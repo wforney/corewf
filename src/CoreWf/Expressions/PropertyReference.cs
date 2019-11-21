@@ -37,10 +37,10 @@ namespace System.Activities.Expressions
 
         protected override void CacheMetadata(CodeActivityMetadata metadata)
         {
-            MethodInfo oldGetMethod = this.getMethod;
-            MethodInfo oldSetMethod = this.setMethod;
+            var oldGetMethod = this.getMethod;
+            var oldSetMethod = this.setMethod;
 
-            bool isRequired = false;
+            var isRequired = false;
             if (typeof(TOperand).IsEnum)
             {
                 metadata.AddValidationError(SR.TargetTypeCannotBeEnum(this.GetType().Name, this.DisplayName));
@@ -56,7 +56,7 @@ namespace System.Activities.Expressions
             }
             else
             {
-                Type operandType = typeof(TOperand);
+                var operandType = typeof(TOperand);
                 this.propertyInfo = operandType.GetProperty(this.PropertyName);
 
                 if (this.propertyInfo == null)
@@ -135,7 +135,7 @@ namespace System.Activities.Expressions
                             throw FxTrace.Exception.AsError(new InvalidOperationException(SR.NullReferencedMemberAccess(this.propertyInfo.DeclaringType.Name, this.propertyInfo.Name)));
                         }
 
-                        return (T)this.getFunc(this.owner, new object[0]);
+                        return (T)this.getFunc(this.owner, Array.Empty<object>());
                     }
                     if (this.propertyInfo.GetGetMethod() == null && TypeHelper.AreTypesCompatible(this.propertyInfo.DeclaringType, typeof(Location)) == false)
                     {

@@ -25,7 +25,7 @@ namespace System.Activities.XamlIntegration
             Expression newNode = null;
             if (node.Expression != null && node.Expression.NodeType == ExpressionType.Constant)
             {
-                ConstantExpression constExpr = (ConstantExpression)node.Expression;
+                var constExpr = (ConstantExpression)node.Expression;
                 if (typeof(CompiledDataContext).IsAssignableFrom(constExpr.Type) && 
                     this.TryRewriteMemberExpressionNode(node, out newNode))
                 {
@@ -41,7 +41,7 @@ namespace System.Activities.XamlIntegration
             if (node.Value != null && node.Value.GetType() == typeof(InlinedLocationReference))
             {
                 Expression newNode = node;
-                ILocationReferenceWrapper inlinedReference = (ILocationReferenceWrapper)node.Value;
+                var inlinedReference = (ILocationReferenceWrapper)node.Value;
                 if (inlinedReference != null)
                 {
                     newNode = Expression.Constant(inlinedReference.LocationReference, typeof(LocationReference));
@@ -57,7 +57,7 @@ namespace System.Activities.XamlIntegration
             newNode = null;
             if (this.locationReferences != null)
             {
-                foreach (LocationReference locationReference in this.locationReferences)
+                foreach (var locationReference in this.locationReferences)
                 {
                     if (node.Member.Name == locationReference.Name)
                     {

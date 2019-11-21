@@ -20,7 +20,7 @@ namespace System.Activities.Runtime
 
         public static string Next()
         {
-            long nextId = Interlocked.Increment(ref s_nameGenerator._id);
+            var nextId = Interlocked.Increment(ref s_nameGenerator._id);
             return s_nameGenerator._prefix + nextId.ToString(CultureInfo.InvariantCulture);
         }
     }

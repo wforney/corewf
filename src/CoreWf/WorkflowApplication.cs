@@ -1,48 +1,52 @@
-// This file is part of Core WF which is licensed under the MIT license.
-// See LICENSE file in the project root for full license information.
+// This file is part of Core WF which is licensed under the MIT license. See LICENSE file in the
+// project root for full license information.
 
 namespace System.Activities
 {
     using System;
-    using System.Activities.Hosting;
     using System.Activities.DurableInstancing;
+    using System.Activities.Hosting;
+    using System.Activities.Internals;
     using System.Activities.Runtime;
+    using System.Activities.Runtime.DurableInstancing;
     using System.Activities.Tracking;
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
     using System.Linq;
-    using System.Activities.Runtime.DurableInstancing;
     using System.Threading;
     using System.Transactions;
     using System.Xml.Linq;
-    using System.Activities.Internals;
 
-using System.Activities.DynamicUpdate;
-
-    // WorkflowApplication is free-threaded. It is responsible for the correct locking and usage of the ActivityExecutor.
-    // Given that there are two simultaneous users of ActivityExecutor (WorkflowApplication and NativeActivityContext),
-    // it is imperative that WorkflowApplication only calls into ActivityExecutor when there are no activities executing
-    // (and thus no worries about colliding with AEC calls).
-
-    // SYNCHRONIZATION SCHEME
-    // WorkflowInstance is defined to not be thread safe and to disallow all operations while it is (potentially
-    // asynchronously) running.  The WorkflowInstance is in the "running" state between a call to Run and the
-    // subsequent call to either WorkflowInstance NotifyPaused or NotifyUnhandledException.
-    // WorkflowApplication keeps track of a boolean "isBusy" and a list of pending operations.  WI is busy whenever
-    // it is servicing an operation or the runtime is in the "running" state.
-    // Enqueue - This enqueues an operation into the pending operation list.  If WI is not busy then the operation
-    //    can be serviced immediately.  This is the only place where "isBusy" flips to true.
-    // OnNotifiedUnhandledException - This method performs some processing and then calls OnNotifiedPaused.
-    // OnNotifiedPaused - This method is only ever called when "isBusy" is true.  It first checks to see if there
-    //    is other work to be done (prioritization: raise completed, handle an operation, resume execution, raise
-    //    idle, stop).  This is the only place where "isBusy" flips to false and this only occurs when there is no
-    //    other work to be done.
-    // [Force]NotifyOperationComplete - These methods are called by individual operations when they are done
-    //    processing.  If the operation was notified (IE - actually performed in the eyes of WI) then this is simply
-    //    a call to OnNotifiedPaused.
-    // Operation notification - The InstanceOperation class keeps tracks of whether a specified operation was
-    //    dispatched by WI or not.  If it was dispatched (determined either in Enqueue, FindOperation, or Remove)
-    //    then it MUST result in a call to OnNotifiedPaused when complete.
+    /// <summary>
+    /// The WorkflowApplication class. This class cannot be inherited. Implements the <see
+    /// cref="System.Activities.Hosting.WorkflowInstance" />
+    /// </summary>
+    /// <seealso cref="System.Activities.Hosting.WorkflowInstance" />
+    /// <remarks>
+    /// WorkflowApplication is free-threaded. It is responsible for the correct locking and usage of
+    /// the ActivityExecutor. Given that there are two simultaneous users of ActivityExecutor
+    /// (WorkflowApplication and NativeActivityContext), it is imperative that WorkflowApplication
+    /// only calls into ActivityExecutor when there are no activities executing (and thus no worries
+    /// about colliding with AEC calls). SYNCHRONIZATION SCHEME WorkflowInstance is defined to not
+    /// be thread safe and to disallow all operations while it is (potentially
+    /// asynchronously) running. The WorkflowInstance is in the "running" state between a call to Run
+    /// and the subsequent call to either WorkflowInstance NotifyPaused or NotifyUnhandledException.
+    /// WorkflowApplication keeps track of a boolean "isBusy" and a list of pending operations. WI
+    /// is busy whenever it is servicing an operation or the runtime is in the "running" state.
+    /// Enqueue - This enqueues an operation into the pending operation list. If WI is not busy then
+    /// the operation can be serviced immediately. This is the only place where "isBusy" flips to
+    /// true. OnNotifiedUnhandledException - This method performs some processing and then calls
+    /// OnNotifiedPaused. OnNotifiedPaused - This method is only ever called when "isBusy" is true.
+    /// It first checks to see if there is other work to be done (prioritization: raise completed,
+    /// handle an operation, resume execution, raise idle, stop). This is the only place where
+    /// "isBusy" flips to false and this only occurs when there is no other work to be done.
+    /// [Force]NotifyOperationComplete - These methods are called by individual operations when they
+    /// are done processing. If the operation was notified (IE - actually performed in the eyes of
+    /// WI) then this is simply a call to OnNotifiedPaused. Operation notification - The
+    /// InstanceOperation class keeps tracks of whether a specified operation was dispatched by WI
+    /// or not. If it was dispatched (determined either in Enqueue, FindOperation, or Remove) then
+    /// it MUST result in a call to OnNotifiedPaused when complete.
+    /// </remarks>
     [Fx.Tag.XamlVisible(false)]
     public sealed class WorkflowApplication : WorkflowInstance
     {
@@ -72,29 +76,31 @@ using System.Activities.DynamicUpdate;
 
         // Tracking for one-time actions per in-memory pulse
         private bool hasCalledAbort;
+
         private bool hasCalledRun;
 
         // Tracking for one-time actions per instance lifetime (these end up being persisted)
         private bool hasRaisedCompleted;
+
         private readonly Quack<InstanceOperation> pendingOperations;
         private bool isBusy;
         private bool hasExecutionOccurredSinceLastIdle;
 
-        // Count of operations that are about to be enqueued.
-        // We use this when enqueueing multiple operations, to avoid raising
-        // idle on dequeue of the first operation.
+        // Count of operations that are about to be enqueued. We use this when enqueueing multiple
+        // operations, to avoid raising idle on dequeue of the first operation.
         private int pendingUnenqueued;
 
         // We use this to keep track of the number of "interesting" things that have happened.
-        // Notifying operations and calling Run on the runtime count as interesting things.
-        // All operations are stamped with the actionCount at the time of being enqueued.
+        // Notifying operations and calling Run on the runtime count as interesting things. All
+        // operations are stamped with the actionCount at the time of being enqueued.
         private int actionCount;
 
         // Initial creation data
         private readonly IDictionary<string, object> initialWorkflowArguments;
+
         private readonly IList<Handle> rootExecutionProperties;
         private IDictionary<XName, InstanceValue> instanceMetadata;
-        
+
         public WorkflowApplication(Activity workflowDefinition)
             : this(workflowDefinition, (WorkflowIdentity)null)
         {
@@ -113,10 +119,7 @@ using System.Activities.DynamicUpdate;
         }
 
         public WorkflowApplication(Activity workflowDefinition, IDictionary<string, object> inputs, WorkflowIdentity definitionIdentity)
-            : this(workflowDefinition, definitionIdentity)
-        {
-            this.initialWorkflowArguments = inputs ?? throw FxTrace.Exception.ArgumentNull(nameof(inputs));
-        }
+            : this(workflowDefinition, definitionIdentity) => this.initialWorkflowArguments = inputs ?? throw FxTrace.Exception.ArgumentNull(nameof(inputs));
 
         private WorkflowApplication(Activity workflowDefinition, IDictionary<string, object> inputs, IList<Handle> executionProperties)
             : this(workflowDefinition)
@@ -127,13 +130,10 @@ using System.Activities.DynamicUpdate;
 
         public InstanceStore InstanceStore
         {
-            get
-            {
-                return this.instanceStore;
-            }
+            get => this.instanceStore;
             set
             {
-                ThrowIfReadOnly();
+                this.ThrowIfReadOnly();
                 this.instanceStore = value;
             }
         }
@@ -150,84 +150,67 @@ using System.Activities.DynamicUpdate;
                         this.extensions.MakeReadOnly();
                     }
                 }
+
                 return this.extensions;
             }
         }
 
         public Action<WorkflowApplicationAbortedEventArgs> Aborted
         {
-            get
-            {
-                return this.onAborted;
-            }
+            get => this.onAborted;
             set
             {
-                ThrowIfMulticast(value);
+                this.ThrowIfMulticast(value);
                 this.onAborted = value;
             }
         }
 
         public Action<WorkflowApplicationEventArgs> Unloaded
         {
-            get
-            {
-                return this.onUnloaded;
-            }
+            get => this.onUnloaded;
             set
             {
-                ThrowIfMulticast(value);
+                this.ThrowIfMulticast(value);
                 this.onUnloaded = value;
             }
         }
 
         public Action<WorkflowApplicationCompletedEventArgs> Completed
         {
-            get
-            {
-                return this.onCompleted;
-            }
+            get => this.onCompleted;
             set
             {
-                ThrowIfMulticast(value);
+                this.ThrowIfMulticast(value);
                 this.onCompleted = value;
             }
         }
 
         public Func<WorkflowApplicationUnhandledExceptionEventArgs, UnhandledExceptionAction> OnUnhandledException
         {
-            get
-            {
-                return this.onUnhandledException;
-            }
+            get => this.onUnhandledException;
             set
             {
-                ThrowIfMulticast(value);
+                this.ThrowIfMulticast(value);
                 this.onUnhandledException = value;
             }
         }
 
         public Action<WorkflowApplicationIdleEventArgs> Idle
         {
-            get
-            {
-                return this.onIdle;
-            }
+            get => this.onIdle;
             set
             {
-                ThrowIfMulticast(value);
+                this.ThrowIfMulticast(value);
                 this.onIdle = value;
             }
         }
 
         public Func<WorkflowApplicationIdleEventArgs, PersistableIdleAction> PersistableIdle
         {
-            get
-            {
-                return this.onPersistableIdle;
-            }
+            get => this.onPersistableIdle;
             set
             {
-                ThrowIfMulticast(value);
+                this.ThrowIfMulticast(value);
                 this.onPersistableIdle = value;
             }
         }
@@ -247,17 +230,12 @@ using System.Activities.DynamicUpdate;
                         }
                     }
                 }
+
                 return this.instanceId;
             }
         }
 
-        protected internal override bool SupportsInstanceKeys
-        {
-            get
-            {
-                return false;
-            }
-        }
+        protected internal override bool SupportsInstanceKeys => false;
 
         private static AsyncCallback EventFrameCallback
         {
@@ -285,33 +263,15 @@ using System.Activities.DynamicUpdate;
             }
         }
 
-        private bool HasPersistenceProvider
-        {
-            get
-            {
-                return this.persistenceManager != null;
-            }
-        }
+        private bool HasPersistenceProvider => this.persistenceManager != null;
 
-        private bool IsHandlerThread
-        {
-            get
-            {
-                return this.isInHandler && this.handlerThreadId == Thread.CurrentThread.ManagedThreadId;
-            }
-        }
+        private bool IsHandlerThread => this.isInHandler && this.handlerThreadId == Thread.CurrentThread.ManagedThreadId;
 
-        private bool IsInTerminalState
-        {
-            get
-            {
-                return this.state == WorkflowApplicationState.Unloaded || this.state == WorkflowApplicationState.Aborted;
-            }
-        }
+        private bool IsInTerminalState => this.state == WorkflowApplicationState.Unloaded || this.state == WorkflowApplicationState.Aborted;
 
         public void AddInitialInstanceValues(IDictionary<XName, object> writeOnlyValues)
         {
-            ThrowIfReadOnly();
+            this.ThrowIfReadOnly();
 
             if (writeOnlyValues != null)
             {
@@ -320,7 +280,7 @@ using System.Activities.DynamicUpdate;
                     this.instanceMetadata = new Dictionary<XName, InstanceValue>(writeOnlyValues.Count);
                 }
 
-                foreach (KeyValuePair<XName, object> pair in writeOnlyValues)
+                foreach (var pair in writeOnlyValues)
                 {
                     // We use the indexer so that we can replace keys that already exist
                     this.instanceMetadata[pair.Key] = new InstanceValue(pair.Value, InstanceValueOptions.Optional | InstanceValueOptions.WriteOnly);
@@ -329,10 +289,7 @@ using System.Activities.DynamicUpdate;
         }
 
         // host-facing access to our cascading ExtensionManager resolution. Used by WorkflowApplicationEventArgs
-        internal IEnumerable<T> InternalGetExtensions<T>() where T : class
-        {
-            return base.GetExtensions<T>();
-        }
+        internal IEnumerable<T> InternalGetExtensions<T>() where T : class => base.GetExtensions<T>();
 
         private static void EventFrame(IAsyncResult result)
         {
@@ -341,10 +298,10 @@ using System.Activities.DynamicUpdate;
                 return;
             }
 
-            WorkflowEventData data = (WorkflowEventData)result.AsyncState;
-            WorkflowApplication thisPtr = data.Instance;
+            var data = (WorkflowEventData)result.AsyncState;
+            var thisPtr = data.Instance;
 
-            bool done = true;
+            var done = true;
 
             try
             {
@@ -379,15 +336,9 @@ using System.Activities.DynamicUpdate;
             }
         }
 
-        private bool ShouldRaiseComplete(WorkflowInstanceState state)
-        {
-            return state == WorkflowInstanceState.Complete && !this.hasRaisedCompleted;
-        }
+        private bool ShouldRaiseComplete(WorkflowInstanceState state) => state == WorkflowInstanceState.Complete && !this.hasRaisedCompleted;
 
-        private void Enqueue(InstanceOperation operation)
-        {
-            Enqueue(operation, false);
-        }
+        private void Enqueue(InstanceOperation operation) => this.Enqueue(operation, false);
 
         private void Enqueue(InstanceOperation operation, bool push)
         {
@@ -397,35 +348,34 @@ using System.Activities.DynamicUpdate;
 
                 if (this.isBusy)
                 {
-                    // If base.IsReadOnly == false, we can't call the Controller yet because WorkflowInstance is not initialized.
-                    // But that's okay; if the instance isn't initialized then the scheduler's not running yet, so no need to pause it.
+                    // If base.IsReadOnly == false, we can't call the Controller yet because
+                    // WorkflowInstance is not initialized. But that's okay; if the instance isn't
+                    // initialized then the scheduler's not running yet, so no need to pause it.
                     if (operation.InterruptsScheduler && base.IsReadOnly)
                     {
                         this.Controller.RequestPause();
                     }
 
-                    AddToPending(operation, push);
+                    this.AddToPending(operation, push);
                 }
                 else
                 {
                     // first make sure we're ready to run
                     if (operation.RequiresInitialized)
                     {
-                        EnsureInitialized();
+                        this.EnsureInitialized();
                     }
 
                     if (!operation.CanRun(this) && !this.IsInTerminalState)
                     {
-                        AddToPending(operation, push);
+                        this.AddToPending(operation, push);
                     }
                     else
                     {
                         // Action: Notifying an operation
                         this.actionCount++;
 
-                        // We've essentially just notified this
-                        // operation that it is free to do its
-                        // thing
+                        // We've essentially just notified this operation that it is free to do its thing
                         try
                         {
                         }
@@ -485,7 +435,7 @@ using System.Activities.DynamicUpdate;
 
         private bool WaitForTurn(InstanceOperation operation, TimeSpan timeout)
         {
-            Enqueue(operation);
+            this.Enqueue(operation);
             return this.WaitForTurnNoEnqueue(operation, timeout);
         }
 
@@ -493,7 +443,7 @@ using System.Activities.DynamicUpdate;
         {
             if (!operation.WaitForTurn(timeout))
             {
-                if (Remove(operation))
+                if (this.Remove(operation))
                 {
                     throw FxTrace.Exception.AsError(new TimeoutException(SR.TimeoutOnOperation(timeout)));
                 }
@@ -501,14 +451,11 @@ using System.Activities.DynamicUpdate;
             return true;
         }
 
-        private bool WaitForTurnAsync(InstanceOperation operation, TimeSpan timeout, Action<object, TimeoutException> callback, object state)
-        {
-            return WaitForTurnAsync(operation, false, timeout, callback, state);
-        }
+        private bool WaitForTurnAsync(InstanceOperation operation, TimeSpan timeout, Action<object, TimeoutException> callback, object state) => this.WaitForTurnAsync(operation, false, timeout, callback, state);
 
         private bool WaitForTurnAsync(InstanceOperation operation, bool push, TimeSpan timeout, Action<object, TimeoutException> callback, object state)
         {
-            Enqueue(operation, push);
+            this.Enqueue(operation, push);
 
             return this.WaitForTurnNoEnqueueAsync(operation, timeout, callback, state);
         }
@@ -524,7 +471,7 @@ using System.Activities.DynamicUpdate;
 
         private static void OnWaitAsyncComplete(object state, TimeoutException exception)
         {
-            WaitForTurnData data = (WaitForTurnData)state;
+            var data = (WaitForTurnData)state;
 
             if (!data.Instance.Remove(data.Operation))
             {
@@ -534,18 +481,14 @@ using System.Activities.DynamicUpdate;
             data.Callback(data.State, exception);
         }
 
-        // For when we know that the operation is non-null
-        // and notified (like in async paths)
-        private void ForceNotifyOperationComplete()
-        {
-            OnNotifyPaused();
-        }
+        // For when we know that the operation is non-null and notified (like in async paths)
+        private void ForceNotifyOperationComplete() => this.OnNotifyPaused();
 
         private void NotifyOperationComplete(InstanceOperation operation)
         {
             if (operation != null && operation.Notified)
             {
-                OnNotifyPaused();
+                this.OnNotifyPaused();
             }
         }
 
@@ -554,16 +497,15 @@ using System.Activities.DynamicUpdate;
             if (this.pendingOperations.Count > 0)
             {
                 // Special case the first one
-                InstanceOperation temp = this.pendingOperations[0];
+                var temp = this.pendingOperations[0];
 
                 if (temp.RequiresInitialized)
                 {
-                    EnsureInitialized();
+                    this.EnsureInitialized();
                 }
 
-                // Even if we can't run this operation we want to notify
-                // it if all the operations are invalid.  This will cause
-                // the Validate* method to throw to the caller.
+                // Even if we can't run this operation we want to notify it if all the operations
+                // are invalid. This will cause the Validate* method to throw to the caller.
                 if (temp.CanRun(this) || this.IsInTerminalState)
                 {
                     // Action: Notifying an operation
@@ -575,13 +517,13 @@ using System.Activities.DynamicUpdate;
                 }
                 else
                 {
-                    for (int i = 0; i < this.pendingOperations.Count; i++)
+                    for (var i = 0; i < this.pendingOperations.Count; i++)
                     {
                         temp = this.pendingOperations[i];
 
                         if (temp.RequiresInitialized)
                         {
-                            EnsureInitialized();
+                            this.EnsureInitialized();
                         }
 
                         if (temp.CanRun(this))
@@ -613,7 +555,7 @@ using System.Activities.DynamicUpdate;
                 if (this.persistenceManager == null && this.instanceStore != null)
                 {
                     Fx.Assert(this.Id != Guid.Empty, "should have a valid Id at this point");
-                    this.persistenceManager = new PersistenceManager(this.instanceStore, GetInstanceMetadata(), this.Id);
+                    this.persistenceManager = new PersistenceManager(this.instanceStore, this.GetInstanceMetadata(), this.Id);
                 }
             }
         }
@@ -627,20 +569,20 @@ using System.Activities.DynamicUpdate;
             {
                 localInstanceState = this.Controller.State;
             }
-            WorkflowApplicationState localApplicationState = this.state;
+            var localApplicationState = this.state;
 
-            bool stillSync = true;
+            var stillSync = true;
 
             while (stillSync)
             {
-                if (localInstanceState.HasValue && ShouldRaiseComplete(localInstanceState.Value))
+                if (localInstanceState.HasValue && this.ShouldRaiseComplete(localInstanceState.Value))
                 {
                     Exception abortException = null;
 
                     try
                     {
-                        // We're about to notify the world that this instance is completed
-                        // so let's make it official.
+                        // We're about to notify the world that this instance is completed so let's
+                        // make it official.
                         this.hasRaisedCompleted = true;
 
                         if (completedHandler == null)
@@ -661,7 +603,7 @@ using System.Activities.DynamicUpdate;
 
                     if (abortException != null)
                     {
-                        AbortInstance(abortException, true);
+                        this.AbortInstance(abortException, true);
                     }
                 }
                 else
@@ -672,11 +614,10 @@ using System.Activities.DynamicUpdate;
 
                     lock (this.pendingOperations)
                     {
-                        toRun = FindOperation();
+                        toRun = this.FindOperation();
 
-                        // Cache the state in local variables to ensure that none 
-                        // of the decision points in the ensuing "if" statement flip 
-                        // when control gets out of the lock.
+                        // Cache the state in local variables to ensure that none of the decision
+                        // points in the ensuing "if" statement flip when control gets out of the lock.
                         shouldRunNow = (localInstanceState.HasValue && localInstanceState == WorkflowInstanceState.Runnable && localApplicationState == WorkflowApplicationState.Runnable);
                         shouldRaiseIdleNow = this.hasExecutionOccurredSinceLastIdle &&
                             localInstanceState.HasValue && localInstanceState == WorkflowInstanceState.Idle &&
@@ -722,7 +663,7 @@ using System.Activities.DynamicUpdate;
 
                         if (abortException != null)
                         {
-                            AbortInstance(abortException, true);
+                            this.AbortInstance(abortException, true);
                         }
                     }
                     else if (shouldRunNow)
@@ -742,33 +683,23 @@ using System.Activities.DynamicUpdate;
         // used by WorkflowInvoker in the InvokeAsync case
         internal void GetCompletionStatus(out Exception terminationException, out bool cancelled)
         {
-            ActivityInstanceState completionState = this.Controller.GetCompletionState(out IDictionary<string, object> dummyOutputs, out terminationException);
+            var completionState = this.Controller.GetCompletionState(out var dummyOutputs, out terminationException);
             Fx.Assert(completionState != ActivityInstanceState.Executing, "Activity cannot be executing when this method is called");
             cancelled = (completionState == ActivityInstanceState.Canceled);
         }
 
-        protected internal override void OnRequestAbort(Exception reason)
-        {
-            this.AbortInstance(reason, false);
-        }
+        protected internal override void OnRequestAbort(Exception reason) => this.AbortInstance(reason, false);
 
-        public void Abort()
-        {
-            Abort(SR.DefaultAbortReason);
-        }
+        public void Abort() => this.Abort(SR.DefaultAbortReason);
 
-        public void Abort(string reason)
-        {
-            this.Abort(reason, null);
-        }
+        public void Abort(string reason) => this.Abort(reason, null);
 
         private void Abort(string reason, Exception innerException)
         {
-            // This is pretty loose check, but it is okay if we
-            // go down the abort path multiple times
+            // This is pretty loose check, but it is okay if we go down the abort path multiple times
             if (this.state != WorkflowApplicationState.Aborted)
             {
-                AbortInstance(new WorkflowApplicationAbortedException(reason, innerException), false);
+                this.AbortInstance(new WorkflowApplicationAbortedException(reason, innerException), false);
             }
         }
 
@@ -779,7 +710,7 @@ using System.Activities.DynamicUpdate;
                 this.persistenceManager.Abort();
             }
 
-            PersistencePipeline currentPersistencePipeline = this.persistencePipelineInUse;
+            var currentPersistencePipeline = this.persistencePipelineInUse;
             if (currentPersistencePipeline != null)
             {
                 currentPersistencePipeline.Abort();
@@ -790,12 +721,13 @@ using System.Activities.DynamicUpdate;
         {
             this.state = WorkflowApplicationState.Aborted;
 
-            // Need to ensure that either components see the Aborted state, this method sees the components, or both.
+            // Need to ensure that either components see the Aborted state, this method sees the
+            // components, or both.
             Thread.MemoryBarrier();
 
-            // We do this outside of the lock since persistence
-            // might currently be blocking access to the lock.
-            AbortPersistence();
+            // We do this outside of the lock since persistence might currently be blocking access
+            // to the lock.
+            this.AbortPersistence();
 
             if (isWorkflowThread)
             {
@@ -805,19 +737,19 @@ using System.Activities.DynamicUpdate;
                     this.Controller.Abort(reason);
 
                     // We should get off this thread because we're unsure of its state
-                    ScheduleTrackAndRaiseAborted(reason);
+                    this.ScheduleTrackAndRaiseAborted(reason);
                 }
             }
             else
             {
-                bool completeSelf = true;
+                var completeSelf = true;
                 InstanceOperation operation = null;
 
                 try
                 {
                     operation = new InstanceOperation();
 
-                    completeSelf = WaitForTurnAsync(operation, true, ActivityDefaults.AcquireLockTimeout, new Action<object, TimeoutException>(OnAbortWaitComplete), reason);
+                    completeSelf = this.WaitForTurnAsync(operation, true, ActivityDefaults.AcquireLockTimeout, new Action<object, TimeoutException>(this.OnAbortWaitComplete), reason);
 
                     if (completeSelf)
                     {
@@ -826,9 +758,8 @@ using System.Activities.DynamicUpdate;
                             this.hasCalledAbort = true;
                             this.Controller.Abort(reason);
 
-                            // We need to get off this thread so we don't block the caller
-                            // of abort
-                            ScheduleTrackAndRaiseAborted(reason);
+                            // We need to get off this thread so we don't block the caller of abort
+                            this.ScheduleTrackAndRaiseAborted(reason);
                         }
                     }
                 }
@@ -836,7 +767,7 @@ using System.Activities.DynamicUpdate;
                 {
                     if (completeSelf)
                     {
-                        NotifyOperationComplete(operation);
+                        this.NotifyOperationComplete(operation);
                     }
                 }
             }
@@ -846,16 +777,15 @@ using System.Activities.DynamicUpdate;
         {
             if (exception != null)
             {
-                // We swallow this exception because we were simply doing our
-                // best to get the lock.  Note that we won't proceed without
-                // the lock because we may have already succeeded on another
-                // thread.  Technically this abort call has failed.
+                // We swallow this exception because we were simply doing our best to get the lock.
+                // Note that we won't proceed without the lock because we may have already succeeded
+                // on another thread. Technically this abort call has failed.
 
                 return;
             }
 
-            bool shouldRaise = false;
-            Exception reason = (Exception)state;
+            var shouldRaise = false;
+            var reason = (Exception)state;
 
             try
             {
@@ -868,14 +798,13 @@ using System.Activities.DynamicUpdate;
             }
             finally
             {
-                ForceNotifyOperationComplete();
+                this.ForceNotifyOperationComplete();
             }
 
             if (shouldRaise)
             {
-                // We call this from this thread because we've already
-                // had a thread switch
-                TrackAndRaiseAborted(reason);
+                // We call this from this thread because we've already had a thread switch
+                this.TrackAndRaiseAborted(reason);
             }
         }
 
@@ -883,27 +812,25 @@ using System.Activities.DynamicUpdate;
         {
             if (this.Controller.HasPendingTrackingRecords || this.Aborted != null)
             {
-                ActionItem.Schedule(new Action<object>(TrackAndRaiseAborted), reason);
+                ActionItem.Schedule(new Action<object>(this.TrackAndRaiseAborted), reason);
             }
         }
 
-        // This is only ever called from an appropriate thread (not the thread
-        // that called abort unless it was an internal abort).
-        // This method is called without the lock.  We still provide single threaded
-        // guarantees to the Controller because:
-        //    * No other call can ever enter the executor again once the state has
-        //      switched to Aborted
-        //    * If this was an internal abort then the thread was fast pathing its
-        //      way out of the runtime and won't conflict
+        // This is only ever called from an appropriate thread (not the thread that called abort
+        // unless it was an internal abort). This method is called without the lock. We still
+        // provide single threaded guarantees to the Controller because:
+        // * No other call can ever enter the executor again once the state has switched to Aborted
+        // * If this was an internal abort then the thread was fast pathing its way out of the
+        // runtime and won't conflict
         private void TrackAndRaiseAborted(object state)
         {
-            Exception reason = (Exception)state;
+            var reason = (Exception)state;
 
             if (this.Controller.HasPendingTrackingRecords)
             {
                 try
                 {
-                    IAsyncResult result = this.Controller.BeginFlushTrackingRecords(ActivityDefaults.TrackingTimeout, Fx.ThunkCallback(new AsyncCallback(OnAbortTrackingComplete)), reason);
+                    var result = this.Controller.BeginFlushTrackingRecords(ActivityDefaults.TrackingTimeout, Fx.ThunkCallback(new AsyncCallback(this.OnAbortTrackingComplete)), reason);
 
                     if (result.CompletedSynchronously)
                     {
@@ -921,12 +848,12 @@ using System.Activities.DynamicUpdate;
                         throw;
                     }
 
-                    // We swallow any exception here because we are on the abort path
-                    // and are doing a best effort to track this record.
+                    // We swallow any exception here because we are on the abort path and are doing
+                    // a best effort to track this record.
                 }
             }
 
-            RaiseAborted(reason);
+            this.RaiseAborted(reason);
         }
 
         private void OnAbortTrackingComplete(IAsyncResult result)
@@ -936,7 +863,7 @@ using System.Activities.DynamicUpdate;
                 return;
             }
 
-            Exception reason = (Exception)result.AsyncState;
+            var reason = (Exception)result.AsyncState;
 
             try
             {
@@ -949,18 +876,18 @@ using System.Activities.DynamicUpdate;
                     throw;
                 }
 
-                // We swallow any exception here because we are on the abort path
-                // and are doing a best effort to track this record.
+                // We swallow any exception here because we are on the abort path and are doing a
+                // best effort to track this record.
             }
 
-            RaiseAborted(reason);
+            this.RaiseAborted(reason);
         }
 
         private void RaiseAborted(Exception reason)
         {
             if (this.invokeCompletedCallback == null)
             {
-                Action<WorkflowApplicationAbortedEventArgs> abortedHandler = this.Aborted;
+                var abortedHandler = this.Aborted;
 
                 if (abortedHandler != null)
                 {
@@ -988,15 +915,9 @@ using System.Activities.DynamicUpdate;
             }
         }
 
-        public void Terminate(string reason)
-        {
-            Terminate(reason, ActivityDefaults.AcquireLockTimeout);
-        }
+        public void Terminate(string reason) => this.Terminate(reason, ActivityDefaults.AcquireLockTimeout);
 
-        public void Terminate(Exception reason)
-        {
-            Terminate(reason, ActivityDefaults.AcquireLockTimeout);
-        }
+        public void Terminate(Exception reason) => this.Terminate(reason, ActivityDefaults.AcquireLockTimeout);
 
         public void Terminate(string reason, TimeSpan timeout)
         {
@@ -1005,7 +926,7 @@ using System.Activities.DynamicUpdate;
                 throw FxTrace.Exception.ArgumentNullOrEmpty(nameof(reason));
             }
 
-            Terminate(new WorkflowApplicationTerminatedException(reason, this.Id), timeout);
+            this.Terminate(new WorkflowApplicationTerminatedException(reason, this.Id), timeout);
         }
 
         public void Terminate(Exception reason, TimeSpan timeout)
@@ -1015,45 +936,36 @@ using System.Activities.DynamicUpdate;
                 throw FxTrace.Exception.ArgumentNull(nameof(reason));
             }
 
-            ThrowIfHandlerThread();
+            this.ThrowIfHandlerThread();
 
             TimeoutHelper.ThrowIfNegativeArgument(timeout);
 
-            TimeoutHelper timeoutHelper = new TimeoutHelper(timeout);
+            var timeoutHelper = new TimeoutHelper(timeout);
             InstanceOperation operation = null;
 
             try
             {
                 operation = new InstanceOperation();
 
-                WaitForTurn(operation, timeoutHelper.RemainingTime());
+                this.WaitForTurn(operation, timeoutHelper.RemainingTime());
 
-                ValidateStateForTerminate();
+                this.ValidateStateForTerminate();
 
-                TerminateCore(reason);
+                this.TerminateCore(reason);
 
                 this.Controller.FlushTrackingRecords(timeoutHelper.RemainingTime());
             }
             finally
             {
-                NotifyOperationComplete(operation);
+                this.NotifyOperationComplete(operation);
             }
         }
 
-        private void TerminateCore(Exception reason)
-        {
-            this.Controller.Terminate(reason);
-        }
+        private void TerminateCore(Exception reason) => this.Controller.Terminate(reason);
 
-        public IAsyncResult BeginTerminate(string reason, AsyncCallback callback, object state)
-        {
-            return BeginTerminate(reason, ActivityDefaults.AcquireLockTimeout, callback, state);
-        }
+        public IAsyncResult BeginTerminate(string reason, AsyncCallback callback, object state) => this.BeginTerminate(reason, ActivityDefaults.AcquireLockTimeout, callback, state);
 
-        public IAsyncResult BeginTerminate(Exception reason, AsyncCallback callback, object state)
-        {
-            return BeginTerminate(reason, ActivityDefaults.AcquireLockTimeout, callback, state);
-        }
+        public IAsyncResult BeginTerminate(Exception reason, AsyncCallback callback, object state) => this.BeginTerminate(reason, ActivityDefaults.AcquireLockTimeout, callback, state);
 
         public IAsyncResult BeginTerminate(string reason, TimeSpan timeout, AsyncCallback callback, object state)
         {
@@ -1062,7 +974,7 @@ using System.Activities.DynamicUpdate;
                 throw FxTrace.Exception.ArgumentNullOrEmpty(nameof(reason));
             }
 
-            return BeginTerminate(new WorkflowApplicationTerminatedException(reason, this.Id), timeout, callback, state);
+            return this.BeginTerminate(new WorkflowApplicationTerminatedException(reason, this.Id), timeout, callback, state);
         }
 
         public IAsyncResult BeginTerminate(Exception reason, TimeSpan timeout, AsyncCallback callback, object state)
@@ -1072,48 +984,40 @@ using System.Activities.DynamicUpdate;
                 throw FxTrace.Exception.ArgumentNull(nameof(reason));
             }
 
-            ThrowIfHandlerThread();
+            this.ThrowIfHandlerThread();
 
             TimeoutHelper.ThrowIfNegativeArgument(timeout);
 
             return TerminateAsyncResult.Create(this, reason, timeout, callback, state);
         }
 
-        public void EndTerminate(IAsyncResult result)
-        {
-            TerminateAsyncResult.End(result);
-        }
+        public void EndTerminate(IAsyncResult result) => TerminateAsyncResult.End(result);
 
         // called from the sync and async paths
         private void CancelCore()
         {
-            // We only actually do any work if we haven't completed and we aren't
-            // unloaded.
+            // We only actually do any work if we haven't completed and we aren't unloaded.
             if (!this.hasRaisedCompleted && this.state != WorkflowApplicationState.Unloaded)
             {
                 this.Controller.ScheduleCancel();
 
-                // This is a loose check, but worst case scenario we call
-                // an extra, unnecessary Run
+                // This is a loose check, but worst case scenario we call an extra, unnecessary Run
                 if (!this.hasCalledRun && !this.hasRaisedCompleted)
                 {
-                    RunCore();
+                    this.RunCore();
                 }
             }
         }
 
-        public void Cancel()
-        {
-            Cancel(ActivityDefaults.AcquireLockTimeout);
-        }
+        public void Cancel() => this.Cancel(ActivityDefaults.AcquireLockTimeout);
 
         public void Cancel(TimeSpan timeout)
         {
-            ThrowIfHandlerThread();
+            this.ThrowIfHandlerThread();
 
             TimeoutHelper.ThrowIfNegativeArgument(timeout);
 
-            TimeoutHelper timeoutHelper = new TimeoutHelper(timeout);
+            var timeoutHelper = new TimeoutHelper(timeout);
 
             InstanceOperation operation = null;
 
@@ -1121,62 +1025,57 @@ using System.Activities.DynamicUpdate;
             {
                 operation = new InstanceOperation();
 
-                WaitForTurn(operation, timeoutHelper.RemainingTime());
+                this.WaitForTurn(operation, timeoutHelper.RemainingTime());
 
-                ValidateStateForCancel();
+                this.ValidateStateForCancel();
 
-                CancelCore();
+                this.CancelCore();
 
                 this.Controller.FlushTrackingRecords(timeoutHelper.RemainingTime());
             }
             finally
             {
-                NotifyOperationComplete(operation);
+                this.NotifyOperationComplete(operation);
             }
         }
 
-        public IAsyncResult BeginCancel(AsyncCallback callback, object state)
-        {
-            return BeginCancel(ActivityDefaults.AcquireLockTimeout, callback, state);
-        }
+        public IAsyncResult BeginCancel(AsyncCallback callback, object state) => this.BeginCancel(ActivityDefaults.AcquireLockTimeout, callback, state);
 
         public IAsyncResult BeginCancel(TimeSpan timeout, AsyncCallback callback, object state)
         {
-            ThrowIfHandlerThread();
+            this.ThrowIfHandlerThread();
 
             TimeoutHelper.ThrowIfNegativeArgument(timeout);
 
             return CancelAsyncResult.Create(this, timeout, callback, state);
         }
 
-        public void EndCancel(IAsyncResult result)
-        {
-            CancelAsyncResult.End(result);
-        }
+        public void EndCancel(IAsyncResult result) => CancelAsyncResult.End(result);
 
-        // called on the Invoke path, this will go away when WorkflowInvoker implements WorkflowInstance directly
+        // called on the Invoke path, this will go away when WorkflowInvoker implements
+        // WorkflowInstance directly
         private static WorkflowApplication CreateInstance(Activity activity, IDictionary<string, object> inputs, WorkflowInstanceExtensionManager extensions, SynchronizationContext syncContext, Action invokeCompletedCallback)
         {
             // 1) Create the workflow instance
-            Transaction ambientTransaction = Transaction.Current;
+            var ambientTransaction = Transaction.Current;
             List<Handle> workflowExecutionProperties = null;
 
             if (ambientTransaction != null)
             {
-                // no need for a NoPersistHandle since the ActivityExecutor performs a no-persist zone
-                // as part of the RuntimeTransactionHandle processing
+                // no need for a NoPersistHandle since the ActivityExecutor performs a no-persist
+                // zone as part of the RuntimeTransactionHandle processing
                 workflowExecutionProperties = new List<Handle>(1)
                 {
                     new RuntimeTransactionHandle(ambientTransaction)
                 };
             }
 
-            WorkflowApplication instance = new WorkflowApplication(activity, inputs, workflowExecutionProperties)
-                {
-                    SynchronizationContext = syncContext
-                };
+            var instance = new WorkflowApplication(activity, inputs, workflowExecutionProperties)
+            {
+                SynchronizationContext = syncContext
+            };
 
-            bool success = false;
+            var success = false;
 
             try
             {
@@ -1221,7 +1120,7 @@ using System.Activities.DynamicUpdate;
 
         private static WorkflowApplication StartInvoke(Activity activity, IDictionary<string, object> inputs, WorkflowInstanceExtensionManager extensions, SynchronizationContext syncContext, Action invokeCompletedCallback, AsyncInvokeContext invokeContext)
         {
-            WorkflowApplication instance = CreateInstance(activity, inputs, extensions, syncContext, invokeCompletedCallback);
+            var instance = CreateInstance(activity, inputs, extensions, syncContext, invokeCompletedCallback);
             if (invokeContext != null)
             {
                 invokeContext.WorkflowApplication = instance;
@@ -1235,14 +1134,13 @@ using System.Activities.DynamicUpdate;
             Fx.Assert(activity != null, "Activity must not be null.");
 
             // Create the invoke synchronization context
-            PumpBasedSynchronizationContext syncContext = new PumpBasedSynchronizationContext(timeout);
-            WorkflowApplication instance = CreateInstance(activity, inputs, extensions, syncContext, new Action(syncContext.OnInvokeCompleted));
+            var syncContext = new PumpBasedSynchronizationContext(timeout);
+            var instance = CreateInstance(activity, inputs, extensions, syncContext, new Action(syncContext.OnInvokeCompleted));
             // Wait for completion
             try
             {
                 RunInstance(instance);
                 syncContext.DoPump();
-
             }
             catch (TimeoutException)
             {
@@ -1279,53 +1177,43 @@ using System.Activities.DynamicUpdate;
             return new InvokeAsyncResult(activity, inputs, extensions, timeout, syncContext, invokeContext, callback, state);
         }
 
-        internal static IDictionary<string, object> EndInvoke(IAsyncResult result)
-        {
-            return InvokeAsyncResult.End(result);
-        }
+        internal static IDictionary<string, object> EndInvoke(IAsyncResult result) => InvokeAsyncResult.End(result);
 
-        public void Run()
-        {
-            Run(ActivityDefaults.AcquireLockTimeout);
-        }
+        public void Run() => this.Run(ActivityDefaults.AcquireLockTimeout);
 
-        public void Run(TimeSpan timeout)
-        {
-            InternalRun(timeout, true);
-        }
+        public void Run(TimeSpan timeout) => this.InternalRun(timeout, true);
 
         private void InternalRun(TimeSpan timeout, bool isUserRun)
         {
-            ThrowIfHandlerThread();
+            this.ThrowIfHandlerThread();
 
             TimeoutHelper.ThrowIfNegativeArgument(timeout);
 
-            TimeoutHelper timeoutHelper = new TimeoutHelper(timeout);
+            var timeoutHelper = new TimeoutHelper(timeout);
             InstanceOperation operation = null;
 
             try
             {
                 operation = new InstanceOperation();
 
-                WaitForTurn(operation, timeoutHelper.RemainingTime());
+                this.WaitForTurn(operation, timeoutHelper.RemainingTime());
 
-                ValidateStateForRun();
+                this.ValidateStateForRun();
 
                 if (isUserRun)
                 {
-                    // We set this to true here so that idle is raised
-                    // regardless of whether the call to Run resulted
-                    // in execution.
+                    // We set this to true here so that idle is raised regardless of whether the
+                    // call to Run resulted in execution.
                     this.hasExecutionOccurredSinceLastIdle = true;
                 }
 
-                RunCore();
+                this.RunCore();
 
                 this.Controller.FlushTrackingRecords(timeoutHelper.RemainingTime());
             }
             finally
             {
-                NotifyOperationComplete(operation);
+                this.NotifyOperationComplete(operation);
             }
         }
 
@@ -1339,40 +1227,28 @@ using System.Activities.DynamicUpdate;
             this.state = WorkflowApplicationState.Runnable;
         }
 
-        public IAsyncResult BeginRun(AsyncCallback callback, object state)
-        {
-            return BeginRun(ActivityDefaults.AcquireLockTimeout, callback, state);
-        }
+        public IAsyncResult BeginRun(AsyncCallback callback, object state) => this.BeginRun(ActivityDefaults.AcquireLockTimeout, callback, state);
 
-        public IAsyncResult BeginRun(TimeSpan timeout, AsyncCallback callback, object state)
-        {
-            return BeginInternalRun(timeout, true, callback, state);
-        }
+        public IAsyncResult BeginRun(TimeSpan timeout, AsyncCallback callback, object state) => this.BeginInternalRun(timeout, true, callback, state);
 
         private IAsyncResult BeginInternalRun(TimeSpan timeout, bool isUserRun, AsyncCallback callback, object state)
         {
-            ThrowIfHandlerThread();
+            this.ThrowIfHandlerThread();
 
             TimeoutHelper.ThrowIfNegativeArgument(timeout);
 
             return RunAsyncResult.Create(this, isUserRun, timeout, callback, state);
         }
 
-        public void EndRun(IAsyncResult result)
-        {
-            RunAsyncResult.End(result);
-        }
+        public void EndRun(IAsyncResult result) => RunAsyncResult.End(result);
 
         // shared by Load/BeginLoad
-        private bool IsLoadTransactionRequired()
-        {
-            return base.GetExtensions<IPersistencePipelineModule>().Any(module => module.IsLoadTransactionRequired);
-        }
+        private bool IsLoadTransactionRequired() => base.GetExtensions<IPersistencePipelineModule>().Any(module => module.IsLoadTransactionRequired);
 
         private void CreatePersistenceManager()
         {
-            PersistenceManager newManager = new PersistenceManager(this.InstanceStore, GetInstanceMetadata(), this.instanceId);
-            SetPersistenceManager(newManager);
+            var newManager = new PersistenceManager(this.InstanceStore, this.GetInstanceMetadata(), this.instanceId);
+            this.SetPersistenceManager(newManager);
         }
 
         // shared by Load(WorkflowApplicationInstance)/BeginLoad*
@@ -1391,9 +1267,9 @@ using System.Activities.DynamicUpdate;
             PersistencePipeline result = null;
             deserializedRuntimeState = ExtractRuntimeState(values, this.persistenceManager.InstanceId);
 
-            if (HasPersistenceModule)
+            if (this.HasPersistenceModule)
             {
-                IEnumerable<IPersistencePipelineModule> modules = base.GetExtensions<IPersistencePipelineModule>();
+                var modules = base.GetExtensions<IPersistencePipelineModule>();
                 result = new PersistencePipeline(modules);
                 result.SetLoadedValues(values);
             }
@@ -1403,20 +1279,15 @@ using System.Activities.DynamicUpdate;
 
         private static ActivityExecutor ExtractRuntimeState(IDictionary<XName, InstanceValue> values, Guid instanceId)
         {
-            if (values.TryGetValue(WorkflowNamespace.Workflow, out InstanceValue value))
+            if (values.TryGetValue(WorkflowNamespace.Workflow, out var value) && value.Value is ActivityExecutor result)
             {
-                if (value.Value is ActivityExecutor result)
-                {
-                    return result;
-                }
+                return result;
             }
+
             throw FxTrace.Exception.AsError(new InstancePersistenceException(SR.WorkflowInstanceNotFoundInStore(instanceId)));
         }
 
-        public static void CreateDefaultInstanceOwner(InstanceStore instanceStore, WorkflowIdentity definitionIdentity, WorkflowIdentityFilter identityFilter)
-        {
-            CreateDefaultInstanceOwner(instanceStore, definitionIdentity, identityFilter, ActivityDefaults.OpenTimeout);
-        }
+        public static void CreateDefaultInstanceOwner(InstanceStore instanceStore, WorkflowIdentity definitionIdentity, WorkflowIdentityFilter identityFilter) => CreateDefaultInstanceOwner(instanceStore, definitionIdentity, identityFilter, ActivityDefaults.OpenTimeout);
 
         public static void CreateDefaultInstanceOwner(InstanceStore instanceStore, WorkflowIdentity definitionIdentity, WorkflowIdentityFilter identityFilter, TimeSpan timeout)
         {
@@ -1429,16 +1300,13 @@ using System.Activities.DynamicUpdate;
                 throw FxTrace.Exception.Argument(nameof(instanceStore), SR.InstanceStoreHasDefaultOwner);
             }
 
-            CreateWorkflowOwnerWithIdentityCommand command = GetCreateOwnerCommand(definitionIdentity, identityFilter);
-            InstanceView commandResult = ExecuteInstanceCommandWithTemporaryHandle(instanceStore, command, timeout);
+            var command = GetCreateOwnerCommand(definitionIdentity, identityFilter);
+            var commandResult = ExecuteInstanceCommandWithTemporaryHandle(instanceStore, command, timeout);
             instanceStore.DefaultInstanceOwner = commandResult.InstanceOwner;
         }
 
         public static IAsyncResult BeginCreateDefaultInstanceOwner(InstanceStore instanceStore, WorkflowIdentity definitionIdentity,
-            WorkflowIdentityFilter identityFilter, AsyncCallback callback, object state)
-        {
-            return BeginCreateDefaultInstanceOwner(instanceStore, definitionIdentity, identityFilter, ActivityDefaults.OpenTimeout, callback, state);
-        }
+            WorkflowIdentityFilter identityFilter, AsyncCallback callback, object state) => BeginCreateDefaultInstanceOwner(instanceStore, definitionIdentity, identityFilter, ActivityDefaults.OpenTimeout, callback, state);
 
         public static IAsyncResult BeginCreateDefaultInstanceOwner(InstanceStore instanceStore, WorkflowIdentity definitionIdentity,
             WorkflowIdentityFilter identityFilter, TimeSpan timeout, AsyncCallback callback, object state)
@@ -1452,20 +1320,17 @@ using System.Activities.DynamicUpdate;
                 throw FxTrace.Exception.Argument(nameof(instanceStore), SR.InstanceStoreHasDefaultOwner);
             }
 
-            CreateWorkflowOwnerWithIdentityCommand command = GetCreateOwnerCommand(definitionIdentity, identityFilter);
+            var command = GetCreateOwnerCommand(definitionIdentity, identityFilter);
             return new InstanceCommandWithTemporaryHandleAsyncResult(instanceStore, command, timeout, callback, state);
         }
 
         public static void EndCreateDefaultInstanceOwner(IAsyncResult asyncResult)
         {
-            InstanceCommandWithTemporaryHandleAsyncResult.End(asyncResult, out InstanceStore instanceStore, out InstanceView commandResult);
+            InstanceCommandWithTemporaryHandleAsyncResult.End(asyncResult, out var instanceStore, out var commandResult);
             instanceStore.DefaultInstanceOwner = commandResult.InstanceOwner;
         }
 
-        public static void DeleteDefaultInstanceOwner(InstanceStore instanceStore)
-        {
-            DeleteDefaultInstanceOwner(instanceStore, ActivityDefaults.CloseTimeout);
-        }
+        public static void DeleteDefaultInstanceOwner(InstanceStore instanceStore) => DeleteDefaultInstanceOwner(instanceStore, ActivityDefaults.CloseTimeout);
 
         public static void DeleteDefaultInstanceOwner(InstanceStore instanceStore, TimeSpan timeout)
         {
@@ -1478,15 +1343,12 @@ using System.Activities.DynamicUpdate;
                 return;
             }
 
-            DeleteWorkflowOwnerCommand command = new DeleteWorkflowOwnerCommand();
+            var command = new DeleteWorkflowOwnerCommand();
             ExecuteInstanceCommandWithTemporaryHandle(instanceStore, command, timeout);
             instanceStore.DefaultInstanceOwner = null;
         }
 
-        public static IAsyncResult BeginDeleteDefaultInstanceOwner(InstanceStore instanceStore, AsyncCallback callback, object state)
-        {
-            return BeginDeleteDefaultInstanceOwner(instanceStore, ActivityDefaults.CloseTimeout, callback, state);
-        }
+        public static IAsyncResult BeginDeleteDefaultInstanceOwner(InstanceStore instanceStore, AsyncCallback callback, object state) => BeginDeleteDefaultInstanceOwner(instanceStore, ActivityDefaults.CloseTimeout, callback, state);
 
         public static IAsyncResult BeginDeleteDefaultInstanceOwner(InstanceStore instanceStore, TimeSpan timeout, AsyncCallback callback, object state)
         {
@@ -1499,20 +1361,19 @@ using System.Activities.DynamicUpdate;
                 return new CompletedAsyncResult(callback, state);
             }
 
-            DeleteWorkflowOwnerCommand command = new DeleteWorkflowOwnerCommand();
+            var command = new DeleteWorkflowOwnerCommand();
             return new InstanceCommandWithTemporaryHandleAsyncResult(instanceStore, command, timeout, callback, state);
         }
 
         public static void EndDeleteDefaultInstanceOwner(IAsyncResult asyncResult)
         {
-
             if (asyncResult is CompletedAsyncResult)
             {
                 CompletedAsyncResult.End(asyncResult);
                 return;
             }
 
-            InstanceCommandWithTemporaryHandleAsyncResult.End(asyncResult, out InstanceStore instanceStore, out InstanceView commandResult);            
+            InstanceCommandWithTemporaryHandleAsyncResult.End(asyncResult, out var instanceStore, out var commandResult);
             instanceStore.DefaultInstanceOwner = null;
         }
 
@@ -1541,8 +1402,8 @@ using System.Activities.DynamicUpdate;
             }
             if (definitionIdentity == null && identityFilter != WorkflowIdentityFilter.Any)
             {
-                // This API isn't useful for null identity, because WFApp only adds a default WorkflowHostType
-                // to instances with non-null identity.
+                // This API isn't useful for null identity, because WFApp only adds a default
+                // WorkflowHostType to instances with non-null identity.
                 throw FxTrace.Exception.Argument(nameof(definitionIdentity), SR.CannotCreateOwnerWithoutIdentity);
             }
             return new CreateWorkflowOwnerWithIdentityCommand
@@ -1556,10 +1417,7 @@ using System.Activities.DynamicUpdate;
             };
         }
 
-        public static WorkflowApplicationInstance GetRunnableInstance(InstanceStore instanceStore)
-        {
-            return GetRunnableInstance(instanceStore, ActivityDefaults.LoadTimeout);
-        }
+        public static WorkflowApplicationInstance GetRunnableInstance(InstanceStore instanceStore) => GetRunnableInstance(instanceStore, ActivityDefaults.LoadTimeout);
 
         public static WorkflowApplicationInstance GetRunnableInstance(InstanceStore instanceStore, TimeSpan timeout)
         {
@@ -1573,14 +1431,11 @@ using System.Activities.DynamicUpdate;
                 throw FxTrace.Exception.AsError(new InvalidOperationException(SR.GetRunnableRequiresOwner));
             }
 
-            PersistenceManager newManager = new PersistenceManager(instanceStore, null);
+            var newManager = new PersistenceManager(instanceStore, null);
             return LoadCore(timeout, true, newManager);
         }
 
-        public static IAsyncResult BeginGetRunnableInstance(InstanceStore instanceStore, AsyncCallback callback, object state)
-        {
-            return BeginGetRunnableInstance(instanceStore, ActivityDefaults.LoadTimeout, callback, state);
-        }
+        public static IAsyncResult BeginGetRunnableInstance(InstanceStore instanceStore, AsyncCallback callback, object state) => BeginGetRunnableInstance(instanceStore, ActivityDefaults.LoadTimeout, callback, state);
 
         public static IAsyncResult BeginGetRunnableInstance(InstanceStore instanceStore, TimeSpan timeout, AsyncCallback callback, object state)
         {
@@ -1594,19 +1449,13 @@ using System.Activities.DynamicUpdate;
                 throw FxTrace.Exception.AsError(new InvalidOperationException(SR.GetRunnableRequiresOwner));
             }
 
-            PersistenceManager newManager = new PersistenceManager(instanceStore, null);
+            var newManager = new PersistenceManager(instanceStore, null);
             return new LoadAsyncResult(null, newManager, true, timeout, callback, state);
-     }
-
-        public static WorkflowApplicationInstance EndGetRunnableInstance(IAsyncResult asyncResult)
-        {
-            return LoadAsyncResult.EndAndCreateInstance(asyncResult);
         }
 
-        public static WorkflowApplicationInstance GetInstance(Guid instanceId, InstanceStore instanceStore)
-        {
-            return GetInstance(instanceId, instanceStore, ActivityDefaults.LoadTimeout);
-        }
+        public static WorkflowApplicationInstance EndGetRunnableInstance(IAsyncResult asyncResult) => LoadAsyncResult.EndAndCreateInstance(asyncResult);
+
+        public static WorkflowApplicationInstance GetInstance(Guid instanceId, InstanceStore instanceStore) => GetInstance(instanceId, instanceStore, ActivityDefaults.LoadTimeout);
 
         public static WorkflowApplicationInstance GetInstance(Guid instanceId, InstanceStore instanceStore, TimeSpan timeout)
         {
@@ -1620,14 +1469,11 @@ using System.Activities.DynamicUpdate;
             }
             TimeoutHelper.ThrowIfNegativeArgument(timeout);
 
-            PersistenceManager newManager = new PersistenceManager(instanceStore, null, instanceId);
+            var newManager = new PersistenceManager(instanceStore, null, instanceId);
             return LoadCore(timeout, false, newManager);
         }
 
-        public static IAsyncResult BeginGetInstance(Guid instanceId, InstanceStore instanceStore, AsyncCallback callback, object state)
-        {
-            return BeginGetInstance(instanceId, instanceStore, ActivityDefaults.LoadTimeout, callback, state);
-        }
+        public static IAsyncResult BeginGetInstance(Guid instanceId, InstanceStore instanceStore, AsyncCallback callback, object state) => BeginGetInstance(instanceId, instanceStore, ActivityDefaults.LoadTimeout, callback, state);
 
         public static IAsyncResult BeginGetInstance(Guid instanceId, InstanceStore instanceStore, TimeSpan timeout, AsyncCallback callback, object state)
         {
@@ -1641,14 +1487,11 @@ using System.Activities.DynamicUpdate;
             }
             TimeoutHelper.ThrowIfNegativeArgument(timeout);
 
-            PersistenceManager newManager = new PersistenceManager(instanceStore, null, instanceId);
+            var newManager = new PersistenceManager(instanceStore, null, instanceId);
             return new LoadAsyncResult(null, newManager, false, timeout, callback, state);
         }
 
-        public static WorkflowApplicationInstance EndGetInstance(IAsyncResult asyncResult)
-        {
-            return LoadAsyncResult.EndAndCreateInstance(asyncResult);
-        }
+        public static WorkflowApplicationInstance EndGetInstance(IAsyncResult asyncResult) => LoadAsyncResult.EndAndCreateInstance(asyncResult);
 
 #if NET45
         public void Load(WorkflowApplicationInstance instance)
@@ -1718,17 +1561,15 @@ using System.Activities.DynamicUpdate;
             {
                 NotifyOperationComplete(operation);
             }
-        } 
-#else
-        public void Load(WorkflowApplicationInstance instance)
-        {
-            Load(instance, ActivityDefaults.LoadTimeout);
         }
+#else
+
+        public void Load(WorkflowApplicationInstance instance) => this.Load(instance, ActivityDefaults.LoadTimeout);
 
         public void Load(WorkflowApplicationInstance instance, TimeSpan timeout)
         {
-            ThrowIfAborted();
-            ThrowIfReadOnly(); // only allow a single Load() or Run()
+            this.ThrowIfAborted();
+            this.ThrowIfReadOnly(); // only allow a single Load() or Run()
             if (instance == null)
             {
                 throw FxTrace.Exception.ArgumentNull(nameof(instance));
@@ -1751,14 +1592,14 @@ using System.Activities.DynamicUpdate;
 
             instance.MarkAsLoaded();
 
-            InstanceOperation operation = new InstanceOperation { RequiresInitialized = false };
+            var operation = new InstanceOperation { RequiresInitialized = false };
 
             try
             {
-                TimeoutHelper timeoutHelper = new TimeoutHelper(timeout);
-                WaitForTurn(operation, timeoutHelper.RemainingTime());
+                var timeoutHelper = new TimeoutHelper(timeout);
+                this.WaitForTurn(operation, timeoutHelper.RemainingTime());
 
-                ValidateStateForLoad();
+                this.ValidateStateForLoad();
 
                 this.instanceId = instance.InstanceId;
                 this.instanceIdSet = true;
@@ -1767,25 +1608,23 @@ using System.Activities.DynamicUpdate;
                     this.instanceStore = instance.InstanceStore;
                 }
 
-                PersistenceManager newManager = (PersistenceManager)instance.PersistenceManager;
-                newManager.SetInstanceMetadata(GetInstanceMetadata());
-                SetPersistenceManager(newManager);
+                var newManager = (PersistenceManager)instance.PersistenceManager;
+                newManager.SetInstanceMetadata(this.GetInstanceMetadata());
+                this.SetPersistenceManager(newManager);
             }
             finally
             {
-                NotifyOperationComplete(operation);
+                this.NotifyOperationComplete(operation);
             }
         }
+
 #endif
 
-        public void LoadRunnableInstance()
-        {
-            LoadRunnableInstance(ActivityDefaults.LoadTimeout);
-        }
+        public void LoadRunnableInstance() => this.LoadRunnableInstance(ActivityDefaults.LoadTimeout);
 
         public void LoadRunnableInstance(TimeSpan timeout)
         {
-            ThrowIfReadOnly(); // only allow a single Load() or Run()
+            this.ThrowIfReadOnly(); // only allow a single Load() or Run()
 
             TimeoutHelper.ThrowIfNegativeArgument(timeout);
 
@@ -1806,17 +1645,17 @@ using System.Activities.DynamicUpdate;
                 throw FxTrace.Exception.AsError(new InvalidOperationException(SR.TryLoadRequiresOwner));
             }
 
-            InstanceOperation operation = new InstanceOperation { RequiresInitialized = false };
+            var operation = new InstanceOperation { RequiresInitialized = false };
 
             try
             {
-                TimeoutHelper timeoutHelper = new TimeoutHelper(timeout);
-                WaitForTurn(operation, timeoutHelper.RemainingTime());
+                var timeoutHelper = new TimeoutHelper(timeout);
+                this.WaitForTurn(operation, timeoutHelper.RemainingTime());
 
-                ValidateStateForLoad();
+                this.ValidateStateForLoad();
 
-                RegisterExtensionManager(this.extensions);
-                this.persistenceManager = new PersistenceManager(InstanceStore, GetInstanceMetadata());
+                this.RegisterExtensionManager(this.extensions);
+                this.persistenceManager = new PersistenceManager(this.InstanceStore, this.GetInstanceMetadata());
 
                 if (!this.persistenceManager.IsInitialized)
                 {
@@ -1824,26 +1663,23 @@ using System.Activities.DynamicUpdate;
                 }
 
 #if NET45
-                LoadCore(null, timeoutHelper, true); 
+                LoadCore(null, timeoutHelper, true);
 #else
-                LoadCore(timeoutHelper, true);
+                this.LoadCore(timeoutHelper, true);
 #endif
             }
             finally
             {
-                NotifyOperationComplete(operation);
+                this.NotifyOperationComplete(operation);
             }
         }
 
-        public void Load(Guid instanceId)
-        {
-            Load(instanceId, ActivityDefaults.LoadTimeout);
-        }
+        public void Load(Guid instanceId) => this.Load(instanceId, ActivityDefaults.LoadTimeout);
 
         public void Load(Guid instanceId, TimeSpan timeout)
         {
-            ThrowIfAborted();
-            ThrowIfReadOnly(); // only allow a single Load() or Run()
+            this.ThrowIfAborted();
+            this.ThrowIfReadOnly(); // only allow a single Load() or Run()
             if (instanceId == Guid.Empty)
             {
                 throw FxTrace.Exception.ArgumentNullOrEmpty(nameof(instanceId));
@@ -1864,34 +1700,35 @@ using System.Activities.DynamicUpdate;
                 throw FxTrace.Exception.AsError(new InvalidOperationException(SR.CannotUseInputsWithLoad));
             }
 
-            InstanceOperation operation = new InstanceOperation { RequiresInitialized = false };
+            var operation = new InstanceOperation { RequiresInitialized = false };
 
             try
             {
-                TimeoutHelper timeoutHelper = new TimeoutHelper(timeout);
-                WaitForTurn(operation, timeoutHelper.RemainingTime());
+                var timeoutHelper = new TimeoutHelper(timeout);
+                this.WaitForTurn(operation, timeoutHelper.RemainingTime());
 
-                ValidateStateForLoad();
+                this.ValidateStateForLoad();
 
                 this.instanceId = instanceId;
                 this.instanceIdSet = true;
 
-                CreatePersistenceManager();
+                this.CreatePersistenceManager();
 #if NET45
-                LoadCore(null, timeoutHelper, false); 
+                LoadCore(null, timeoutHelper, false);
 #else
-                LoadCore(timeoutHelper, false);
+                this.LoadCore(timeoutHelper, false);
 #endif
             }
             finally
             {
-                NotifyOperationComplete(operation);
+                this.NotifyOperationComplete(operation);
             }
         }
 
 #if NET45
-        void LoadCore(DynamicUpdateMap updateMap, TimeoutHelper timeoutHelper, bool loadAny, IDictionary<XName, InstanceValue> values = null) 
+        void LoadCore(DynamicUpdateMap updateMap, TimeoutHelper timeoutHelper, bool loadAny, IDictionary<XName, InstanceValue> values = null)
 #else
+
         private void LoadCore(TimeoutHelper timeoutHelper, bool loadAny, IDictionary<XName, InstanceValue> values = null)
 #endif
         {
@@ -1911,11 +1748,11 @@ using System.Activities.DynamicUpdate;
             PersistencePipeline pipeline = null;
             WorkflowPersistenceContext context = null;
             TransactionScope scope = null;
-            bool success = false;
+            var success = false;
             Exception abortReasonInnerException = null;
             try
             {
-                InitializePersistenceContext(IsLoadTransactionRequired(), timeoutHelper, out context, out scope);
+                InitializePersistenceContext(this.IsLoadTransactionRequired(), timeoutHelper, out context, out scope);
 
                 if (values == null)
                 {
@@ -1931,7 +1768,7 @@ using System.Activities.DynamicUpdate;
                         this.instanceIdSet = true;
                     }
                 }
-                pipeline = ProcessInstanceValues(values, out object deserializedRuntimeState);
+                pipeline = this.ProcessInstanceValues(values, out var deserializedRuntimeState);
 
                 if (pipeline != null)
                 {
@@ -1939,7 +1776,8 @@ using System.Activities.DynamicUpdate;
                     {
                         this.persistencePipelineInUse = pipeline;
 
-                        // Need to ensure that either we see the Aborted state, AbortInstance sees us, or both.
+                        // Need to ensure that either we see the Aborted state, AbortInstance sees
+                        // us, or both.
                         Thread.MemoryBarrier();
 
                         if (this.state == WorkflowApplicationState.Aborted)
@@ -1954,7 +1792,7 @@ using System.Activities.DynamicUpdate;
                         this.persistencePipelineInUse = null;
                     }
                 }
-                
+
                 try
                 {
 #if NET45
@@ -1962,7 +1800,7 @@ using System.Activities.DynamicUpdate;
                     if (updateMap != null)
                     {
                         UpdateInstanceMetadata();
-                    } 
+                    }
 #else
                     base.Initialize(deserializedRuntimeState);
 #endif
@@ -1972,7 +1810,7 @@ using System.Activities.DynamicUpdate;
                 {
                     abortReasonInnerException = e;
                     throw;
-                } 
+                }
 #endif
                 catch (VersionMismatchException e)
                 {
@@ -2004,7 +1842,7 @@ using System.Activities.DynamicUpdate;
             {
                 this.Abort(SR.AbortingDueToDynamicUpdateFailure, e);
             }
-            else  
+            else
 #endif
             if (e is VersionMismatchException)
             {
@@ -2018,7 +1856,7 @@ using System.Activities.DynamicUpdate;
 
         private static WorkflowApplicationInstance LoadCore(TimeSpan timeout, bool loadAny, PersistenceManager persistenceManager)
         {
-            TimeoutHelper timeoutHelper = new TimeoutHelper(timeout);
+            var timeoutHelper = new TimeoutHelper(timeout);
 
             if (!persistenceManager.IsInitialized)
             {
@@ -2032,13 +1870,13 @@ using System.Activities.DynamicUpdate;
             {
                 InitializePersistenceContext(false, timeoutHelper, out context, out scope);
 
-                IDictionary<XName, InstanceValue> values = LoadValues(persistenceManager, timeoutHelper, loadAny);
-                ActivityExecutor deserializedRuntimeState = ExtractRuntimeState(values, persistenceManager.InstanceId);
+                var values = LoadValues(persistenceManager, timeoutHelper, loadAny);
+                var deserializedRuntimeState = ExtractRuntimeState(values, persistenceManager.InstanceId);
                 result = new WorkflowApplicationInstance(persistenceManager, values, deserializedRuntimeState.WorkflowIdentity);
             }
             finally
             {
-                bool success = (result != null);
+                var success = (result != null);
                 CompletePersistenceContext(context, scope, success);
                 if (!success)
                 {
@@ -2094,22 +1932,19 @@ using System.Activities.DynamicUpdate;
 
         internal static void DiscardInstance(PersistenceManagerBase persistanceManager, TimeSpan timeout)
         {
-            PersistenceManager manager = (PersistenceManager)persistanceManager;
-            TimeoutHelper timeoutHelper = new TimeoutHelper(timeout);
+            var manager = (PersistenceManager)persistanceManager;
+            var timeoutHelper = new TimeoutHelper(timeout);
             UnlockInstance(manager, timeoutHelper);
         }
 
         internal static IAsyncResult BeginDiscardInstance(PersistenceManagerBase persistanceManager, TimeSpan timeout, AsyncCallback callback, object state)
         {
-            PersistenceManager manager = (PersistenceManager)persistanceManager;
-            TimeoutHelper timeoutHelper = new TimeoutHelper(timeout);
+            var manager = (PersistenceManager)persistanceManager;
+            var timeoutHelper = new TimeoutHelper(timeout);
             return new UnlockInstanceAsyncResult(manager, timeoutHelper, callback, state);
         }
 
-        internal static void EndDiscardInstance(IAsyncResult asyncResult)
-        {
-            UnlockInstanceAsyncResult.End(asyncResult);
-        }
+        internal static void EndDiscardInstance(IAsyncResult asyncResult) => UnlockInstanceAsyncResult.End(asyncResult);
 
         private static void UnlockInstance(PersistenceManager persistenceManager, TimeoutHelper timeoutHelper)
         {
@@ -2117,8 +1952,8 @@ using System.Activities.DynamicUpdate;
             {
                 if (persistenceManager.OwnerWasCreated)
                 {
-                    // if the owner was created by this WorkflowApplication, delete it.
-                    // This implicitly unlocks the instance.
+                    // if the owner was created by this WorkflowApplication, delete it. This
+                    // implicitly unlocks the instance.
                     persistenceManager.DeleteOwner(timeoutHelper.RemainingTime());
                 }
                 else
@@ -2137,17 +1972,14 @@ using System.Activities.DynamicUpdate;
         {
             object deserializedRuntimeState = ExtractRuntimeState(instance.Values, instance.InstanceId);
             return WorkflowInstance.GetActivitiesBlockingUpdate(deserializedRuntimeState, updateMap);
-        } 
+        }
 #endif
 
-        public IAsyncResult BeginLoadRunnableInstance(AsyncCallback callback, object state)
-        {
-            return BeginLoadRunnableInstance(ActivityDefaults.LoadTimeout, callback, state);
-        }
+        public IAsyncResult BeginLoadRunnableInstance(AsyncCallback callback, object state) => this.BeginLoadRunnableInstance(ActivityDefaults.LoadTimeout, callback, state);
 
         public IAsyncResult BeginLoadRunnableInstance(TimeSpan timeout, AsyncCallback callback, object state)
         {
-            ThrowIfReadOnly(); // only allow a single Load() or Run()
+            this.ThrowIfReadOnly(); // only allow a single Load() or Run()
 
             TimeoutHelper.ThrowIfNegativeArgument(timeout);
 
@@ -2168,7 +2000,7 @@ using System.Activities.DynamicUpdate;
                 throw FxTrace.Exception.AsError(new InvalidOperationException(SR.TryLoadRequiresOwner));
             }
 
-            PersistenceManager newManager = new PersistenceManager(InstanceStore, GetInstanceMetadata());
+            var newManager = new PersistenceManager(this.InstanceStore, this.GetInstanceMetadata());
             if (!newManager.IsInitialized)
             {
                 throw FxTrace.Exception.AsError(new InvalidOperationException(SR.TryLoadRequiresOwner));
@@ -2177,15 +2009,12 @@ using System.Activities.DynamicUpdate;
             return new LoadAsyncResult(this, newManager, true, timeout, callback, state);
         }
 
-        public IAsyncResult BeginLoad(Guid instanceId, AsyncCallback callback, object state)
-        {
-            return BeginLoad(instanceId, ActivityDefaults.LoadTimeout, callback, state);
-        }
+        public IAsyncResult BeginLoad(Guid instanceId, AsyncCallback callback, object state) => this.BeginLoad(instanceId, ActivityDefaults.LoadTimeout, callback, state);
 
         public IAsyncResult BeginLoad(Guid instanceId, TimeSpan timeout, AsyncCallback callback, object state)
         {
-            ThrowIfAborted();
-            ThrowIfReadOnly(); // only allow a single Load() or Run()
+            this.ThrowIfAborted();
+            this.ThrowIfReadOnly(); // only allow a single Load() or Run()
             if (instanceId == Guid.Empty)
             {
                 throw FxTrace.Exception.ArgumentNullOrEmpty(nameof(instanceId));
@@ -2206,7 +2035,7 @@ using System.Activities.DynamicUpdate;
                 throw FxTrace.Exception.AsError(new InvalidOperationException(SR.CannotUseInputsWithLoad));
             }
 
-            PersistenceManager newManager = new PersistenceManager(this.InstanceStore, GetInstanceMetadata(), instanceId);
+            var newManager = new PersistenceManager(this.InstanceStore, this.GetInstanceMetadata(), instanceId);
 
             return new LoadAsyncResult(this, newManager, false, timeout, callback, state);
         }
@@ -2259,18 +2088,16 @@ using System.Activities.DynamicUpdate;
             newManager.SetInstanceMetadata(GetInstanceMetadata());
 
             return new LoadAsyncResult(this, newManager, instance.Values, updateMap, timeout, callback, state);
-        } 
-#else
-        public IAsyncResult BeginLoad(WorkflowApplicationInstance instance, AsyncCallback callback, object state)
-        {
-            return BeginLoad(instance, ActivityDefaults.LoadTimeout, callback, state);
         }
+#else
+
+        public IAsyncResult BeginLoad(WorkflowApplicationInstance instance, AsyncCallback callback, object state) => this.BeginLoad(instance, ActivityDefaults.LoadTimeout, callback, state);
 
         public IAsyncResult BeginLoad(WorkflowApplicationInstance instance, TimeSpan timeout,
             AsyncCallback callback, object state)
         {
-            ThrowIfAborted();
-            ThrowIfReadOnly(); // only allow a single Load() or Run()
+            this.ThrowIfAborted();
+            this.ThrowIfReadOnly(); // only allow a single Load() or Run()
             if (instance == null)
             {
                 throw FxTrace.Exception.ArgumentNull(nameof(instance));
@@ -2292,26 +2119,21 @@ using System.Activities.DynamicUpdate;
             }
 
             instance.MarkAsLoaded();
-            PersistenceManager newManager = (PersistenceManager)instance.PersistenceManager;
-            newManager.SetInstanceMetadata(GetInstanceMetadata());
+            var newManager = (PersistenceManager)instance.PersistenceManager;
+            newManager.SetInstanceMetadata(this.GetInstanceMetadata());
 
-            return new LoadAsyncResult(this, newManager, instance.Values, timeout, callback, state); 
+            return new LoadAsyncResult(this, newManager, instance.Values, timeout, callback, state);
         }
+
 #endif
 
-        public void EndLoad(IAsyncResult result)
-        {
-            LoadAsyncResult.End(result);
-        }
+        public void EndLoad(IAsyncResult result) => LoadAsyncResult.End(result);
 
-        public void EndLoadRunnableInstance(IAsyncResult result)
-        {
-            LoadAsyncResult.End(result);
-        }
+        public void EndLoadRunnableInstance(IAsyncResult result) => LoadAsyncResult.End(result);
 
         protected override void OnNotifyUnhandledException(Exception exception, Activity exceptionSource, string exceptionSourceInstanceId)
         {
-            bool done = true;
+            var done = true;
 
             try
             {
@@ -2338,27 +2160,21 @@ using System.Activities.DynamicUpdate;
 
                 if (abortException != null)
                 {
-                    AbortInstance(abortException, true);
+                    this.AbortInstance(abortException, true);
                 }
             }
             finally
             {
                 if (done)
                 {
-                    OnNotifyPaused();
+                    this.OnNotifyPaused();
                 }
             }
         }
 
-        private IAsyncResult BeginInternalPersist(PersistenceOperation operation, TimeSpan timeout, bool isInternalPersist, AsyncCallback callback, object state)
-        {
-            return new UnloadOrPersistAsyncResult(this, timeout, operation, true, isInternalPersist, callback, state);
-        }
+        private IAsyncResult BeginInternalPersist(PersistenceOperation operation, TimeSpan timeout, bool isInternalPersist, AsyncCallback callback, object state) => new UnloadOrPersistAsyncResult(this, timeout, operation, true, isInternalPersist, callback, state);
 
-        private void EndInternalPersist(IAsyncResult result)
-        {
-            UnloadOrPersistAsyncResult.End(result);
-        }
+        private void EndInternalPersist(IAsyncResult result) => UnloadOrPersistAsyncResult.End(result);
 
         private void TrackPersistence(PersistenceOperation operation)
         {
@@ -2381,7 +2197,7 @@ using System.Activities.DynamicUpdate;
 
         private void PersistCore(ref TimeoutHelper timeoutHelper, PersistenceOperation operation)
         {
-            if (HasPersistenceProvider)
+            if (this.HasPersistenceProvider)
             {
                 if (!this.persistenceManager.IsInitialized)
                 {
@@ -2394,12 +2210,12 @@ using System.Activities.DynamicUpdate;
 
                 // Do the tracking before preparing in case the tracking data is being pushed into
                 // an extension and persisted transactionally with the instance state.
-                TrackPersistence(operation);
+                this.TrackPersistence(operation);
 
                 this.Controller.FlushTrackingRecords(timeoutHelper.RemainingTime());
             }
 
-            bool success = false;
+            var success = false;
             WorkflowPersistenceContext context = null;
             TransactionScope scope = null;
 
@@ -2407,16 +2223,16 @@ using System.Activities.DynamicUpdate;
             {
                 IDictionary<XName, InstanceValue> data = null;
                 PersistencePipeline pipeline = null;
-                if (HasPersistenceModule)
+                if (this.HasPersistenceModule)
                 {
-                    IEnumerable<IPersistencePipelineModule> modules = base.GetExtensions<IPersistencePipelineModule>();
+                    var modules = base.GetExtensions<IPersistencePipelineModule>();
                     pipeline = new PersistencePipeline(modules, PersistenceManager.GenerateInitialData(this));
                     pipeline.Collect();
                     pipeline.Map();
                     data = pipeline.Values;
                 }
 
-                if (HasPersistenceProvider)
+                if (this.HasPersistenceProvider)
                 {
                     if (data == null)
                     {
@@ -2444,7 +2260,8 @@ using System.Activities.DynamicUpdate;
                     {
                         this.persistencePipelineInUse = pipeline;
 
-                        // Need to ensure that either we see the Aborted state, AbortInstance sees us, or both.
+                        // Need to ensure that either we see the Aborted state, AbortInstance sees
+                        // us, or both.
                         Thread.MemoryBarrier();
 
                         if (this.state == WorkflowApplicationState.Aborted)
@@ -2488,61 +2305,56 @@ using System.Activities.DynamicUpdate;
 
                     if (operation == PersistenceOperation.Complete || operation == PersistenceOperation.Unload)
                     {
-                        // We did a Delete or Unload, so if we have a persistence provider, tell it to delete the owner.
-                        if (HasPersistenceProvider && this.persistenceManager.OwnerWasCreated)
+                        // We did a Delete or Unload, so if we have a persistence provider, tell it
+                        // to delete the owner.
+                        if (this.HasPersistenceProvider && this.persistenceManager.OwnerWasCreated)
                         {
-                            // This will happen to be under the caller's transaction, if there is one.
-                            // TODO, 124600, suppress the transaction
+                            // This will happen to be under the caller's transaction, if there is
+                            // one. TODO, 124600, suppress the transaction
                             this.persistenceManager.DeleteOwner(timeoutHelper.RemainingTime());
                         }
 
-                        MarkUnloaded();
+                        this.MarkUnloaded();
                     }
                 }
             }
         }
 
         [Fx.Tag.InheritThrows(From = "Unload")]
-        public void Persist()
-        {
-            Persist(ActivityDefaults.SaveTimeout);
-        }
+        public void Persist() => this.Persist(ActivityDefaults.SaveTimeout);
 
         [Fx.Tag.InheritThrows(From = "Unload")]
         public void Persist(TimeSpan timeout)
         {
-            ThrowIfHandlerThread();
+            this.ThrowIfHandlerThread();
 
             TimeoutHelper.ThrowIfNegativeArgument(timeout);
 
-            TimeoutHelper timeoutHelper = new TimeoutHelper(timeout);
+            var timeoutHelper = new TimeoutHelper(timeout);
 
-            RequiresPersistenceOperation operation = new RequiresPersistenceOperation();
+            var operation = new RequiresPersistenceOperation();
 
             try
             {
-                WaitForTurn(operation, timeoutHelper.RemainingTime());
+                this.WaitForTurn(operation, timeoutHelper.RemainingTime());
 
-                ValidateStateForPersist();
+                this.ValidateStateForPersist();
 
-                PersistCore(ref timeoutHelper, PersistenceOperation.Save);
+                this.PersistCore(ref timeoutHelper, PersistenceOperation.Save);
             }
             finally
             {
-                NotifyOperationComplete(operation);
+                this.NotifyOperationComplete(operation);
             }
         }
 
         [Fx.Tag.InheritThrows(From = "Unload")]
-        public IAsyncResult BeginPersist(AsyncCallback callback, object state)
-        {
-            return BeginPersist(ActivityDefaults.SaveTimeout, callback, state);
-        }
+        public IAsyncResult BeginPersist(AsyncCallback callback, object state) => this.BeginPersist(ActivityDefaults.SaveTimeout, callback, state);
 
         [Fx.Tag.InheritThrows(From = "Unload")]
         public IAsyncResult BeginPersist(TimeSpan timeout, AsyncCallback callback, object state)
         {
-            ThrowIfHandlerThread();
+            this.ThrowIfHandlerThread();
 
             TimeoutHelper.ThrowIfNegativeArgument(timeout);
 
@@ -2550,68 +2362,44 @@ using System.Activities.DynamicUpdate;
         }
 
         [Fx.Tag.InheritThrows(From = "Unload")]
-        public void EndPersist(IAsyncResult result)
-        {
-            UnloadOrPersistAsyncResult.End(result);
-        }
+        public void EndPersist(IAsyncResult result) => UnloadOrPersistAsyncResult.End(result);
 
         // called from WorkflowApplicationIdleEventArgs
-        internal ReadOnlyCollection<BookmarkInfo> GetBookmarksForIdle()
-        {
-            return this.Controller.GetBookmarks();
-        }
+        internal ReadOnlyCollection<BookmarkInfo> GetBookmarksForIdle() => this.Controller.GetBookmarks();
 
-        public ReadOnlyCollection<BookmarkInfo> GetBookmarks()
-        {
-            return GetBookmarks(ActivityDefaults.ResumeBookmarkTimeout);
-        }
+        public ReadOnlyCollection<BookmarkInfo> GetBookmarks() => this.GetBookmarks(ActivityDefaults.ResumeBookmarkTimeout);
 
         public ReadOnlyCollection<BookmarkInfo> GetBookmarks(TimeSpan timeout)
         {
-            ThrowIfHandlerThread();
+            this.ThrowIfHandlerThread();
 
             TimeoutHelper.ThrowIfNegativeArgument(timeout);
 
-            InstanceOperation operation = new InstanceOperation();
+            var operation = new InstanceOperation();
 
             try
             {
-                WaitForTurn(operation, timeout);
+                this.WaitForTurn(operation, timeout);
 
-                ValidateStateForGetAllBookmarks();
+                this.ValidateStateForGetAllBookmarks();
 
                 return this.Controller.GetBookmarks();
             }
             finally
             {
-                NotifyOperationComplete(operation);
+                this.NotifyOperationComplete(operation);
             }
         }
 
-        protected internal override IAsyncResult OnBeginPersist(AsyncCallback callback, object state)
-        {
-            return this.BeginInternalPersist(PersistenceOperation.Save, ActivityDefaults.InternalSaveTimeout, true, callback, state);
-        }
+        protected internal override IAsyncResult OnBeginPersist(AsyncCallback callback, object state) => this.BeginInternalPersist(PersistenceOperation.Save, ActivityDefaults.InternalSaveTimeout, true, callback, state);
 
-        protected internal override void OnEndPersist(IAsyncResult result)
-        {
-            this.EndInternalPersist(result);
-        }
+        protected internal override void OnEndPersist(IAsyncResult result) => this.EndInternalPersist(result);
 
-        protected internal override IAsyncResult OnBeginAssociateKeys(ICollection<InstanceKey> keys, AsyncCallback callback, object state)
-        {
-            throw Fx.AssertAndThrow("WorkflowApplication is sealed with CanUseKeys as false, so WorkflowInstance should not call OnBeginAssociateKeys.");
-        }
+        protected internal override IAsyncResult OnBeginAssociateKeys(ICollection<InstanceKey> keys, AsyncCallback callback, object state) => throw Fx.AssertAndThrow("WorkflowApplication is sealed with CanUseKeys as false, so WorkflowInstance should not call OnBeginAssociateKeys.");
 
-        protected internal override void OnEndAssociateKeys(IAsyncResult result)
-        {
-            throw Fx.AssertAndThrow("WorkflowApplication is sealed with CanUseKeys as false, so WorkflowInstance should not call OnEndAssociateKeys.");
-        }
+        protected internal override void OnEndAssociateKeys(IAsyncResult result) => throw Fx.AssertAndThrow("WorkflowApplication is sealed with CanUseKeys as false, so WorkflowInstance should not call OnEndAssociateKeys.");
 
-        protected internal override void OnDisassociateKeys(ICollection<InstanceKey> keys)
-        {
-            throw Fx.AssertAndThrow("WorkflowApplication is sealed with CanUseKeys as false, so WorkflowInstance should not call OnDisassociateKeys.");
-        }
+        protected internal override void OnDisassociateKeys(ICollection<InstanceKey> keys) => throw Fx.AssertAndThrow("WorkflowApplication is sealed with CanUseKeys as false, so WorkflowInstance should not call OnDisassociateKeys.");
 
         private bool AreBookmarksInvalid(out BookmarkResumptionResult result)
         {
@@ -2638,14 +2426,11 @@ using System.Activities.DynamicUpdate;
                 throw FxTrace.Exception.ArgumentNullOrEmpty(nameof(bookmarkName));
             }
 
-            return ResumeBookmark(new Bookmark(bookmarkName), value);
+            return this.ResumeBookmark(new Bookmark(bookmarkName), value);
         }
 
         [Fx.Tag.InheritThrows(From = "ResumeBookmark")]
-        public BookmarkResumptionResult ResumeBookmark(Bookmark bookmark, object value)
-        {
-            return ResumeBookmark(bookmark, value, ActivityDefaults.ResumeBookmarkTimeout);
-        }
+        public BookmarkResumptionResult ResumeBookmark(Bookmark bookmark, object value) => this.ResumeBookmark(bookmark, value, ActivityDefaults.ResumeBookmarkTimeout);
 
         [Fx.Tag.InheritThrows(From = "ResumeBookmark")]
         public BookmarkResumptionResult ResumeBookmark(string bookmarkName, object value, TimeSpan timeout)
@@ -2655,32 +2440,31 @@ using System.Activities.DynamicUpdate;
                 throw FxTrace.Exception.ArgumentNullOrEmpty(nameof(bookmarkName));
             }
 
-            return ResumeBookmark(new Bookmark(bookmarkName), value, timeout);
+            return this.ResumeBookmark(new Bookmark(bookmarkName), value, timeout);
         }
 
         [Fx.Tag.InheritThrows(From = "BeginResumeBookmark", FromDeclaringType = typeof(WorkflowInstance))]
         public BookmarkResumptionResult ResumeBookmark(Bookmark bookmark, object value, TimeSpan timeout)
         {
             TimeoutHelper.ThrowIfNegativeArgument(timeout);
-            ThrowIfHandlerThread();
-            TimeoutHelper timeoutHelper = new TimeoutHelper(timeout);
+            this.ThrowIfHandlerThread();
+            var timeoutHelper = new TimeoutHelper(timeout);
 
             InstanceOperation operation = new RequiresIdleOperation();
             BookmarkResumptionResult result;
-            bool pendedUnenqueued = false;
+            var pendedUnenqueued = false;
 
             try
             {
-                // This is a loose check, but worst case scenario we call
-                // an extra, unnecessary Run
+                // This is a loose check, but worst case scenario we call an extra, unnecessary Run
                 if (!this.hasCalledRun)
                 {
-                    // Increment the pending unenqueued count so we don't raise idle in the time between
-                    // when the Run completes and when we enqueue our InstanceOperation.
+                    // Increment the pending unenqueued count so we don't raise idle in the time
+                    // between when the Run completes and when we enqueue our InstanceOperation.
                     pendedUnenqueued = true;
-                    IncrementPendingUnenqueud();
+                    this.IncrementPendingUnenqueud();
 
-                    InternalRun(timeoutHelper.RemainingTime(), false);
+                    this.InternalRun(timeoutHelper.RemainingTime(), false);
                 }
 
                 do
@@ -2689,22 +2473,22 @@ using System.Activities.DynamicUpdate;
 
                     try
                     {
-                        // Need to enqueue and wait for turn as two separate steps, so that
-                        // OnQueued always gets called and we make sure to decrement the pendingUnenqueued counter
-                        WaitForTurn(operation, timeoutHelper.RemainingTime());
+                        // Need to enqueue and wait for turn as two separate steps, so that OnQueued
+                        // always gets called and we make sure to decrement the pendingUnenqueued counter
+                        this.WaitForTurn(operation, timeoutHelper.RemainingTime());
 
                         if (pendedUnenqueued)
                         {
-                            DecrementPendingUnenqueud();
+                            this.DecrementPendingUnenqueud();
                             pendedUnenqueued = false;
                         }
 
-                        if (AreBookmarksInvalid(out result))
+                        if (this.AreBookmarksInvalid(out result))
                         {
                             return result;
                         }
 
-                        result = ResumeBookmarkCore(bookmark, value);
+                        result = this.ResumeBookmarkCore(bookmark, value);
 
                         if (result == BookmarkResumptionResult.Success)
                         {
@@ -2717,7 +2501,7 @@ using System.Activities.DynamicUpdate;
                     }
                     finally
                     {
-                        NotifyOperationComplete(operation);
+                        this.NotifyOperationComplete(operation);
                     }
 
                     operation = nextOperation;
@@ -2729,7 +2513,7 @@ using System.Activities.DynamicUpdate;
             {
                 if (pendedUnenqueued)
                 {
-                    DecrementPendingUnenqueud();
+                    this.DecrementPendingUnenqueud();
                 }
             }
         }
@@ -2742,7 +2526,7 @@ using System.Activities.DynamicUpdate;
                 throw FxTrace.Exception.ArgumentNullOrEmpty(nameof(bookmarkName));
             }
 
-            return BeginResumeBookmark(new Bookmark(bookmarkName), value, callback, state);
+            return this.BeginResumeBookmark(new Bookmark(bookmarkName), value, callback, state);
         }
 
         [Fx.Tag.InheritThrows(From = "ResumeBookmark")]
@@ -2753,48 +2537,39 @@ using System.Activities.DynamicUpdate;
                 throw FxTrace.Exception.ArgumentNullOrEmpty(nameof(bookmarkName));
             }
 
-            return BeginResumeBookmark(new Bookmark(bookmarkName), value, timeout, callback, state);
+            return this.BeginResumeBookmark(new Bookmark(bookmarkName), value, timeout, callback, state);
         }
 
         [Fx.Tag.InheritThrows(From = "ResumeBookmark")]
-        public IAsyncResult BeginResumeBookmark(Bookmark bookmark, object value, AsyncCallback callback, object state)
-        {
-            return BeginResumeBookmark(bookmark, value, ActivityDefaults.ResumeBookmarkTimeout, callback, state);
-        }
+        public IAsyncResult BeginResumeBookmark(Bookmark bookmark, object value, AsyncCallback callback, object state) => this.BeginResumeBookmark(bookmark, value, ActivityDefaults.ResumeBookmarkTimeout, callback, state);
 
         [Fx.Tag.InheritThrows(From = "ResumeBookmark")]
         public IAsyncResult BeginResumeBookmark(Bookmark bookmark, object value, TimeSpan timeout, AsyncCallback callback, object state)
         {
             TimeoutHelper.ThrowIfNegativeArgument(timeout);
-            ThrowIfHandlerThread();
+            this.ThrowIfHandlerThread();
 
             return new ResumeBookmarkAsyncResult(this, bookmark, value, timeout, callback, state);
         }
 
         [Fx.Tag.InheritThrows(From = "ResumeBookmark")]
-        public BookmarkResumptionResult EndResumeBookmark(IAsyncResult result)
-        {
-            return ResumeBookmarkAsyncResult.End(result);
-        }
+        public BookmarkResumptionResult EndResumeBookmark(IAsyncResult result) => ResumeBookmarkAsyncResult.End(result);
 
         protected internal override IAsyncResult OnBeginResumeBookmark(Bookmark bookmark, object value, TimeSpan timeout, AsyncCallback callback, object state)
         {
-            ThrowIfHandlerThread();
+            this.ThrowIfHandlerThread();
             return new ResumeBookmarkAsyncResult(this, bookmark, value, true, timeout, callback, state);
         }
 
-        protected internal override BookmarkResumptionResult OnEndResumeBookmark(IAsyncResult result)
-        {
-            return ResumeBookmarkAsyncResult.End(result);
-        }
+        protected internal override BookmarkResumptionResult OnEndResumeBookmark(IAsyncResult result) => ResumeBookmarkAsyncResult.End(result);
 
         private BookmarkResumptionResult ResumeBookmarkCore(Bookmark bookmark, object value)
         {
-            BookmarkResumptionResult result = this.Controller.ScheduleBookmarkResumption(bookmark, value);
+            var result = this.Controller.ScheduleBookmarkResumption(bookmark, value);
 
             if (result == BookmarkResumptionResult.Success)
             {
-                RunCore();
+                this.RunCore();
             }
 
             return result;
@@ -2812,7 +2587,7 @@ using System.Activities.DynamicUpdate;
 
             try
             {
-                Action<WorkflowApplicationIdleEventArgs> idleHandler = this.Idle;
+                var idleHandler = this.Idle;
 
                 if (idleHandler != null)
                 {
@@ -2838,7 +2613,7 @@ using System.Activities.DynamicUpdate;
 
             if (abortException != null)
             {
-                AbortInstance(abortException, true);
+                this.AbortInstance(abortException, true);
                 return false;
             }
 
@@ -2863,7 +2638,7 @@ using System.Activities.DynamicUpdate;
 
             try
             {
-                Action<WorkflowApplicationEventArgs> handler = this.Unloaded;
+                var handler = this.Unloaded;
 
                 if (handler != null)
                 {
@@ -2889,34 +2664,31 @@ using System.Activities.DynamicUpdate;
 
             if (abortException != null)
             {
-                AbortInstance(abortException, true);
+                this.AbortInstance(abortException, true);
             }
         }
 
         [Fx.Tag.Throws(typeof(WorkflowApplicationException), "The WorkflowApplication is in a state for which unloading is not valid.  The specific subclass denotes which state the instance is in.")]
         [Fx.Tag.Throws(typeof(InstancePersistenceException), "Something went wrong during persistence, but persistence can be retried.")]
         [Fx.Tag.Throws(typeof(TimeoutException), "The workflow could not be unloaded within the given timeout.")]
-        public void Unload()
-        {
-            Unload(ActivityDefaults.SaveTimeout);
-        }
+        public void Unload() => this.Unload(ActivityDefaults.SaveTimeout);
 
         [Fx.Tag.InheritThrows(From = "Unload")]
         public void Unload(TimeSpan timeout)
         {
-            ThrowIfHandlerThread();
+            this.ThrowIfHandlerThread();
 
             TimeoutHelper.ThrowIfNegativeArgument(timeout);
 
-            TimeoutHelper timeoutHelper = new TimeoutHelper(timeout);
+            var timeoutHelper = new TimeoutHelper(timeout);
 
-            RequiresPersistenceOperation operation = new RequiresPersistenceOperation();
+            var operation = new RequiresPersistenceOperation();
 
             try
             {
-                WaitForTurn(operation, timeoutHelper.RemainingTime());
+                this.WaitForTurn(operation, timeoutHelper.RemainingTime());
 
-                ValidateStateForUnload();
+                this.ValidateStateForUnload();
                 if (this.state != WorkflowApplicationState.Unloaded) // Unload on unload is a no-op
                 {
                     PersistenceOperation persistenceOperation;
@@ -2930,25 +2702,22 @@ using System.Activities.DynamicUpdate;
                         persistenceOperation = PersistenceOperation.Unload;
                     }
 
-                    PersistCore(ref timeoutHelper, persistenceOperation);
+                    this.PersistCore(ref timeoutHelper, persistenceOperation);
                 }
             }
             finally
             {
-                NotifyOperationComplete(operation);
+                this.NotifyOperationComplete(operation);
             }
         }
 
         [Fx.Tag.InheritThrows(From = "Unload")]
-        public IAsyncResult BeginUnload(AsyncCallback callback, object state)
-        {
-            return BeginUnload(ActivityDefaults.SaveTimeout, callback, state);
-        }
+        public IAsyncResult BeginUnload(AsyncCallback callback, object state) => this.BeginUnload(ActivityDefaults.SaveTimeout, callback, state);
 
         [Fx.Tag.InheritThrows(From = "Unload")]
         public IAsyncResult BeginUnload(TimeSpan timeout, AsyncCallback callback, object state)
         {
-            ThrowIfHandlerThread();
+            this.ThrowIfHandlerThread();
 
             TimeoutHelper.ThrowIfNegativeArgument(timeout);
 
@@ -2956,10 +2725,7 @@ using System.Activities.DynamicUpdate;
         }
 
         [Fx.Tag.InheritThrows(From = "Unload")]
-        public void EndUnload(IAsyncResult result)
-        {
-            UnloadOrPersistAsyncResult.End(result);
-        }
+        public void EndUnload(IAsyncResult result) => UnloadOrPersistAsyncResult.End(result);
 
         private IDictionary<XName, InstanceValue> GetInstanceMetadata()
         {
@@ -2979,14 +2745,12 @@ using System.Activities.DynamicUpdate;
             return this.instanceMetadata;
         }
 
-        private void UpdateInstanceMetadata()
-        {
+        private void UpdateInstanceMetadata() =>
             // Update the metadata to reflect the new identity after a Dynamic Update
             this.persistenceManager.SetMutablemetadata(new Dictionary<XName, InstanceValue>
             {
                 { Workflow45Namespace.DefinitionIdentity, new InstanceValue(this.DefinitionIdentity, InstanceValueOptions.Optional) }
             });
-        }
 
         private void ThrowIfMulticast(Delegate value)
         {
@@ -3008,7 +2772,7 @@ using System.Activities.DynamicUpdate;
         {
             if (this.hasRaisedCompleted)
             {
-                this.Controller.GetCompletionState(out Exception completionException);
+                this.Controller.GetCompletionState(out var completionException);
                 if (completionException != null)
                 {
                     throw FxTrace.Exception.AsError(new WorkflowApplicationTerminatedException(SR.WorkflowApplicationTerminated(this.Id), this.Id, completionException));
@@ -3030,7 +2794,7 @@ using System.Activities.DynamicUpdate;
 
         private void ThrowIfNoInstanceStore()
         {
-            if (!HasPersistenceProvider)
+            if (!this.HasPersistenceProvider)
             {
                 throw FxTrace.Exception.AsError(new InvalidOperationException(SR.InstanceStoreRequiredToPersist));
             }
@@ -3047,34 +2811,27 @@ using System.Activities.DynamicUpdate;
         private void ValidateStateForRun()
         {
             // WorkflowInstanceException validations
-            ThrowIfAborted();
-            ThrowIfTerminatedOrCompleted();
-            ThrowIfUnloaded();
+            this.ThrowIfAborted();
+            this.ThrowIfTerminatedOrCompleted();
+            this.ThrowIfUnloaded();
         }
 
         private void ValidateStateForGetAllBookmarks()
         {
             // WorkflowInstanceException validations
-            ThrowIfAborted();
-            ThrowIfTerminatedOrCompleted();
-            ThrowIfUnloaded();
+            this.ThrowIfAborted();
+            this.ThrowIfTerminatedOrCompleted();
+            this.ThrowIfUnloaded();
         }
 
-        private void ValidateStateForCancel()
-        {
+        private void ValidateStateForCancel() =>
             // WorkflowInstanceException validations
-            ThrowIfAborted();
-
-            // We only validate that we aren't aborted and no-op otherwise.
-            // This is because the scenario for calling cancel is for it to
-            // be a best attempt from an unknown thread.  The less it throws
-            // the easier it is to author a host.
-        }
+            this.ThrowIfAborted();// We only validate that we aren't aborted and no-op otherwise. This is because the// scenario for calling cancel is for it to be a best attempt from an unknown thread.// The less it throws the easier it is to author a host.
 
         private void ValidateStateForLoad()
         {
-            ThrowIfAborted();
-            ThrowIfReadOnly(); // only allow a single Load() or Run()
+            this.ThrowIfAborted();
+            this.ThrowIfReadOnly(); // only allow a single Load() or Run()
             if (this.instanceIdSet)
             {
                 throw FxTrace.Exception.AsError(new InvalidOperationException(SR.WorkflowApplicationAlreadyHasId));
@@ -3084,32 +2841,32 @@ using System.Activities.DynamicUpdate;
         private void ValidateStateForPersist()
         {
             // WorkflowInstanceException validations
-            ThrowIfAborted();
-            ThrowIfTerminatedOrCompleted();
-            ThrowIfUnloaded();
+            this.ThrowIfAborted();
+            this.ThrowIfTerminatedOrCompleted();
+            this.ThrowIfUnloaded();
 
             // Other validations
-            ThrowIfNoInstanceStore();
+            this.ThrowIfNoInstanceStore();
         }
 
         private void ValidateStateForUnload()
         {
             // WorkflowInstanceException validations
-            ThrowIfAborted();
+            this.ThrowIfAborted();
 
             // Other validations
             if (this.Controller.State != WorkflowInstanceState.Complete)
             {
-                ThrowIfNoInstanceStore();
+                this.ThrowIfNoInstanceStore();
             }
         }
 
         private void ValidateStateForTerminate()
         {
             // WorkflowInstanceException validations
-            ThrowIfAborted();
-            ThrowIfTerminatedOrCompleted();
-            ThrowIfUnloaded();
+            this.ThrowIfAborted();
+            this.ThrowIfTerminatedOrCompleted();
+            this.ThrowIfUnloaded();
         }
 
         private enum PersistenceOperation : byte
@@ -3147,15 +2904,9 @@ using System.Activities.DynamicUpdate;
                 }
             }
 
-            public override void Post(SendOrPostCallback d, object state)
-            {
-                d(state);
-            }
+            public override void Post(SendOrPostCallback d, object state) => d(state);
 
-            public override void Send(SendOrPostCallback d, object state)
-            {
-                d(state);
-            }
+            public override void Send(SendOrPostCallback d, object state) => d(state);
         }
 
         private class InvokeAsyncResult : AsyncResult
@@ -3178,7 +2929,7 @@ using System.Activities.DynamicUpdate;
 
                 if (this.completionWaiter.WaitAsync(WaitCompleteCallback, this, timeout))
                 {
-                    bool completeSelf = OnWorkflowCompletion();
+                    var completeSelf = this.OnWorkflowCompletion();
 
                     if (completeSelf)
                     {
@@ -3188,7 +2939,7 @@ using System.Activities.DynamicUpdate;
                         }
                         else
                         {
-                            Complete(true);
+                            this.Complete(true);
                         }
                     }
                 }
@@ -3209,18 +2960,15 @@ using System.Activities.DynamicUpdate;
 
             public static IDictionary<string, object> End(IAsyncResult result)
             {
-                InvokeAsyncResult thisPtr = AsyncResult.End<InvokeAsyncResult>(result);
+                var thisPtr = AsyncResult.End<InvokeAsyncResult>(result);
                 return thisPtr.outputs;
             }
 
-            private void OnInvokeComplete()
-            {
-                this.completionWaiter.Set();
-            }
+            private void OnInvokeComplete() => this.completionWaiter.Set();
 
             private static void OnWaitComplete(object state, TimeoutException asyncException)
             {
-                InvokeAsyncResult thisPtr = (InvokeAsyncResult)state;
+                var thisPtr = (InvokeAsyncResult)state;
 
                 if (asyncException != null)
                 {
@@ -3229,7 +2977,7 @@ using System.Activities.DynamicUpdate;
                     return;
                 }
 
-                bool completeSelf = true;
+                var completeSelf = true;
 
                 try
                 {
@@ -3266,7 +3014,6 @@ using System.Activities.DynamicUpdate;
 
                 return true;
             }
-
         }
 
         private class ResumeBookmarkAsyncResult : AsyncResult
@@ -3297,21 +3044,21 @@ using System.Activities.DynamicUpdate;
                 this.isFromExtension = isFromExtension;
                 this.timeoutHelper = new TimeoutHelper(timeout);
 
-                bool completeSelf = false;
-                bool success = false;
+                var completeSelf = false;
+                var success = false;
 
-                this.OnCompleting = new Action<AsyncResult, Exception>(Finally);
+                this.OnCompleting = new Action<AsyncResult, Exception>(this.Finally);
 
                 try
                 {
                     if (!this.instance.hasCalledRun && !this.isFromExtension)
                     {
-                        // Increment the pending unenqueued count so we don't raise idle in the time between
-                        // when the Run completes and when we enqueue our InstanceOperation.
+                        // Increment the pending unenqueued count so we don't raise idle in the time
+                        // between when the Run completes and when we enqueue our InstanceOperation.
                         this.pendedUnenqueued = true;
                         this.instance.IncrementPendingUnenqueud();
 
-                        IAsyncResult result = this.instance.BeginInternalRun(this.timeoutHelper.RemainingTime(), false, PrepareAsyncCompletion(resumedCallback), this);
+                        var result = this.instance.BeginInternalRun(this.timeoutHelper.RemainingTime(), false, this.PrepareAsyncCompletion(resumedCallback), this);
                         if (result.CompletedSynchronously)
                         {
                             completeSelf = OnResumed(result);
@@ -3319,29 +3066,30 @@ using System.Activities.DynamicUpdate;
                     }
                     else
                     {
-                        completeSelf = StartResumptionLoop();
+                        completeSelf = this.StartResumptionLoop();
                     }
 
                     success = true;
                 }
                 finally
                 {
-                    // We only want to call this if we are throwing.  Otherwise OnCompleting will take care of it.
+                    // We only want to call this if we are throwing. Otherwise OnCompleting will
+                    // take care of it.
                     if (!success)
                     {
-                        Finally(null, null);
+                        this.Finally(null, null);
                     }
                 }
 
                 if (completeSelf)
                 {
-                    Complete(true);
+                    this.Complete(true);
                 }
             }
 
             public static BookmarkResumptionResult End(IAsyncResult result)
             {
-                ResumeBookmarkAsyncResult thisPtr = AsyncResult.End<ResumeBookmarkAsyncResult>(result);
+                var thisPtr = AsyncResult.End<ResumeBookmarkAsyncResult>(result);
 
                 return thisPtr.resumptionResult;
             }
@@ -3357,20 +3105,20 @@ using System.Activities.DynamicUpdate;
 
             private void NotifyOperationComplete()
             {
-                InstanceOperation lastOperation = this.currentOperation;
+                var lastOperation = this.currentOperation;
                 this.currentOperation = null;
                 this.instance.NotifyOperationComplete(lastOperation);
             }
 
             private void Finally(AsyncResult result, Exception completionException)
             {
-                ClearPendedUnenqueued();
-                NotifyOperationComplete();
+                this.ClearPendedUnenqueued();
+                this.NotifyOperationComplete();
             }
 
             private static bool OnResumed(IAsyncResult result)
             {
-                ResumeBookmarkAsyncResult thisPtr = (ResumeBookmarkAsyncResult)result.AsyncState;
+                var thisPtr = (ResumeBookmarkAsyncResult)result.AsyncState;
                 thisPtr.instance.EndRun(result);
                 return thisPtr.StartResumptionLoop();
             }
@@ -3378,13 +3126,13 @@ using System.Activities.DynamicUpdate;
             private bool StartResumptionLoop()
             {
                 this.currentOperation = new RequiresIdleOperation(this.isFromExtension);
-                return WaitOnCurrentOperation();
+                return this.WaitOnCurrentOperation();
             }
 
             private bool WaitOnCurrentOperation()
             {
-                bool stillSync = true;
-                bool tryOneMore = true;
+                var stillSync = true;
+                var tryOneMore = true;
 
                 while (tryOneMore)
                 {
@@ -3394,15 +3142,15 @@ using System.Activities.DynamicUpdate;
 
                     if (this.instance.WaitForTurnAsync(this.currentOperation, this.timeoutHelper.RemainingTime(), waitCompleteCallback, this))
                     {
-                        ClearPendedUnenqueued();
+                        this.ClearPendedUnenqueued();
 
-                        if (CheckIfBookmarksAreInvalid())
+                        if (this.CheckIfBookmarksAreInvalid())
                         {
                             stillSync = true;
                         }
                         else
                         {
-                            stillSync = ProcessResumption();
+                            stillSync = this.ProcessResumption();
 
                             tryOneMore = this.resumptionResult == BookmarkResumptionResult.NotReady;
                         }
@@ -3418,7 +3166,7 @@ using System.Activities.DynamicUpdate;
 
             private static void OnWaitComplete(object state, TimeoutException asyncException)
             {
-                ResumeBookmarkAsyncResult thisPtr = (ResumeBookmarkAsyncResult)state;
+                var thisPtr = (ResumeBookmarkAsyncResult)state;
 
                 if (asyncException != null)
                 {
@@ -3427,7 +3175,7 @@ using System.Activities.DynamicUpdate;
                 }
 
                 Exception completionException = null;
-                bool completeSelf = false;
+                var completeSelf = false;
 
                 try
                 {
@@ -3476,7 +3224,7 @@ using System.Activities.DynamicUpdate;
 
             private bool ProcessResumption()
             {
-                bool stillSync = true;
+                var stillSync = true;
 
                 this.resumptionResult = this.instance.ResumeBookmarkCore(this.bookmark, this.value);
 
@@ -3484,7 +3232,7 @@ using System.Activities.DynamicUpdate;
                 {
                     if (this.instance.Controller.HasPendingTrackingRecords)
                     {
-                        IAsyncResult result = this.instance.Controller.BeginFlushTrackingRecords(this.timeoutHelper.RemainingTime(), PrepareAsyncCompletion(trackingCompleteCallback), this);
+                        var result = this.instance.Controller.BeginFlushTrackingRecords(this.timeoutHelper.RemainingTime(), this.PrepareAsyncCompletion(trackingCompleteCallback), this);
 
                         if (result.CompletedSynchronously)
                         {
@@ -3498,7 +3246,7 @@ using System.Activities.DynamicUpdate;
                 }
                 else if (this.resumptionResult == BookmarkResumptionResult.NotReady)
                 {
-                    NotifyOperationComplete();
+                    this.NotifyOperationComplete();
                     this.currentOperation = new DeferredRequiresIdleOperation();
                 }
 
@@ -3507,7 +3255,7 @@ using System.Activities.DynamicUpdate;
 
             private static bool OnTrackingComplete(IAsyncResult result)
             {
-                ResumeBookmarkAsyncResult thisPtr = (ResumeBookmarkAsyncResult)result.AsyncState;
+                var thisPtr = (ResumeBookmarkAsyncResult)result.AsyncState;
 
                 thisPtr.instance.Controller.EndFlushTrackingRecords(result);
 
@@ -3550,14 +3298,15 @@ using System.Activities.DynamicUpdate;
                 this.OnCompleting = UnloadOrPersistAsyncResult.completeCallback;
 
                 bool completeSelf;
-                bool success = false;
+                var success = false;
 
-                // Save off the current transaction in case we have an async operation before we end up creating
-                // the WorkflowPersistenceContext and create it on another thread. Do a blocking dependent clone that
-                // we will complete when we are completed.
+                // Save off the current transaction in case we have an async operation before we end
+                // up creating the WorkflowPersistenceContext and create it on another thread. Do a
+                // blocking dependent clone that we will complete when we are completed.
                 //
-                // This will throw TransactionAbortedException by design, if the transaction is already rolled back.
-                Transaction currentTransaction = Transaction.Current;
+                // This will throw TransactionAbortedException by design, if the transaction is
+                // already rolled back.
+                var currentTransaction = Transaction.Current;
                 if (currentTransaction != null)
                 {
                     this.dependentTransaction = currentTransaction.DependentClone(DependentCloneOption.BlockCommitUntilComplete);
@@ -3569,11 +3318,10 @@ using System.Activities.DynamicUpdate;
                     {
                         Fx.Assert(this.instance.Controller.IsPersistable, "The runtime won't schedule this work item unless we've passed the guard");
 
-                        // We're an internal persistence on the workflow thread which means
-                        // that we are passed the guard already, we have the lock, and we know
-                        // we aren't detached.
+                        // We're an internal persistence on the workflow thread which means that we
+                        // are passed the guard already, we have the lock, and we know we aren't detached.
 
-                        completeSelf = InitializeProvider();
+                        completeSelf = this.InitializeProvider();
                         success = true;
                     }
                     else
@@ -3583,7 +3331,7 @@ using System.Activities.DynamicUpdate;
                         {
                             if (this.instance.WaitForTurnAsync(this.instanceOperation, this.timeoutHelper.RemainingTime(), waitCompleteCallback, this))
                             {
-                                completeSelf = ValidateState();
+                                completeSelf = this.ValidateState();
                             }
                             else
                             {
@@ -3595,7 +3343,7 @@ using System.Activities.DynamicUpdate;
                         {
                             if (!success)
                             {
-                                NotifyOperationComplete();
+                                this.NotifyOperationComplete();
                             }
                         }
                     }
@@ -3614,13 +3362,13 @@ using System.Activities.DynamicUpdate;
 
                 if (completeSelf)
                 {
-                    Complete(true);
+                    this.Complete(true);
                 }
             }
 
             private bool ValidateState()
             {
-                bool alreadyUnloaded = false;
+                var alreadyUnloaded = false;
                 if (this.operation == PersistenceOperation.Unload)
                 {
                     this.instance.ValidateStateForUnload();
@@ -3637,13 +3385,13 @@ using System.Activities.DynamicUpdate;
                 }
                 else
                 {
-                    return InitializeProvider();
+                    return this.InitializeProvider();
                 }
             }
 
             private static void OnWaitComplete(object state, TimeoutException asyncException)
             {
-                UnloadOrPersistAsyncResult thisPtr = (UnloadOrPersistAsyncResult)state;
+                var thisPtr = (UnloadOrPersistAsyncResult)state;
                 if (asyncException != null)
                 {
                     thisPtr.Complete(false, asyncException);
@@ -3676,7 +3424,8 @@ using System.Activities.DynamicUpdate;
 
             private bool InitializeProvider()
             {
-                // We finally have the lock and are passed the guard.  Let's update our operation if this is an Unload.
+                // We finally have the lock and are passed the guard. Let's update our operation if
+                // this is an Unload.
                 if (this.operation == PersistenceOperation.Unload && this.instance.Controller.State == WorkflowInstanceState.Complete)
                 {
                     this.operation = PersistenceOperation.Complete;
@@ -3684,19 +3433,19 @@ using System.Activities.DynamicUpdate;
 
                 if (this.instance.HasPersistenceProvider && !this.instance.persistenceManager.IsInitialized)
                 {
-                    IAsyncResult result = this.instance.persistenceManager.BeginInitialize(this.instance.DefinitionIdentity, this.timeoutHelper.RemainingTime(),
-                        PrepareAsyncCompletion(UnloadOrPersistAsyncResult.initializedCallback), this);
-                    return SyncContinue(result);
+                    var result = this.instance.persistenceManager.BeginInitialize(this.instance.DefinitionIdentity, this.timeoutHelper.RemainingTime(),
+                        this.PrepareAsyncCompletion(UnloadOrPersistAsyncResult.initializedCallback), this);
+                    return this.SyncContinue(result);
                 }
                 else
                 {
-                    return EnsureProviderReadyness();
+                    return this.EnsureProviderReadyness();
                 }
             }
 
             private static bool OnProviderInitialized(IAsyncResult result)
             {
-                UnloadOrPersistAsyncResult thisPtr = (UnloadOrPersistAsyncResult)result.AsyncState;
+                var thisPtr = (UnloadOrPersistAsyncResult)result.AsyncState;
                 thisPtr.instance.persistenceManager.EndInitialize(result);
                 return thisPtr.EnsureProviderReadyness();
             }
@@ -3705,31 +3454,28 @@ using System.Activities.DynamicUpdate;
             {
                 if (this.instance.HasPersistenceProvider && !this.instance.persistenceManager.IsLocked && this.dependentTransaction != null)
                 {
-                    IAsyncResult result = this.instance.persistenceManager.BeginEnsureReadyness(this.timeoutHelper.RemainingTime(),
-                        PrepareAsyncCompletion(UnloadOrPersistAsyncResult.readynessEnsuredCallback), this);
-                    return SyncContinue(result);
+                    var result = this.instance.persistenceManager.BeginEnsureReadyness(this.timeoutHelper.RemainingTime(),
+                        this.PrepareAsyncCompletion(UnloadOrPersistAsyncResult.readynessEnsuredCallback), this);
+                    return this.SyncContinue(result);
                 }
                 else
                 {
-                    return Track();
+                    return this.Track();
                 }
             }
 
             private static bool OnProviderReadynessEnsured(IAsyncResult result)
             {
-                UnloadOrPersistAsyncResult thisPtr = (UnloadOrPersistAsyncResult)result.AsyncState;
+                var thisPtr = (UnloadOrPersistAsyncResult)result.AsyncState;
                 thisPtr.instance.persistenceManager.EndEnsureReadyness(result);
                 return thisPtr.Track();
             }
 
-            public static void End(IAsyncResult result)
-            {
-                AsyncResult.End<UnloadOrPersistAsyncResult>(result);
-            }
+            public static void End(IAsyncResult result) => AsyncResult.End<UnloadOrPersistAsyncResult>(result);
 
             private void NotifyOperationComplete()
             {
-                RequiresPersistenceOperation localInstanceOperation = this.instanceOperation;
+                var localInstanceOperation = this.instanceOperation;
                 this.instanceOperation = null;
                 this.instance.NotifyOperationComplete(localInstanceOperation);
             }
@@ -3741,8 +3487,8 @@ using System.Activities.DynamicUpdate;
 
                 if (this.instance.HasPersistenceProvider)
                 {
-                    // We only track the persistence operation if we actually
-                    // are persisting (and not just hitting PersistenceParticipants)
+                    // We only track the persistence operation if we actually are persisting (and
+                    // not just hitting PersistenceParticipants)
                     this.instance.TrackPersistence(this.operation);
                 }
 
@@ -3752,9 +3498,8 @@ using System.Activities.DynamicUpdate;
 
                     if (this.isInternalPersist)
                     {
-                        // If we're an internal persist we're using TimeSpan.MaxValue
-                        // for our persistence and we want to use a smaller timeout
-                        // for tracking
+                        // If we're an internal persist we're using TimeSpan.MaxValue for our
+                        // persistence and we want to use a smaller timeout for tracking
                         flushTrackingRecordsTimeout = ActivityDefaults.TrackingTimeout;
                     }
                     else
@@ -3762,28 +3507,28 @@ using System.Activities.DynamicUpdate;
                         flushTrackingRecordsTimeout = this.timeoutHelper.RemainingTime();
                     }
 
-                    IAsyncResult result = this.instance.Controller.BeginFlushTrackingRecords(flushTrackingRecordsTimeout, PrepareAsyncCompletion(trackingCompleteCallback), this);
-                    return SyncContinue(result);
+                    var result = this.instance.Controller.BeginFlushTrackingRecords(flushTrackingRecordsTimeout, this.PrepareAsyncCompletion(trackingCompleteCallback), this);
+                    return this.SyncContinue(result);
                 }
 
-                return CollectAndMap();
+                return this.CollectAndMap();
             }
 
             private static bool OnTrackingComplete(IAsyncResult result)
             {
-                UnloadOrPersistAsyncResult thisPtr = (UnloadOrPersistAsyncResult)result.AsyncState;
+                var thisPtr = (UnloadOrPersistAsyncResult)result.AsyncState;
                 thisPtr.instance.Controller.EndFlushTrackingRecords(result);
                 return thisPtr.CollectAndMap();
             }
 
             private bool CollectAndMap()
             {
-                bool success = false;
+                var success = false;
                 try
                 {
                     if (this.instance.HasPersistenceModule)
                     {
-                        IEnumerable<IPersistencePipelineModule> modules = this.instance.GetExtensions<IPersistencePipelineModule>();
+                        var modules = this.instance.GetExtensions<IPersistencePipelineModule>();
                         this.pipeline = new PersistencePipeline(modules, PersistenceManager.GenerateInitialData(this.instance));
                         this.pipeline.Collect();
                         this.pipeline.Map();
@@ -3801,11 +3546,11 @@ using System.Activities.DynamicUpdate;
 
                 if (this.instance.HasPersistenceProvider)
                 {
-                    return Persist();
+                    return this.Persist();
                 }
                 else
                 {
-                    return Save();
+                    return this.Save();
                 }
             }
 
@@ -3825,9 +3570,9 @@ using System.Activities.DynamicUpdate;
                             this.dependentTransaction, this.timeoutHelper.OriginalTimeout);
                     }
 
-                    using (PrepareTransactionalCall(this.context.PublicTransaction))
+                    using (this.PrepareTransactionalCall(this.context.PublicTransaction))
                     {
-                        result = this.instance.persistenceManager.BeginSave(this.data, this.operation, this.timeoutHelper.RemainingTime(), PrepareAsyncCompletion(persistedCallback), this);
+                        result = this.instance.persistenceManager.BeginSave(this.data, this.operation, this.timeoutHelper.RemainingTime(), this.PrepareAsyncCompletion(persistedCallback), this);
                     }
                 }
                 finally
@@ -3837,13 +3582,13 @@ using System.Activities.DynamicUpdate;
                         this.context.Abort();
                     }
                 }
-                return SyncContinue(result);
+                return this.SyncContinue(result);
             }
 
             private static bool OnPersisted(IAsyncResult result)
             {
-                UnloadOrPersistAsyncResult thisPtr = (UnloadOrPersistAsyncResult)result.AsyncState;
-                bool success = false;
+                var thisPtr = (UnloadOrPersistAsyncResult)result.AsyncState;
+                var success = false;
                 try
                 {
                     thisPtr.instance.persistenceManager.EndSave(result);
@@ -3879,9 +3624,9 @@ using System.Activities.DynamicUpdate;
                             throw FxTrace.Exception.AsError(new OperationCanceledException(SR.DefaultAbortReason));
                         }
 
-                        using (PrepareTransactionalCall(this.context.PublicTransaction))
+                        using (this.PrepareTransactionalCall(this.context.PublicTransaction))
                         {
-                            result = this.pipeline.BeginSave(this.timeoutHelper.RemainingTime(), PrepareAsyncCompletion(savedCallback), this);
+                            result = this.pipeline.BeginSave(this.timeoutHelper.RemainingTime(), this.PrepareAsyncCompletion(savedCallback), this);
                         }
                     }
                     finally
@@ -3895,19 +3640,19 @@ using System.Activities.DynamicUpdate;
                             }
                         }
                     }
-                    return SyncContinue(result);
+                    return this.SyncContinue(result);
                 }
                 else
                 {
-                    return CompleteContext();
+                    return this.CompleteContext();
                 }
             }
 
             private static bool OnSaved(IAsyncResult result)
             {
-                UnloadOrPersistAsyncResult thisPtr = (UnloadOrPersistAsyncResult)result.AsyncState;
+                var thisPtr = (UnloadOrPersistAsyncResult)result.AsyncState;
 
-                bool success = false;
+                var success = false;
                 try
                 {
                     thisPtr.pipeline.EndSave(result);
@@ -3927,7 +3672,7 @@ using System.Activities.DynamicUpdate;
 
             private bool CompleteContext()
             {
-                bool wentAsync = false;
+                var wentAsync = false;
                 IAsyncResult completeResult = null;
 
                 if (this.context != null)
@@ -3938,19 +3683,18 @@ using System.Activities.DynamicUpdate;
                 if (wentAsync)
                 {
                     Fx.Assert(completeResult != null, "We shouldn't have null here because we would have rethrown or gotten false for went async.");
-                    return SyncContinue(completeResult);
+                    return this.SyncContinue(completeResult);
                 }
                 else
                 {
-                    // We completed synchronously if we didn't get an async result out of
-                    // TryBeginComplete
-                    return DeleteOwner();
+                    // We completed synchronously if we didn't get an async result out of TryBeginComplete
+                    return this.DeleteOwner();
                 }
             }
 
             private static bool OnCompleteContext(IAsyncResult result)
             {
-                UnloadOrPersistAsyncResult thisPtr = (UnloadOrPersistAsyncResult)result.AsyncState;
+                var thisPtr = (UnloadOrPersistAsyncResult)result.AsyncState;
                 thisPtr.context.EndComplete(result);
 
                 return thisPtr.DeleteOwner();
@@ -3961,10 +3705,10 @@ using System.Activities.DynamicUpdate;
                 if (this.instance.HasPersistenceProvider && this.instance.persistenceManager.OwnerWasCreated &&
                     (this.operation == PersistenceOperation.Unload || this.operation == PersistenceOperation.Complete))
                 {
-                    // This call uses the ambient transaction directly if there was one, to mimic the sync case.
-                    // TODO, 124600, suppress the transaction always.
+                    // This call uses the ambient transaction directly if there was one, to mimic
+                    // the sync case. TODO, 124600, suppress the transaction always.
                     IAsyncResult deleteOwnerResult = null;
-                    using (PrepareTransactionalCall(this.dependentTransaction))
+                    using (this.PrepareTransactionalCall(this.dependentTransaction))
                     {
                         deleteOwnerResult = this.instance.persistenceManager.BeginDeleteOwner(this.timeoutHelper.RemainingTime(),
                             this.PrepareAsyncCompletion(UnloadOrPersistAsyncResult.deleteOwnerCompleteCallback), this);
@@ -3973,23 +3717,22 @@ using System.Activities.DynamicUpdate;
                 }
                 else
                 {
-                    return CloseInstance();
+                    return this.CloseInstance();
                 }
             }
 
             private static bool OnOwnerDeleted(IAsyncResult result)
             {
-                UnloadOrPersistAsyncResult thisPtr = (UnloadOrPersistAsyncResult)result.AsyncState;
+                var thisPtr = (UnloadOrPersistAsyncResult)result.AsyncState;
                 thisPtr.instance.persistenceManager.EndDeleteOwner(result);
                 return thisPtr.CloseInstance();
             }
 
             private bool CloseInstance()
             {
-                // NOTE: We need to make sure that any changes which occur
-                // here are appropriately ported to WorkflowApplication's
-                // CompletionHandler.OnStage1Complete method in the case
-                // where we don't call BeginPersist.
+                // NOTE: We need to make sure that any changes which occur here are appropriately
+                // ported to WorkflowApplication's CompletionHandler.OnStage1Complete method in the
+                // case where we don't call BeginPersist.
                 if (this.operation != PersistenceOperation.Save)
                 {
                     // Stop execution if we've given up the instance lock
@@ -4006,7 +3749,7 @@ using System.Activities.DynamicUpdate;
 
             private static void OnComplete(AsyncResult result, Exception exception)
             {
-                UnloadOrPersistAsyncResult thisPtr = (UnloadOrPersistAsyncResult)result;
+                var thisPtr = (UnloadOrPersistAsyncResult)result;
                 try
                 {
                     thisPtr.NotifyOperationComplete();
@@ -4029,26 +3772,17 @@ using System.Activities.DynamicUpdate;
             private TimeoutHelper timeoutHelper;
 
             protected SimpleOperationAsyncResult(WorkflowApplication instance, AsyncCallback callback, object state)
-                : base(callback, state)
-            {
-                this.instance = instance;
-            }
+                : base(callback, state) => this.instance = instance;
 
-            protected WorkflowApplication Instance
-            {
-                get
-                {
-                    return this.instance;
-                }
-            }
+            protected WorkflowApplication Instance => this.instance;
 
             protected void Run(TimeSpan timeout)
             {
                 this.timeoutHelper = new TimeoutHelper(timeout);
 
-                InstanceOperation operation = new InstanceOperation();
+                var operation = new InstanceOperation();
 
-                bool completeSelf = true;
+                var completeSelf = true;
 
                 try
                 {
@@ -4058,7 +3792,7 @@ using System.Activities.DynamicUpdate;
                     {
                         this.ValidateState();
 
-                        completeSelf = PerformOperationAndTrack();
+                        completeSelf = this.PerformOperationAndTrack();
                     }
                 }
                 finally
@@ -4071,19 +3805,19 @@ using System.Activities.DynamicUpdate;
 
                 if (completeSelf)
                 {
-                    Complete(true);
+                    this.Complete(true);
                 }
             }
 
             private bool PerformOperationAndTrack()
             {
-                PerformOperation();
+                this.PerformOperation();
 
-                bool completedSync = true;
+                var completedSync = true;
 
                 if (this.instance.Controller.HasPendingTrackingRecords)
                 {
-                    IAsyncResult trackingResult = this.instance.Controller.BeginFlushTrackingRecords(this.timeoutHelper.RemainingTime(), trackingCompleteCallback, this);
+                    var trackingResult = this.instance.Controller.BeginFlushTrackingRecords(this.timeoutHelper.RemainingTime(), trackingCompleteCallback, this);
 
                     if (trackingResult.CompletedSynchronously)
                     {
@@ -4100,7 +3834,7 @@ using System.Activities.DynamicUpdate;
 
             private static void OnWaitComplete(object state, TimeoutException asyncException)
             {
-                SimpleOperationAsyncResult thisPtr = (SimpleOperationAsyncResult)state;
+                var thisPtr = (SimpleOperationAsyncResult)state;
 
                 if (asyncException != null)
                 {
@@ -4109,7 +3843,7 @@ using System.Activities.DynamicUpdate;
                 else
                 {
                     Exception completionException = null;
-                    bool completeSelf = true;
+                    var completeSelf = true;
 
                     try
                     {
@@ -4148,7 +3882,7 @@ using System.Activities.DynamicUpdate;
                     return;
                 }
 
-                SimpleOperationAsyncResult thisPtr = (SimpleOperationAsyncResult)result.AsyncState;
+                var thisPtr = (SimpleOperationAsyncResult)result.AsyncState;
 
                 Exception completionException = null;
 
@@ -4174,6 +3908,7 @@ using System.Activities.DynamicUpdate;
             }
 
             protected abstract void ValidateState();
+
             protected abstract void PerformOperation();
         }
 
@@ -4182,32 +3917,20 @@ using System.Activities.DynamicUpdate;
             private readonly Exception reason;
 
             private TerminateAsyncResult(WorkflowApplication instance, Exception reason, AsyncCallback callback, object state)
-                : base(instance, callback, state)
-            {
-                this.reason = reason;
-            }
+                : base(instance, callback, state) => this.reason = reason;
 
             public static TerminateAsyncResult Create(WorkflowApplication instance, Exception reason, TimeSpan timeout, AsyncCallback callback, object state)
             {
-                TerminateAsyncResult result = new TerminateAsyncResult(instance, reason, callback, state);
+                var result = new TerminateAsyncResult(instance, reason, callback, state);
                 result.Run(timeout);
                 return result;
             }
 
-            public static void End(IAsyncResult result)
-            {
-                AsyncResult.End<TerminateAsyncResult>(result);
-            }
+            public static void End(IAsyncResult result) => AsyncResult.End<TerminateAsyncResult>(result);
 
-            protected override void ValidateState()
-            {
-                this.Instance.ValidateStateForTerminate();
-            }
+            protected override void ValidateState() => this.Instance.ValidateStateForTerminate();
 
-            protected override void PerformOperation()
-            {
-                this.Instance.TerminateCore(this.reason);
-            }
+            protected override void PerformOperation() => this.Instance.TerminateCore(this.reason);
         }
 
         private class CancelAsyncResult : SimpleOperationAsyncResult
@@ -4219,25 +3942,16 @@ using System.Activities.DynamicUpdate;
 
             public static CancelAsyncResult Create(WorkflowApplication instance, TimeSpan timeout, AsyncCallback callback, object state)
             {
-                CancelAsyncResult result = new CancelAsyncResult(instance, callback, state);
+                var result = new CancelAsyncResult(instance, callback, state);
                 result.Run(timeout);
                 return result;
             }
 
-            public static void End(IAsyncResult result)
-            {
-                AsyncResult.End<CancelAsyncResult>(result);
-            }
+            public static void End(IAsyncResult result) => AsyncResult.End<CancelAsyncResult>(result);
 
-            protected override void ValidateState()
-            {
-                this.Instance.ValidateStateForCancel();
-            }
+            protected override void ValidateState() => this.Instance.ValidateStateForCancel();
 
-            protected override void PerformOperation()
-            {
-                this.Instance.CancelCore();
-            }
+            protected override void PerformOperation() => this.Instance.CancelCore();
         }
 
         private class RunAsyncResult : SimpleOperationAsyncResult
@@ -4245,34 +3959,25 @@ using System.Activities.DynamicUpdate;
             private readonly bool isUserRun;
 
             private RunAsyncResult(WorkflowApplication instance, bool isUserRun, AsyncCallback callback, object state)
-                : base(instance, callback, state)
-            {
-                this.isUserRun = isUserRun;
-            }
+                : base(instance, callback, state) => this.isUserRun = isUserRun;
 
             public static RunAsyncResult Create(WorkflowApplication instance, bool isUserRun, TimeSpan timeout, AsyncCallback callback, object state)
             {
-                RunAsyncResult result = new RunAsyncResult(instance, isUserRun, callback, state);
+                var result = new RunAsyncResult(instance, isUserRun, callback, state);
                 result.Run(timeout);
                 return result;
             }
 
-            public static void End(IAsyncResult result)
-            {
-                AsyncResult.End<RunAsyncResult>(result);
-            }
+            public static void End(IAsyncResult result) => AsyncResult.End<RunAsyncResult>(result);
 
-            protected override void ValidateState()
-            {
-                this.Instance.ValidateStateForRun();
-            }
+            protected override void ValidateState() => this.Instance.ValidateStateForRun();
 
             protected override void PerformOperation()
             {
                 if (this.isUserRun)
                 {
-                    // We set this to true here so that idle will be raised
-                    // regardless of whether any work is performed.
+                    // We set this to true here so that idle will be raised regardless of whether
+                    // any work is performed.
                     this.Instance.hasExecutionOccurredSinceLastIdle = true;
                 }
 
@@ -4295,15 +4000,15 @@ using System.Activities.DynamicUpdate;
                 this.persistenceManager = persistenceManager;
                 this.timeoutHelper = timeoutHelper;
 
-                Transaction currentTransaction = Transaction.Current;
+                var currentTransaction = Transaction.Current;
                 if (currentTransaction != null)
                 {
                     this.dependentTransaction = currentTransaction.DependentClone(DependentCloneOption.BlockCommitUntilComplete);
                 }
 
-                OnCompleting = UnlockInstanceAsyncResult.completeCallback;
+                this.OnCompleting = UnlockInstanceAsyncResult.completeCallback;
 
-                bool success = false;
+                var success = false;
                 try
                 {
                     IAsyncResult result;
@@ -4311,8 +4016,8 @@ using System.Activities.DynamicUpdate;
                     {
                         if (this.persistenceManager.OwnerWasCreated)
                         {
-                            // if the owner was created by this WorkflowApplication, delete it.
-                            // This implicitly unlocks the instance.
+                            // if the owner was created by this WorkflowApplication, delete it. This
+                            // implicitly unlocks the instance.
                             result = this.persistenceManager.BeginDeleteOwner(this.timeoutHelper.RemainingTime(), this.PrepareAsyncCompletion(ownerDeletedCallback), this);
                         }
                         else
@@ -4321,9 +4026,9 @@ using System.Activities.DynamicUpdate;
                         }
                     }
 
-                    if (SyncContinue(result))
+                    if (this.SyncContinue(result))
                     {
-                        Complete(true);
+                        this.Complete(true);
                     }
 
                     success = true;
@@ -4337,28 +4042,25 @@ using System.Activities.DynamicUpdate;
                 }
             }
 
-            public static void End(IAsyncResult result)
-            {
-                AsyncResult.End<UnlockInstanceAsyncResult>(result);
-            }
+            public static void End(IAsyncResult result) => AsyncResult.End<UnlockInstanceAsyncResult>(result);
 
             private static bool OnInstanceUnlocked(IAsyncResult result)
             {
-                UnlockInstanceAsyncResult thisPtr = (UnlockInstanceAsyncResult)result.AsyncState;
+                var thisPtr = (UnlockInstanceAsyncResult)result.AsyncState;
                 thisPtr.persistenceManager.EndUnlock(result);
                 return true;
             }
 
             private static bool OnOwnerDeleted(IAsyncResult result)
             {
-                UnlockInstanceAsyncResult thisPtr = (UnlockInstanceAsyncResult)result.AsyncState;
+                var thisPtr = (UnlockInstanceAsyncResult)result.AsyncState;
                 thisPtr.persistenceManager.EndDeleteOwner(result);
                 return true;
             }
 
             private static void OnComplete(AsyncResult result, Exception exception)
             {
-                UnlockInstanceAsyncResult thisPtr = (UnlockInstanceAsyncResult)result;
+                var thisPtr = (UnlockInstanceAsyncResult)result;
                 if (thisPtr.dependentTransaction != null)
                 {
                     thisPtr.dependentTransaction.Complete();
@@ -4385,7 +4087,7 @@ using System.Activities.DynamicUpdate;
             private DependentTransaction dependentTransaction;
             private IDictionary<XName, InstanceValue> values;
 #if NET45
-            DynamicUpdateMap updateMap; 
+            DynamicUpdateMap updateMap;
 #endif
             private InstanceOperation instanceOperation;
 
@@ -4394,8 +4096,8 @@ using System.Activities.DynamicUpdate;
 #if NET45
                         DynamicUpdateMap updateMap,
 
-#endif                
-                TimeSpan timeout, 
+#endif
+                TimeSpan timeout,
                 AsyncCallback callback, object state)
                 : base(callback, state)
             {
@@ -4404,10 +4106,10 @@ using System.Activities.DynamicUpdate;
                 this.values = values;
                 this.timeoutHelper = new TimeoutHelper(timeout);
 #if NET45
-                this.updateMap = updateMap; 
+                this.updateMap = updateMap;
 #endif
 
-                Initialize();
+                this.Initialize();
             }
 
             public LoadAsyncResult(WorkflowApplication application, PersistenceManager persistenceManager,
@@ -4419,37 +4121,38 @@ using System.Activities.DynamicUpdate;
                 this.loadAny = loadAny;
                 this.timeoutHelper = new TimeoutHelper(timeout);
 
-                Initialize();
+                this.Initialize();
             }
 
             private void Initialize()
             {
-                OnCompleting = LoadAsyncResult.completeCallback;
+                this.OnCompleting = LoadAsyncResult.completeCallback;
 
-                // Save off the current transaction in case we have an async operation before we end up creating
-                // the WorkflowPersistenceContext and create it on another thread. Do a simple clone here to prevent
-                // the object referenced by Transaction.Current from disposing before we get around to referencing it
-                // when we create the WorkflowPersistenceContext.
+                // Save off the current transaction in case we have an async operation before we end
+                // up creating the WorkflowPersistenceContext and create it on another thread. Do a
+                // simple clone here to prevent the object referenced by Transaction.Current from
+                // disposing before we get around to referencing it when we create the WorkflowPersistenceContext.
                 //
-                // This will throw TransactionAbortedException by design, if the transaction is already rolled back.
-                Transaction currentTransaction = Transaction.Current;
+                // This will throw TransactionAbortedException by design, if the transaction is
+                // already rolled back.
+                var currentTransaction = Transaction.Current;
                 if (currentTransaction != null)
                 {
                     this.dependentTransaction = currentTransaction.DependentClone(DependentCloneOption.BlockCommitUntilComplete);
                 }
 
                 bool completeSelf;
-                bool success = false;
+                var success = false;
                 Exception updateException = null;
                 try
                 {
                     if (this.application == null)
                     {
-                        completeSelf = RegisterProvider();
+                        completeSelf = this.RegisterProvider();
                     }
                     else
                     {
-                        completeSelf = WaitForTurn();
+                        completeSelf = this.WaitForTurn();
                     }
                     success = true;
                 }
@@ -4458,7 +4161,7 @@ using System.Activities.DynamicUpdate;
                 {
                     updateException = e;
                     throw;
-                } 
+                }
 #endif
                 catch (VersionMismatchException e)
                 {
@@ -4479,34 +4182,31 @@ using System.Activities.DynamicUpdate;
 
                 if (completeSelf)
                 {
-                    Complete(true);
+                    this.Complete(true);
                 }
             }
 
-            public static void End(IAsyncResult result)
-            {
-                AsyncResult.End<LoadAsyncResult>(result);
-            }
+            public static void End(IAsyncResult result) => AsyncResult.End<LoadAsyncResult>(result);
 
             public static WorkflowApplicationInstance EndAndCreateInstance(IAsyncResult result)
             {
-                LoadAsyncResult thisPtr = AsyncResult.End<LoadAsyncResult>(result);
+                var thisPtr = AsyncResult.End<LoadAsyncResult>(result);
                 Fx.AssertAndThrow(thisPtr.application == null, "Should not create a WorkflowApplicationInstance if we already have a WorkflowApplication");
 
-                ActivityExecutor deserializedRuntimeState = WorkflowApplication.ExtractRuntimeState(thisPtr.values, thisPtr.persistenceManager.InstanceId);
+                var deserializedRuntimeState = WorkflowApplication.ExtractRuntimeState(thisPtr.values, thisPtr.persistenceManager.InstanceId);
                 return new WorkflowApplicationInstance(thisPtr.persistenceManager, thisPtr.values, deserializedRuntimeState.WorkflowIdentity);
             }
 
             private bool WaitForTurn()
             {
                 bool completeSelf;
-                bool success = false;
+                var success = false;
                 this.instanceOperation = new InstanceOperation { RequiresInitialized = false };
                 try
                 {
                     if (this.application.WaitForTurnAsync(this.instanceOperation, this.timeoutHelper.RemainingTime(), waitCompleteCallback, this))
                     {
-                        completeSelf = ValidateState();
+                        completeSelf = this.ValidateState();
                     }
                     else
                     {
@@ -4518,7 +4218,7 @@ using System.Activities.DynamicUpdate;
                 {
                     if (!success)
                     {
-                        NotifyOperationComplete();
+                        this.NotifyOperationComplete();
                     }
                 }
 
@@ -4527,7 +4227,7 @@ using System.Activities.DynamicUpdate;
 
             private static void OnWaitComplete(object state, TimeoutException asyncException)
             {
-                LoadAsyncResult thisPtr = (LoadAsyncResult)state;
+                var thisPtr = (LoadAsyncResult)state;
                 if (asyncException != null)
                 {
                     thisPtr.Complete(false, asyncException);
@@ -4573,54 +4273,54 @@ using System.Activities.DynamicUpdate;
                     this.application.InstanceStore = this.persistenceManager.InstanceStore;
                 }
 
-                return RegisterProvider();
+                return this.RegisterProvider();
             }
 
             private bool RegisterProvider()
             {
                 if (!this.persistenceManager.IsInitialized)
                 {
-                    WorkflowIdentity definitionIdentity = this.application != null ? this.application.DefinitionIdentity : WorkflowApplication.unknownIdentity;
-                    IAsyncResult result = this.persistenceManager.BeginInitialize(definitionIdentity, this.timeoutHelper.RemainingTime(), PrepareAsyncCompletion(providerRegisteredCallback), this);
-                    return SyncContinue(result);
+                    var definitionIdentity = this.application != null ? this.application.DefinitionIdentity : WorkflowApplication.unknownIdentity;
+                    var result = this.persistenceManager.BeginInitialize(definitionIdentity, this.timeoutHelper.RemainingTime(), this.PrepareAsyncCompletion(providerRegisteredCallback), this);
+                    return this.SyncContinue(result);
                 }
                 else
                 {
-                    return Load();
+                    return this.Load();
                 }
             }
 
             private static bool OnProviderRegistered(IAsyncResult result)
             {
-                LoadAsyncResult thisPtr = (LoadAsyncResult)result.AsyncState;
+                var thisPtr = (LoadAsyncResult)result.AsyncState;
                 thisPtr.persistenceManager.EndInitialize(result);
                 return thisPtr.Load();
             }
 
             private bool Load()
             {
-                bool success = false;
+                var success = false;
                 IAsyncResult result = null;
                 try
                 {
-                    bool transactionRequired = this.application != null ? this.application.IsLoadTransactionRequired() : false;
+                    var transactionRequired = this.application != null ? this.application.IsLoadTransactionRequired() : false;
                     this.context = new WorkflowPersistenceContext(transactionRequired,
                         this.dependentTransaction, this.timeoutHelper.OriginalTimeout);
 
-                    // Values is null if this is an initial load from the database.
-                    // It is non-null if we already loaded values into a WorkflowApplicationInstance,
-                    // and are now loading from that WAI.
+                    // Values is null if this is an initial load from the database. It is non-null
+                    // if we already loaded values into a WorkflowApplicationInstance, and are now
+                    // loading from that WAI.
                     if (this.values == null)
                     {
-                        using (PrepareTransactionalCall(this.context.PublicTransaction))
+                        using (this.PrepareTransactionalCall(this.context.PublicTransaction))
                         {
                             if (this.loadAny)
                             {
-                                result = this.persistenceManager.BeginTryLoad(this.timeoutHelper.RemainingTime(), PrepareAsyncCompletion(loadCompleteCallback), this);
+                                result = this.persistenceManager.BeginTryLoad(this.timeoutHelper.RemainingTime(), this.PrepareAsyncCompletion(loadCompleteCallback), this);
                             }
                             else
                             {
-                                result = this.persistenceManager.BeginLoad(this.timeoutHelper.RemainingTime(), PrepareAsyncCompletion(loadCompleteCallback), this);
+                                result = this.persistenceManager.BeginLoad(this.timeoutHelper.RemainingTime(), this.PrepareAsyncCompletion(loadCompleteCallback), this);
                             }
                         }
                     }
@@ -4636,24 +4336,24 @@ using System.Activities.DynamicUpdate;
 
                 if (result == null)
                 {
-                    return LoadValues(null);
+                    return this.LoadValues(null);
                 }
                 else
                 {
-                    return SyncContinue(result);
+                    return this.SyncContinue(result);
                 }
             }
 
             private static bool OnLoadComplete(IAsyncResult result)
             {
-                LoadAsyncResult thisPtr = (LoadAsyncResult)result.AsyncState;
+                var thisPtr = (LoadAsyncResult)result.AsyncState;
                 return thisPtr.LoadValues(result);
             }
 
             private bool LoadValues(IAsyncResult result)
             {
                 IAsyncResult loadResult = null;
-                bool success = false;
+                var success = false;
                 try
                 {
                     Fx.Assert((result == null) != (this.values == null), "We should either have values already retrieved, or an IAsyncResult to retrieve them");
@@ -4727,9 +4427,9 @@ using System.Activities.DynamicUpdate;
 
             private static bool OnLoadPipeline(IAsyncResult result)
             {
-                LoadAsyncResult thisPtr = (LoadAsyncResult)result.AsyncState;
+                var thisPtr = (LoadAsyncResult)result.AsyncState;
 
-                bool success = false;
+                var success = false;
                 try
                 {
                     thisPtr.pipeline.EndLoad(result);
@@ -4754,26 +4454,26 @@ using System.Activities.DynamicUpdate;
                     if (this.updateMap != null)
                     {
                         this.application.UpdateInstanceMetadata();
-                    } 
+                    }
 #else
                     this.application.Initialize(this.deserializedRuntimeState);
 #endif
                 }
 
-                if (this.context.TryBeginComplete(PrepareAsyncCompletion(completeContextCallback), this, out IAsyncResult completeResult))
+                if (this.context.TryBeginComplete(this.PrepareAsyncCompletion(completeContextCallback), this, out var completeResult))
                 {
                     Fx.Assert(completeResult != null, "We shouldn't have null here.");
-                    return SyncContinue(completeResult);
+                    return this.SyncContinue(completeResult);
                 }
                 else
                 {
-                    return Finish();
+                    return this.Finish();
                 }
             }
 
             private static bool OnCompleteContext(IAsyncResult result)
             {
-                LoadAsyncResult thisPtr = (LoadAsyncResult)result.AsyncState;
+                var thisPtr = (LoadAsyncResult)result.AsyncState;
                 thisPtr.context.EndComplete(result);
                 return thisPtr.Finish();
             }
@@ -4791,7 +4491,7 @@ using System.Activities.DynamicUpdate;
             {
                 if (this.application != null)
                 {
-                    InstanceOperation localInstanceOperation = this.instanceOperation;
+                    var localInstanceOperation = this.instanceOperation;
                     this.instanceOperation = null;
                     this.application.NotifyOperationComplete(localInstanceOperation);
                 }
@@ -4799,7 +4499,7 @@ using System.Activities.DynamicUpdate;
 
             private static void OnComplete(AsyncResult result, Exception exception)
             {
-                LoadAsyncResult thisPtr = (LoadAsyncResult)result;
+                var thisPtr = (LoadAsyncResult)result;
                 try
                 {
                     if (thisPtr.dependentTransaction != null)
@@ -4831,14 +4531,16 @@ using System.Activities.DynamicUpdate;
             }
         }
 
-        // this class is not a general purpose SyncContext and is only meant to work for workflow scenarios, where the scheduler ensures 
-        // at most one work item pending. The scheduler ensures that Invoke must run before Post is called on a different thread.
+        // this class is not a general purpose SyncContext and is only meant to work for workflow
+        // scenarios, where the scheduler ensures at most one work item pending. The scheduler
+        // ensures that Invoke must run before Post is called on a different thread.
         private class PumpBasedSynchronizationContext : SynchronizationContext
         {
-            // The waitObject is cached per thread so that we can avoid the cost of creating
-            // events for multiple synchronous invokes.
+            // The waitObject is cached per thread so that we can avoid the cost of creating events
+            // for multiple synchronous invokes.
             [ThreadStatic]
             private static AutoResetEvent waitObject;
+
             private AutoResetEvent queueWaiter;
             private WorkItem currentWorkItem;
             private readonly object thisLock;
@@ -4885,20 +4587,14 @@ using System.Activities.DynamicUpdate;
                 }
             }
 
-            public override void Post(SendOrPostCallback d, object state)
-            {
-                ScheduleWorkItem(new WorkItem(d, state));
-            }
+            public override void Post(SendOrPostCallback d, object state) => this.ScheduleWorkItem(new WorkItem(d, state));
 
-            public override void Send(SendOrPostCallback d, object state)
-            {
-                throw FxTrace.Exception.AsError(new NotSupportedException(SR.SendNotSupported));
-            }
+            public override void Send(SendOrPostCallback d, object state) => throw FxTrace.Exception.AsError(new NotSupportedException(SR.SendNotSupported));
 
-            // Since tracking can go async this may or may not be called directly
-            // under a call to workItem.Invoke.  Also, the scheduler may call
-            // OnNotifyPaused or OnNotifyUnhandledException from any random thread
-            // if runtime goes async (post-work item tracking, AsyncCodeActivity).
+            // Since tracking can go async this may or may not be called directly under a call to
+            // workItem.Invoke. Also, the scheduler may call OnNotifyPaused or
+            // OnNotifyUnhandledException from any random thread if runtime goes async (post-work
+            // item tracking, AsyncCodeActivity).
             public void OnInvokeCompleted()
             {
                 Fx.AssertAndFailFast(this.currentWorkItem == null, "There can be no pending work items when complete");
@@ -4909,9 +4605,8 @@ using System.Activities.DynamicUpdate;
                 {
                     if (this.queueWaiter != null)
                     {
-                        // Since we don't know which thread this is being called
-                        // from we just set the waiter directly rather than
-                        // doing our SetWaiter cleanup.
+                        // Since we don't know which thread this is being called from we just set
+                        // the waiter directly rather than doing our SetWaiter cleanup.
                         this.queueWaiter.Set();
                     }
                 }
@@ -4925,9 +4620,8 @@ using System.Activities.DynamicUpdate;
                     this.currentWorkItem = item;
                     if (this.queueWaiter != null)
                     {
-                        // Since we don't know which thread this is being called
-                        // from we just set the waiter directly rather than
-                        // doing our SetWaiter cleanup.
+                        // Since we don't know which thread this is being called from we just set
+                        // the waiter directly rather than doing our SetWaiter cleanup.
                         this.queueWaiter.Set();
                     }
                 }
@@ -4935,10 +4629,10 @@ using System.Activities.DynamicUpdate;
 
             private bool WaitOne(AutoResetEvent waiter, TimeSpan timeout)
             {
-                bool success = false;
+                var success = false;
                 try
                 {
-                    bool result = TimeoutHelper.WaitOne(waiter, timeout);
+                    var result = TimeoutHelper.WaitOne(waiter, timeout);
                     // if the wait timed out, reset the thread static
                     success = result;
                     return result;
@@ -4954,13 +4648,12 @@ using System.Activities.DynamicUpdate;
 
             private bool WaitForNextItem()
             {
-                if (!WaitOne(this.queueWaiter, timeoutHelper.RemainingTime()))
+                if (!this.WaitOne(this.queueWaiter, this.timeoutHelper.RemainingTime()))
                 {
-                    throw FxTrace.Exception.AsError(new TimeoutException(SR.TimeoutOnOperation(timeoutHelper.OriginalTimeout)));
+                    throw FxTrace.Exception.AsError(new TimeoutException(SR.TimeoutOnOperation(this.timeoutHelper.OriginalTimeout)));
                 }
 
-                // We need to check this after the wait as well in 
-                // case the notification came in asynchronously
+                // We need to check this after the wait as well in case the notification came in asynchronously
                 if (this.IsInvokeCompleted)
                 {
                     return false;
@@ -4980,19 +4673,13 @@ using System.Activities.DynamicUpdate;
                     this.state = state;
                 }
 
-                public void Invoke()
-                {
-                    this.callback(this.state);
-                }
+                public void Invoke() => this.callback(this.state);
             }
         }
 
         private class WorkflowEventData
         {
-            public WorkflowEventData(WorkflowApplication instance)
-            {
-                this.Instance = instance;
-            }
+            public WorkflowEventData(WorkflowApplication instance) => this.Instance = instance;
 
             public WorkflowApplication Instance
             {
@@ -5040,7 +4727,7 @@ using System.Activities.DynamicUpdate;
                 {
                     if (this.stage1Callback == null)
                     {
-                        this.stage1Callback = new Func<IAsyncResult, WorkflowApplication, bool, bool>(OnStage1Complete);
+                        this.stage1Callback = new Func<IAsyncResult, WorkflowApplication, bool, bool>(this.OnStage1Complete);
                     }
 
                     return this.stage1Callback;
@@ -5053,7 +4740,7 @@ using System.Activities.DynamicUpdate;
                 {
                     if (this.stage2Callback == null)
                     {
-                        this.stage2Callback = new Func<IAsyncResult, WorkflowApplication, bool, bool>(OnStage2Complete);
+                        this.stage2Callback = new Func<IAsyncResult, WorkflowApplication, bool, bool>(this.OnStage2Complete);
                     }
 
                     return this.stage2Callback;
@@ -5077,7 +4764,7 @@ using System.Activities.DynamicUpdate;
                     }
                 }
 
-                return OnStage1Complete(result, instance, true);
+                return this.OnStage1Complete(result, instance, true);
             }
 
             private bool OnStage1Complete(IAsyncResult lastResult, WorkflowApplication application, bool isStillSync)
@@ -5093,11 +4780,11 @@ using System.Activities.DynamicUpdate;
                 {
                     if (application.Controller.IsPersistable && application.persistenceManager != null)
                     {
-                        Func<WorkflowApplicationIdleEventArgs, PersistableIdleAction> persistableIdleHandler = application.PersistableIdle;
+                        var persistableIdleHandler = application.PersistableIdle;
 
                         if (persistableIdleHandler != null)
                         {
-                            PersistableIdleAction action = PersistableIdleAction.None;
+                            var action = PersistableIdleAction.None;
 
                             application.handlerThreadId = Thread.CurrentThread.ManagedThreadId;
 
@@ -5118,7 +4805,7 @@ using System.Activities.DynamicUpdate;
 
                             if (action != PersistableIdleAction.None)
                             {
-                                PersistenceOperation operation = PersistenceOperation.Unload;
+                                var operation = PersistenceOperation.Unload;
 
                                 if (action == PersistableIdleAction.Persist)
                                 {
@@ -5149,7 +4836,7 @@ using System.Activities.DynamicUpdate;
                     }
                 }
 
-                return OnStage2Complete(result, application, isStillSync);
+                return this.OnStage2Complete(result, application, isStillSync);
             }
 
             private bool OnStage2Complete(IAsyncResult lastResult, WorkflowApplication instance, bool isStillSync)
@@ -5178,7 +4865,7 @@ using System.Activities.DynamicUpdate;
                 {
                     if (this.stage1Callback == null)
                     {
-                        this.stage1Callback = new Func<IAsyncResult, WorkflowApplication, bool, bool>(OnStage1Complete);
+                        this.stage1Callback = new Func<IAsyncResult, WorkflowApplication, bool, bool>(this.OnStage1Complete);
                     }
 
                     return this.stage1Callback;
@@ -5191,7 +4878,7 @@ using System.Activities.DynamicUpdate;
                 {
                     if (this.stage2Callback == null)
                     {
-                        this.stage2Callback = new Func<IAsyncResult, WorkflowApplication, bool, bool>(OnStage2Complete);
+                        this.stage2Callback = new Func<IAsyncResult, WorkflowApplication, bool, bool>(this.OnStage2Complete);
                     }
 
                     return this.stage2Callback;
@@ -5212,7 +4899,7 @@ using System.Activities.DynamicUpdate;
                     }
                 }
 
-                return OnStage1Complete(result, instance, true);
+                return this.OnStage1Complete(result, instance, true);
             }
 
             private bool OnStage1Complete(IAsyncResult lastResult, WorkflowApplication instance, bool isStillSync)
@@ -5221,11 +4908,11 @@ using System.Activities.DynamicUpdate;
                 {
                     instance.Controller.EndFlushTrackingRecords(lastResult);
                 }
-                ActivityInstanceState completionState = instance.Controller.GetCompletionState(out IDictionary<string, object> outputs, out Exception completionException);
+                var completionState = instance.Controller.GetCompletionState(out var outputs, out var completionException);
 
                 if (instance.invokeCompletedCallback == null)
                 {
-                    Action<WorkflowApplicationCompletedEventArgs> handler = instance.Completed;
+                    var handler = instance.Completed;
 
                     if (handler != null)
                     {
@@ -5251,12 +4938,14 @@ using System.Activities.DynamicUpdate;
                             TD.WorkflowApplicationCompleted(instance.Id.ToString());
                         }
                         break;
+
                     case ActivityInstanceState.Canceled:
                         if (TD.WorkflowInstanceCanceledIsEnabled())
                         {
                             TD.WorkflowInstanceCanceled(instance.Id.ToString());
                         }
                         break;
+
                     case ActivityInstanceState.Faulted:
                         if (TD.WorkflowApplicationTerminatedIsEnabled())
                         {
@@ -5282,7 +4971,7 @@ using System.Activities.DynamicUpdate;
                     instance.MarkUnloaded();
                 }
 
-                return OnStage2Complete(result, instance, isStillSync);
+                return this.OnStage2Complete(result, instance, isStillSync);
             }
 
             private bool OnStage2Complete(IAsyncResult lastResult, WorkflowApplication instance, bool isStillSync)
@@ -5315,7 +5004,7 @@ using System.Activities.DynamicUpdate;
                 {
                     if (this.stage1Callback == null)
                     {
-                        this.stage1Callback = new Func<IAsyncResult, WorkflowApplication, bool, bool>(OnStage1Complete);
+                        this.stage1Callback = new Func<IAsyncResult, WorkflowApplication, bool, bool>(this.OnStage1Complete);
                     }
 
                     return this.stage1Callback;
@@ -5340,13 +5029,10 @@ using System.Activities.DynamicUpdate;
                     }
                 }
 
-                return OnStage1Complete(result, instance, exception, exceptionSource, exceptionSourceInstanceId);
+                return this.OnStage1Complete(result, instance, exception, exceptionSource, exceptionSourceInstanceId);
             }
 
-            private bool OnStage1Complete(IAsyncResult lastResult, WorkflowApplication instance, bool isStillSync)
-            {
-                return OnStage1Complete(lastResult, instance, instance.EventData.UnhandledException, instance.EventData.UnhandledExceptionSource, instance.EventData.UnhandledExceptionSourceInstance);
-            }
+            private bool OnStage1Complete(IAsyncResult lastResult, WorkflowApplication instance, bool isStillSync) => this.OnStage1Complete(lastResult, instance, instance.EventData.UnhandledException, instance.EventData.UnhandledExceptionSource, instance.EventData.UnhandledExceptionSourceInstance);
 
             private bool OnStage1Complete(IAsyncResult lastResult, WorkflowApplication instance, Exception exception, Activity source, string sourceInstanceId)
             {
@@ -5355,9 +5041,9 @@ using System.Activities.DynamicUpdate;
                     instance.Controller.EndFlushTrackingRecords(lastResult);
                 }
 
-                Func<WorkflowApplicationUnhandledExceptionEventArgs, UnhandledExceptionAction> handler = instance.OnUnhandledException;
+                var handler = instance.OnUnhandledException;
 
-                UnhandledExceptionAction action = UnhandledExceptionAction.Terminate;
+                var action = UnhandledExceptionAction.Terminate;
 
                 if (handler != null)
                 {
@@ -5389,12 +5075,15 @@ using System.Activities.DynamicUpdate;
                     case UnhandledExceptionAction.Abort:
                         instance.AbortInstance(exception, true);
                         break;
+
                     case UnhandledExceptionAction.Cancel:
                         instance.Controller.ScheduleCancel();
                         break;
+
                     case UnhandledExceptionAction.Terminate:
                         instance.TerminateCore(exception);
                         break;
+
                     default:
                         throw FxTrace.Exception.AsError(new InvalidOperationException(SR.InvalidUnhandledExceptionAction));
                 }
@@ -5421,43 +5110,43 @@ using System.Activities.DynamicUpdate;
                 this.command = command;
                 this.temporaryHandle = instanceStore.CreateInstanceHandle();
 
-                Transaction currentTransaction = Transaction.Current;
+                var currentTransaction = Transaction.Current;
                 if (currentTransaction != null)
                 {
                     this.dependentTransaction = currentTransaction.DependentClone(DependentCloneOption.BlockCommitUntilComplete);
                 }
 
-                OnCompleting = completeCallback;
+                this.OnCompleting = completeCallback;
 
                 IAsyncResult result;
                 using (this.PrepareTransactionalCall(this.dependentTransaction))
                 {
-                    result = instanceStore.BeginExecute(this.temporaryHandle, command, timeout, PrepareAsyncCompletion(commandCompletedCallback), this);
+                    result = instanceStore.BeginExecute(this.temporaryHandle, command, timeout, this.PrepareAsyncCompletion(commandCompletedCallback), this);
                 }
 
-                if (SyncContinue(result))
+                if (this.SyncContinue(result))
                 {
-                    Complete(true);
+                    this.Complete(true);
                 }
             }
 
             public static void End(IAsyncResult result, out InstanceStore instanceStore, out InstanceView commandResult)
             {
-                InstanceCommandWithTemporaryHandleAsyncResult thisPtr = AsyncResult.End<InstanceCommandWithTemporaryHandleAsyncResult>(result);
+                var thisPtr = AsyncResult.End<InstanceCommandWithTemporaryHandleAsyncResult>(result);
                 instanceStore = thisPtr.instanceStore;
                 commandResult = thisPtr.commandResult;
             }
 
             private static bool OnCommandCompleted(IAsyncResult result)
             {
-                InstanceCommandWithTemporaryHandleAsyncResult thisPtr = (InstanceCommandWithTemporaryHandleAsyncResult)result.AsyncState;
+                var thisPtr = (InstanceCommandWithTemporaryHandleAsyncResult)result.AsyncState;
                 thisPtr.commandResult = thisPtr.instanceStore.EndExecute(result);
                 return true;
             }
 
             private static void OnComplete(AsyncResult result, Exception exception)
             {
-                InstanceCommandWithTemporaryHandleAsyncResult thisPtr = (InstanceCommandWithTemporaryHandleAsyncResult)result;
+                var thisPtr = (InstanceCommandWithTemporaryHandleAsyncResult)result;
                 if (thisPtr.dependentTransaction != null)
                 {
                     thisPtr.dependentTransaction.Complete();
@@ -5500,21 +5189,15 @@ using System.Activities.DynamicUpdate;
                 set;
             }
 
-            public void OnEnqueued()
-            {
-                this.waitHandle = new AsyncWaitHandle();
-            }
+            public void OnEnqueued() => this.waitHandle = new AsyncWaitHandle();
 
-            public virtual bool CanRun(WorkflowApplication instance)
-            {
-                return true;
-            }
+            public virtual bool CanRun(WorkflowApplication instance) => true;
 
             public void NotifyTurn()
             {
                 Fx.Assert(this.waitHandle != null, "We must have a wait handle.");
 
-                waitHandle.Set();
+                this.waitHandle.Set();
             }
 
             public bool WaitForTurn(TimeSpan timeout)
@@ -5555,7 +5238,7 @@ using System.Activities.DynamicUpdate;
 
             public override bool CanRun(WorkflowApplication instance)
             {
-                if (requiresRunnableInstance && instance.state != WorkflowApplicationState.Runnable)
+                if (this.requiresRunnableInstance && instance.state != WorkflowApplicationState.Runnable)
                 {
                     return false;
                 }
@@ -5566,15 +5249,9 @@ using System.Activities.DynamicUpdate;
 
         private class DeferredRequiresIdleOperation : InstanceOperation
         {
-            public DeferredRequiresIdleOperation()
-            {
-                this.InterruptsScheduler = false;
-            }
+            public DeferredRequiresIdleOperation() => this.InterruptsScheduler = false;
 
-            public override bool CanRun(WorkflowApplication instance)
-            {
-                return (this.ActionId != instance.actionCount && instance.Controller.State == WorkflowInstanceState.Idle) || instance.Controller.State == WorkflowInstanceState.Complete;
-            }
+            public override bool CanRun(WorkflowApplication instance) => (this.ActionId != instance.actionCount && instance.Controller.State == WorkflowInstanceState.Idle) || instance.Controller.State == WorkflowInstanceState.Complete;
         }
 
         private class RequiresPersistenceOperation : InstanceOperation
@@ -5628,8 +5305,8 @@ using System.Activities.DynamicUpdate;
             }
         }
 
-        // This is a thin shell of PersistenceManager functionality so that WorkflowApplicationInstance
-        // can hold onto a PM without exposing the entire persistence functionality
+        // This is a thin shell of PersistenceManager functionality so that
+        // WorkflowApplicationInstance can hold onto a PM without exposing the entire persistence functionality
         internal abstract class PersistenceManagerBase
         {
             public abstract InstanceStore InstanceStore { get; }
@@ -5661,7 +5338,7 @@ using System.Activities.DynamicUpdate;
                 this.instanceId = instanceId;
                 this.instanceMetadata = instanceMetadata;
 
-                InitializeInstanceMetadata();
+                this.InitializeInstanceMetadata();
 
                 this.owner = store.DefaultInstanceOwner;
                 if (this.owner != null)
@@ -5679,7 +5356,7 @@ using System.Activities.DynamicUpdate;
                 this.isTryLoad = true;
                 this.instanceMetadata = instanceMetadata;
 
-                InitializeInstanceMetadata();
+                this.InitializeInstanceMetadata();
 
                 this.owner = store.DefaultInstanceOwner;
                 if (this.owner != null)
@@ -5690,45 +5367,15 @@ using System.Activities.DynamicUpdate;
                 this.store = store;
             }
 
-            public sealed override Guid InstanceId
-            {
-                get
-                {
-                    return this.instanceId;
-                }
-            }
+            public sealed override Guid InstanceId => this.instanceId;
 
-            public sealed override InstanceStore InstanceStore
-            {
-                get
-                {
-                    return this.store;
-                }
-            }
+            public sealed override InstanceStore InstanceStore => this.store;
 
-            public bool IsInitialized
-            {
-                get
-                {
-                    return (this.handle != null);
-                }
-            }
+            public bool IsInitialized => (this.handle != null);
 
-            public bool IsLocked
-            {
-                get
-                {
-                    return this.isLocked;
-                }
-            }
+            public bool IsLocked => this.isLocked;
 
-            public bool OwnerWasCreated
-            {
-                get
-                {
-                    return this.ownerWasCreated;
-                }
-            }
+            public bool OwnerWasCreated => this.ownerWasCreated;
 
             private void InitializeInstanceMetadata()
             {
@@ -5737,8 +5384,7 @@ using System.Activities.DynamicUpdate;
                     this.instanceMetadata = new Dictionary<XName, InstanceValue>(1);
                 }
 
-                // We always set this key explicitly so that users can't override
-                // this metadata value
+                // We always set this key explicitly so that users can't override this metadata value
                 this.instanceMetadata[PersistenceMetadataNamespace.InstanceType] = new InstanceValue(WorkflowNamespace.WorkflowHostType, InstanceValueOptions.WriteOnly);
             }
 
@@ -5748,14 +5394,11 @@ using System.Activities.DynamicUpdate;
                 if (metadata != null)
                 {
                     this.instanceMetadata = metadata;
-                    InitializeInstanceMetadata();
+                    this.InitializeInstanceMetadata();
                 }
             }
 
-            public void SetMutablemetadata(IDictionary<XName, InstanceValue> metadata)
-            {
-                this.mutableMetadata = metadata;
-            }
+            public void SetMutablemetadata(IDictionary<XName, InstanceValue> metadata) => this.mutableMetadata = metadata;
 
             public void Initialize(WorkflowIdentity definitionIdentity, TimeSpan timeout)
             {
@@ -5765,16 +5408,16 @@ using System.Activities.DynamicUpdate;
                 {
                     try
                     {
-                        CreateTemporaryHandle(null);
+                        this.CreateTemporaryHandle(null);
                         this.owner = this.store.Execute(this.temporaryHandle, GetCreateOwnerCommand(definitionIdentity), timeout).InstanceOwner;
                         this.ownerWasCreated = true;
                     }
                     finally
                     {
-                        FreeTemporaryHandle();
+                        this.FreeTemporaryHandle();
                     }
 
-                    this.handle = this.isTryLoad ? this.store.CreateInstanceHandle(this.owner) : this.store.CreateInstanceHandle(this.owner, InstanceId);
+                    this.handle = this.isTryLoad ? this.store.CreateInstanceHandle(this.owner) : this.store.CreateInstanceHandle(this.owner, this.InstanceId);
 
                     Thread.MemoryBarrier();
                     if (this.aborted)
@@ -5792,13 +5435,13 @@ using System.Activities.DynamicUpdate;
 
                 if (this.aborted)
                 {
-                    FreeTemporaryHandle();
+                    this.FreeTemporaryHandle();
                 }
             }
 
             private void FreeTemporaryHandle()
             {
-                InstanceHandle handle = this.temporaryHandle;
+                var handle = this.temporaryHandle;
 
                 if (handle != null)
                 {
@@ -5816,7 +5459,7 @@ using System.Activities.DynamicUpdate;
 
                     try
                     {
-                        CreateTemporaryHandle(null);
+                        this.CreateTemporaryHandle(null);
                         result = this.store.BeginExecute(this.temporaryHandle, GetCreateOwnerCommand(definitionIdentity), timeout, callback, state);
                     }
                     finally
@@ -5824,7 +5467,7 @@ using System.Activities.DynamicUpdate;
                         // We've encountered an exception
                         if (result == null)
                         {
-                            FreeTemporaryHandle();
+                            this.FreeTemporaryHandle();
                         }
                     }
                     return result;
@@ -5840,10 +5483,10 @@ using System.Activities.DynamicUpdate;
                 }
                 finally
                 {
-                    FreeTemporaryHandle();
+                    this.FreeTemporaryHandle();
                 }
 
-                this.handle = this.isTryLoad ? this.store.CreateInstanceHandle(this.owner) : this.store.CreateInstanceHandle(this.owner, InstanceId);
+                this.handle = this.isTryLoad ? this.store.CreateInstanceHandle(this.owner) : this.store.CreateInstanceHandle(this.owner, this.InstanceId);
                 Thread.MemoryBarrier();
                 if (this.aborted)
                 {
@@ -5855,7 +5498,7 @@ using System.Activities.DynamicUpdate;
             {
                 try
                 {
-                    CreateTemporaryHandle(this.owner);
+                    this.CreateTemporaryHandle(this.owner);
                     this.store.Execute(this.temporaryHandle, new DeleteWorkflowOwnerCommand(), timeout);
                 }
                 // Ignore some exceptions because DeleteWorkflowOwner is best effort.
@@ -5864,7 +5507,7 @@ using System.Activities.DynamicUpdate;
                 catch (OperationCanceledException) { }
                 finally
                 {
-                    FreeTemporaryHandle();
+                    this.FreeTemporaryHandle();
                 }
             }
 
@@ -5873,7 +5516,7 @@ using System.Activities.DynamicUpdate;
                 IAsyncResult result = null;
                 try
                 {
-                    CreateTemporaryHandle(this.owner);
+                    this.CreateTemporaryHandle(this.owner);
                     result = this.store.BeginExecute(this.temporaryHandle, new DeleteWorkflowOwnerCommand(), timeout, callback, state);
                 }
                 // Ignore some exceptions because DeleteWorkflowOwner is best effort.
@@ -5884,7 +5527,7 @@ using System.Activities.DynamicUpdate;
                 {
                     if (result == null)
                     {
-                        FreeTemporaryHandle();
+                        this.FreeTemporaryHandle();
                     }
                 }
                 return result;
@@ -5902,14 +5545,14 @@ using System.Activities.DynamicUpdate;
                 catch (OperationCanceledException) { }
                 finally
                 {
-                    FreeTemporaryHandle();
+                    this.FreeTemporaryHandle();
                 }
             }
 
             public void EnsureReadyness(TimeSpan timeout)
             {
                 Fx.Assert(this.handle != null, "We should already be initialized by now");
-                Fx.Assert(!IsLocked, "We are already ready for persistence; why are we being called?");
+                Fx.Assert(!this.IsLocked, "We are already ready for persistence; why are we being called?");
                 Fx.Assert(!this.isTryLoad, "Should not be on an initial save path if we tried load.");
 
                 using (new TransactionScope(TransactionScopeOption.Suppress))
@@ -5922,7 +5565,7 @@ using System.Activities.DynamicUpdate;
             public IAsyncResult BeginEnsureReadyness(TimeSpan timeout, AsyncCallback callback, object state)
             {
                 Fx.Assert(this.handle != null, "We should already be initialized by now");
-                Fx.Assert(!IsLocked, "We are already ready for persistence; why are we being called?");
+                Fx.Assert(!this.IsLocked, "We are already ready for persistence; why are we being called?");
                 Fx.Assert(!this.isTryLoad, "Should not be on an initial save path if we tried load.");
 
                 using (new TransactionScope(TransactionScopeOption.Suppress))
@@ -5939,11 +5582,11 @@ using System.Activities.DynamicUpdate;
 
             public static Dictionary<XName, InstanceValue> GenerateInitialData(WorkflowApplication instance)
             {
-                Dictionary<XName, InstanceValue> data = new Dictionary<XName, InstanceValue>(10);
+                var data = new Dictionary<XName, InstanceValue>(10);
                 data[WorkflowNamespace.Bookmarks] = new InstanceValue(instance.Controller.GetBookmarks(), InstanceValueOptions.WriteOnly | InstanceValueOptions.Optional);
                 data[WorkflowNamespace.LastUpdate] = new InstanceValue(DateTime.UtcNow, InstanceValueOptions.WriteOnly | InstanceValueOptions.Optional);
 
-                foreach (KeyValuePair<string, LocationInfo> mappedVariable in instance.Controller.GetMappedVariables())
+                foreach (var mappedVariable in instance.Controller.GetMappedVariables())
                 {
                     data[WorkflowNamespace.VariablesPath.GetName(mappedVariable.Key)] = new InstanceValue(mappedVariable.Value, InstanceValueOptions.WriteOnly | InstanceValueOptions.Optional);
                 }
@@ -5957,7 +5600,7 @@ using System.Activities.DynamicUpdate;
                 else
                 {
                     data[WorkflowNamespace.Workflow] = new InstanceValue(instance.Controller.PrepareForSerialization(), InstanceValueOptions.Optional);
-                    ActivityInstanceState completionState = instance.Controller.GetCompletionState(out IDictionary<string, object> outputs, out Exception completionException);
+                    var completionState = instance.Controller.GetCompletionState(out var outputs, out var completionException);
 
                     if (completionState == ActivityInstanceState.Faulted)
                     {
@@ -5969,7 +5612,7 @@ using System.Activities.DynamicUpdate;
                         data[WorkflowNamespace.Status] = new InstanceValue("Closed", InstanceValueOptions.WriteOnly);
                         if (outputs != null)
                         {
-                            foreach (KeyValuePair<string, object> output in outputs)
+                            foreach (var output in outputs)
                             {
                                 data[WorkflowNamespace.OutputPath.GetName(output.Key)] = new InstanceValue(output.Value, InstanceValueOptions.WriteOnly | InstanceValueOptions.Optional);
                             }
@@ -5987,13 +5630,14 @@ using System.Activities.DynamicUpdate;
             private static InstancePersistenceCommand GetCreateOwnerCommand(WorkflowIdentity definitionIdentity)
             {
                 // Technically, we only need to pass the owner identity when doing LoadRunnable.
-                // However, if we create an instance with identity on a store that doesn't recognize it,
-                // the identity metadata might be stored in a way which makes it unqueryable if the store
-                // is later upgraded to support identity (e.g. SWIS 4.0 -> 4.5 upgrade). So to be on the
-                // safe side, if we're using identity, we require the store to explicitly support it.
+                // However, if we create an instance with identity on a store that doesn't recognize
+                // it, the identity metadata might be stored in a way which makes it unqueryable if
+                // the store is later upgraded to support identity (e.g. SWIS 4.0 -> 4.5 upgrade).
+                // So to be on the safe side, if we're using identity, we require the store to
+                // explicitly support it.
                 if (definitionIdentity != null)
                 {
-                    CreateWorkflowOwnerWithIdentityCommand result = new CreateWorkflowOwnerWithIdentityCommand();
+                    var result = new CreateWorkflowOwnerWithIdentityCommand();
                     if (!object.ReferenceEquals(definitionIdentity, WorkflowApplication.unknownIdentity))
                     {
                         result.InstanceOwnerMetadata.Add(Workflow45Namespace.DefinitionIdentities,
@@ -6009,7 +5653,7 @@ using System.Activities.DynamicUpdate;
 
             private static SaveWorkflowCommand CreateSaveCommand(IDictionary<XName, InstanceValue> instance, IDictionary<XName, InstanceValue> instanceMetadata, PersistenceOperation operation)
             {
-                SaveWorkflowCommand saveCommand = new SaveWorkflowCommand()
+                var saveCommand = new SaveWorkflowCommand()
                 {
                     CompleteInstance = operation == PersistenceOperation.Complete,
                     UnlockInstance = operation != PersistenceOperation.Save,
@@ -6017,7 +5661,7 @@ using System.Activities.DynamicUpdate;
 
                 if (instance != null)
                 {
-                    foreach (KeyValuePair<XName, InstanceValue> value in instance)
+                    foreach (var value in instance)
                     {
                         saveCommand.InstanceData.Add(value);
                     }
@@ -6025,7 +5669,7 @@ using System.Activities.DynamicUpdate;
 
                 if (instanceMetadata != null)
                 {
-                    foreach (KeyValuePair<XName, InstanceValue> value in instanceMetadata)
+                    foreach (var value in instanceMetadata)
                     {
                         saveCommand.InstanceMetadataChanges.Add(value);
                     }
@@ -6046,7 +5690,7 @@ using System.Activities.DynamicUpdate;
 
                 if (!this.handle.IsValid)
                 {
-                    throw FxTrace.Exception.AsError(new OperationCanceledException(SR.WorkflowInstanceAborted(InstanceId)));
+                    throw FxTrace.Exception.AsError(new OperationCanceledException(SR.WorkflowInstanceAborted(this.InstanceId)));
                 }
 
                 data = view.InstanceData;
@@ -6061,12 +5705,12 @@ using System.Activities.DynamicUpdate;
 
             public IDictionary<XName, InstanceValue> Load(TimeSpan timeout)
             {
-                InstanceView view = this.store.Execute(this.handle, new LoadWorkflowCommand(), timeout);
+                var view = this.store.Execute(this.handle, new LoadWorkflowCommand(), timeout);
                 this.isLocked = true;
 
                 if (!this.handle.IsValid)
                 {
-                    throw FxTrace.Exception.AsError(new OperationCanceledException(SR.WorkflowInstanceAborted(InstanceId)));
+                    throw FxTrace.Exception.AsError(new OperationCanceledException(SR.WorkflowInstanceAborted(this.InstanceId)));
                 }
 
                 return view.InstanceData;
@@ -6074,14 +5718,11 @@ using System.Activities.DynamicUpdate;
 
             public bool TryLoad(TimeSpan timeout, out IDictionary<XName, InstanceValue> data)
             {
-                InstanceView view = this.store.Execute(this.handle, new TryLoadRunnableWorkflowCommand(), timeout);
-                return TryLoadHelper(view, out data);
+                var view = this.store.Execute(this.handle, new TryLoadRunnableWorkflowCommand(), timeout);
+                return this.TryLoadHelper(view, out data);
             }
 
-            public IAsyncResult BeginSave(IDictionary<XName, InstanceValue> instance, PersistenceOperation operation, TimeSpan timeout, AsyncCallback callback, object state)
-            {
-                return this.store.BeginExecute(this.handle, CreateSaveCommand(instance, (this.isLocked ? this.mutableMetadata : this.instanceMetadata), operation), timeout, callback, state);
-            }
+            public IAsyncResult BeginSave(IDictionary<XName, InstanceValue> instance, PersistenceOperation operation, TimeSpan timeout, AsyncCallback callback, object state) => this.store.BeginExecute(this.handle, CreateSaveCommand(instance, (this.isLocked ? this.mutableMetadata : this.instanceMetadata), operation), timeout, callback, state);
 
             public void EndSave(IAsyncResult result)
             {
@@ -6089,33 +5730,27 @@ using System.Activities.DynamicUpdate;
                 this.isLocked = true;
             }
 
-            public IAsyncResult BeginLoad(TimeSpan timeout, AsyncCallback callback, object state)
-            {
-                return this.store.BeginExecute(this.handle, new LoadWorkflowCommand(), timeout, callback, state);
-            }
+            public IAsyncResult BeginLoad(TimeSpan timeout, AsyncCallback callback, object state) => this.store.BeginExecute(this.handle, new LoadWorkflowCommand(), timeout, callback, state);
 
             public IDictionary<XName, InstanceValue> EndLoad(IAsyncResult result)
             {
-                InstanceView view = this.store.EndExecute(result);
+                var view = this.store.EndExecute(result);
                 this.isLocked = true;
 
                 if (!this.handle.IsValid)
                 {
-                    throw FxTrace.Exception.AsError(new OperationCanceledException(SR.WorkflowInstanceAborted(InstanceId)));
+                    throw FxTrace.Exception.AsError(new OperationCanceledException(SR.WorkflowInstanceAborted(this.InstanceId)));
                 }
 
                 return view.InstanceData;
             }
 
-            public IAsyncResult BeginTryLoad(TimeSpan timeout, AsyncCallback callback, object state)
-            {
-                return this.store.BeginExecute(this.handle, new TryLoadRunnableWorkflowCommand(), timeout, callback, state);
-            }
+            public IAsyncResult BeginTryLoad(TimeSpan timeout, AsyncCallback callback, object state) => this.store.BeginExecute(this.handle, new TryLoadRunnableWorkflowCommand(), timeout, callback, state);
 
             public bool EndTryLoad(IAsyncResult result, out IDictionary<XName, InstanceValue> data)
             {
-                InstanceView view = this.store.EndExecute(result);
-                return TryLoadHelper(view, out data);
+                var view = this.store.EndExecute(result);
+                return this.TryLoadHelper(view, out data);
             }
 
             public void Abort()
@@ -6125,18 +5760,18 @@ using System.Activities.DynamicUpdate;
                 // Make sure the setter of handle sees aborted, or v.v., or both.
                 Thread.MemoryBarrier();
 
-                InstanceHandle handle = this.handle;
+                var handle = this.handle;
                 if (handle != null)
                 {
                     handle.Free();
                 }
 
-                FreeTemporaryHandle();
+                this.FreeTemporaryHandle();
             }
 
             public void Unlock(TimeSpan timeout)
             {
-                SaveWorkflowCommand saveCmd = new SaveWorkflowCommand()
+                var saveCmd = new SaveWorkflowCommand()
                 {
                     UnlockInstance = true,
                 };
@@ -6146,7 +5781,7 @@ using System.Activities.DynamicUpdate;
 
             public IAsyncResult BeginUnlock(TimeSpan timeout, AsyncCallback callback, object state)
             {
-                SaveWorkflowCommand saveCmd = new SaveWorkflowCommand()
+                var saveCmd = new SaveWorkflowCommand()
                 {
                     UnlockInstance = true,
                 };
@@ -6154,10 +5789,7 @@ using System.Activities.DynamicUpdate;
                 return this.store.BeginExecute(this.handle, saveCmd, timeout, callback, state);
             }
 
-            public void EndUnlock(IAsyncResult result)
-            {
-                this.store.EndExecute(result);
-            }
+            public void EndUnlock(IAsyncResult result) => this.store.EndExecute(result);
         }
     }
 }

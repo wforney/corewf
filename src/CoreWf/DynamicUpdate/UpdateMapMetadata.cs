@@ -12,7 +12,7 @@ namespace System.Activities.DynamicUpdate
     public class UpdateMapMetadata
     {
         private DynamicUpdateMapBuilder.Finalizer finalizer;
-        DynamicUpdateMapBuilder.IDefinitionMatcher matcher;
+        private DynamicUpdateMapBuilder.IDefinitionMatcher matcher;
         private Activity targetActivity;
         private bool isDisposed;
 
@@ -65,7 +65,7 @@ namespace System.Activities.DynamicUpdate
 
             if (updatedChild != null)
             {
-                Activity result = this.matcher.GetMatch(updatedChild);
+                var result = this.matcher.GetMatch(updatedChild);
                 if (updatedChild.MemberOf == this.targetActivity.MemberOf)
                 {
                     return result;
@@ -77,12 +77,12 @@ namespace System.Activities.DynamicUpdate
                     // to referencing parent.
                     // In case of multiple references from the same parent, we'll compare the first one we find.
                     bool updatedIsImport;
-                    bool updatedIsReferenced = IsChild(this.TargetActivity, updatedChild, out updatedIsImport);
-                    bool updatedIsDelegate = updatedChild.HandlerOf != null;
+                    var updatedIsReferenced = IsChild(this.TargetActivity, updatedChild, out updatedIsImport);
+                    var updatedIsDelegate = updatedChild.HandlerOf != null;
 
                     bool originalIsImport;
-                    bool originalIsReferenced = IsChild(GetMatch(this.TargetActivity), result, out originalIsImport);
-                    bool originalIsDelegate = result.HandlerOf != null;
+                    var originalIsReferenced = IsChild(GetMatch(this.TargetActivity), result, out originalIsImport);
+                    var originalIsDelegate = result.HandlerOf != null;
 
                     if (updatedIsReferenced && originalIsReferenced && updatedIsImport == originalIsImport && updatedIsDelegate == originalIsDelegate)
                     {
@@ -100,7 +100,7 @@ namespace System.Activities.DynamicUpdate
 
             if (updatedVariable != null && updatedVariable.Owner == this.TargetActivity)
             {
-                Variable result = this.matcher.GetMatch(updatedVariable);
+                var result = this.matcher.GetMatch(updatedVariable);
                 return result;
             }
             
@@ -116,7 +116,7 @@ namespace System.Activities.DynamicUpdate
                 return false;
             }
 
-            Activity parent = (childActivity.RootActivity == this.TargetActivity.RootActivity) ? this.TargetActivity : GetMatch(this.TargetActivity);
+            var parent = (childActivity.RootActivity == this.TargetActivity.RootActivity) ? this.TargetActivity : GetMatch(this.TargetActivity);
             return IsReferenceToImportedChild(parent, childActivity);
         }
 
@@ -188,11 +188,11 @@ namespace System.Activities.DynamicUpdate
             }
         }
 
-        static bool IsReferenceToImportedChild(Activity parent, Activity child)
+        private static bool IsReferenceToImportedChild(Activity parent, Activity child)
         {
             if (child != null && child.MemberOf != parent.MemberOf)
             {
-                IdSpace idSpace = parent.MemberOf.Parent;
+                var idSpace = parent.MemberOf.Parent;
                 while (idSpace != null)
                 {
                     if (idSpace == child.MemberOf)

@@ -24,7 +24,7 @@ namespace System.Activities.Debugger
 
         public override string ToString()
         {
-            StringBuilder sb = new StringBuilder();
+            var sb = new StringBuilder();
             sb.AppendFormat("{0} {1} ", this.LineNumber, this.LinePosition);
             switch (this.NodeType)
             {

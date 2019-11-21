@@ -20,11 +20,10 @@ namespace System.Activities.DynamicUpdate
         // the following two fields are never to be serialized.
         private Type type;
         private bool HasGetTypeBeenAttempted;
-                
-        string versionlessAssemblyQualifiedTypeName;
-        string name;
-        string fullAssemblyQualifiedTypeName;
-        ArgumentDirection direction;
+        private string versionlessAssemblyQualifiedTypeName;
+        private string name;
+        private string fullAssemblyQualifiedTypeName;
+        private ArgumentDirection direction;
                 
         public ArgumentInfo(RuntimeArgument argument)
         {
@@ -187,7 +186,7 @@ namespace System.Activities.DynamicUpdate
 
         public override bool Equals(object obj)
         {
-            ArgumentInfo operand = obj as ArgumentInfo;
+            var operand = obj as ArgumentInfo;
             return Equals(this, operand);
         }
 
@@ -197,16 +196,16 @@ namespace System.Activities.DynamicUpdate
         }
 
         // generate assembly-qualified type name without assembly's version, culture and public token info
-        static string GenerateVersionlessAssemblyQualifiedTypeName(Type type)
+        private static string GenerateVersionlessAssemblyQualifiedTypeName(Type type)
         {
-            StringBuilder sb = new StringBuilder();
+            var sb = new StringBuilder();
 
             BuildTypeSpec(sb, type);
 
             return sb.ToString();
         }
 
-        static void BuildTypeSpec(StringBuilder sb, Type type)
+        private static void BuildTypeSpec(StringBuilder sb, Type type)
         {
             if (type.IsByRef)
             {
@@ -218,7 +217,7 @@ namespace System.Activities.DynamicUpdate
             }
         }
 
-        static void BuildReferenceTypeSpec(StringBuilder sb, Type type)
+        private static void BuildReferenceTypeSpec(StringBuilder sb, Type type)
         {
             Fx.Assert(type.HasElementType, "This type must have an element type.");
 
@@ -226,7 +225,7 @@ namespace System.Activities.DynamicUpdate
             sb.Append('&');
         }
 
-        static void BuildSimpleTypeSpec(StringBuilder sb, Type type)
+        private static void BuildSimpleTypeSpec(StringBuilder sb, Type type)
         {
             if (type.IsPointer)
             {
@@ -242,7 +241,7 @@ namespace System.Activities.DynamicUpdate
             }
         }
 
-        static void BuildPointerTypeSpec(StringBuilder sb, Type type)
+        private static void BuildPointerTypeSpec(StringBuilder sb, Type type)
         {
             Fx.Assert(type.HasElementType, "This type must have an element type.");
 
@@ -250,32 +249,32 @@ namespace System.Activities.DynamicUpdate
             sb.Append('*');
         }
 
-        static void BuildArrayTypeSpec(StringBuilder sb, Type type)
+        private static void BuildArrayTypeSpec(StringBuilder sb, Type type)
         {
             Fx.Assert(type.IsArray, "This type must be an array type.");
             Fx.Assert(type.HasElementType, "This type must have an element type.");
 
             BuildSimpleTypeSpec(sb, type.GetElementType());
 
-            int arrayRank = type.GetArrayRank();
+            var arrayRank = type.GetArrayRank();
             Fx.Assert(arrayRank > 0, "number of dimentions of this array must be greater than 0.");
 
             sb.Append('[');
-            for (int i = 1; i < arrayRank; i++)
+            for (var i = 1; i < arrayRank; i++)
             {
                 sb.Append(',');
             }
             sb.Append(']');
         }
 
-        static void BuildTypeName(StringBuilder sb, Type type)
+        private static void BuildTypeName(StringBuilder sb, Type type)
         {
             BuildNamespaceTypeName(sb, type);
             sb.Append(", ");
             BuildAssemblyNameSpec(sb, type);
         }
 
-        static void BuildNamespaceTypeName(StringBuilder sb, Type type)
+        private static void BuildNamespaceTypeName(StringBuilder sb, Type type)
         {
             if (!String.IsNullOrEmpty(type.Namespace))
             {
@@ -285,7 +284,7 @@ namespace System.Activities.DynamicUpdate
             BuildNestedTypeName(sb, type);
         }
 
-        static void BuildNestedTypeName(StringBuilder sb, Type type)
+        private static void BuildNestedTypeName(StringBuilder sb, Type type)
         {
             if (type.IsNested)
             {
@@ -296,20 +295,20 @@ namespace System.Activities.DynamicUpdate
             BuildSimpleName(sb, type);
         }
 
-        static void BuildSimpleName(StringBuilder sb, Type type)
+        private static void BuildSimpleName(StringBuilder sb, Type type)
         {
             sb.Append(type.Name);
 
             if (type.IsGenericType && !type.IsGenericTypeDefinition)
             {
                 sb.Append('[');
-                Type[] genericArguments = type.GetGenericArguments();
+                var genericArguments = type.GetGenericArguments();
 
                 sb.Append('[');
                 BuildTypeSpec(sb, genericArguments[0]);
                 sb.Append(']');
 
-                for (int i = 1; i < genericArguments.Length; i++)
+                for (var i = 1; i < genericArguments.Length; i++)
                 {
                     sb.Append(',');
                     sb.Append('[');
@@ -321,11 +320,11 @@ namespace System.Activities.DynamicUpdate
             }
         }
 
-        static void BuildAssemblyNameSpec(StringBuilder sb, Type type)
+        private static void BuildAssemblyNameSpec(StringBuilder sb, Type type)
         {
             // only write assembly simple name,
             // omit version, culture and public token
-            AssemblyName tempAssemName = new AssemblyName(type.Assembly.FullName);
+            var tempAssemName = new AssemblyName(type.Assembly.FullName);
             sb.Append(tempAssemName.Name);
         }
     }

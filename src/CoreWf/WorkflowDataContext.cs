@@ -9,40 +9,84 @@ namespace System.Activities
     using System.ComponentModel;
     using System.Activities.Internals;
 
+    /// <summary>
+    /// The WorkflowDataContext class. This class cannot be inherited.
+    /// Implements the <see cref="System.ComponentModel.CustomTypeDescriptor" />
+    /// Implements the <see cref="System.ComponentModel.INotifyPropertyChanged" />
+    /// Implements the <see cref="System.IDisposable" />
+    /// </summary>
+    /// <seealso cref="System.ComponentModel.CustomTypeDescriptor" />
+    /// <seealso cref="System.ComponentModel.INotifyPropertyChanged" />
+    /// <seealso cref="System.IDisposable" />
     [Fx.Tag.XamlVisible(false)]
     public sealed class WorkflowDataContext : CustomTypeDescriptor, INotifyPropertyChanged, IDisposable
     {
+        /// <summary>
+        /// The executor
+        /// </summary>
         private readonly ActivityExecutor executor;
+        /// <summary>
+        /// The activity instance
+        /// </summary>
         private ActivityInstance activityInstance;
+        /// <summary>
+        /// The location mapping
+        /// </summary>
         private IDictionary<Location, PropertyDescriptorImpl> locationMapping;
+        /// <summary>
+        /// The property changed event handler
+        /// </summary>
         private PropertyChangedEventHandler propertyChangedEventHandler;
+        /// <summary>
+        /// The properties
+        /// </summary>
         private readonly PropertyDescriptorCollection properties;
+        /// <summary>
+        /// The cached resolution context
+        /// </summary>
         private ActivityContext cachedResolutionContext;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="WorkflowDataContext"/> class.
+        /// </summary>
+        /// <param name="executor">The executor.</param>
+        /// <param name="activityInstance">The activity instance.</param>
+        /// <param name="includeLocalVariables">if set to <c>true</c> [include local variables].</param>
         internal WorkflowDataContext(ActivityExecutor executor, ActivityInstance activityInstance, bool includeLocalVariables)
         {
             this.executor = executor;
             this.activityInstance = activityInstance;
             this.IncludesLocalVariables = includeLocalVariables;
-            this.properties = CreateProperties();
+            this.properties = this.CreateProperties();
         }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether [includes local variables].
+        /// </summary>
+        /// <value><c>true</c> if [includes local variables]; otherwise, <c>false</c>.</value>
         internal bool IncludesLocalVariables
         {
             get;
             set;
         }
 
+        /// <summary>
+        /// Occurs when a property value changes.
+        /// </summary>
         public event PropertyChangedEventHandler PropertyChanged;
 
-        // We want our own cached ActivityContext rather than using this.executor.GetResolutionContext
-        // because there is no synchronization of access to the executor's cached object and access thru
-        // this WorkflowDataContext will not be done on the workflow runtime thread.
+        /// <summary>
+        /// Gets the resolution context.
+        /// </summary>
+        /// <value>The resolution context.</value>
+        /// <remarks>We want our own cached ActivityContext rather than using this.executor.GetResolutionContext
+        /// because there is no synchronization of access to the executor's cached object and access thru
+        /// this WorkflowDataContext will not be done on the workflow runtime thread.</remarks>
         private ActivityContext ResolutionContext
         {
             get
             {
-                ThrowIfEnvironmentDisposed();
+                this.ThrowIfEnvironmentDisposed();
                 if (this.cachedResolutionContext == null)
                 {
                     this.cachedResolutionContext = new ActivityContext(this.activityInstance, this.executor)
@@ -58,6 +102,10 @@ namespace System.Activities
             }
         }
 
+        /// <summary>
+        /// Gets the property changed event handler.
+        /// </summary>
+        /// <value>The property changed event handler.</value>
         private PropertyChangedEventHandler PropertyChangedEventHandler
         {
             get
@@ -70,22 +118,26 @@ namespace System.Activities
             }
         }
 
+        /// <summary>
+        /// Creates the properties.
+        /// </summary>
+        /// <returns>PropertyDescriptorCollection.</returns>
         private PropertyDescriptorCollection CreateProperties()
         {
             // The name in child Activity will shadow the name in parent.
-            Dictionary<string, object> names = new Dictionary<string, object>();
+            var names = new Dictionary<string, object>();
 
-            List<PropertyDescriptorImpl> propertyList = new List<PropertyDescriptorImpl>();
+            var propertyList = new List<PropertyDescriptorImpl>();
 
-            LocationReferenceEnvironment environment = this.activityInstance.Activity.PublicEnvironment;
-            bool isLocalEnvironment = true;
+            var environment = this.activityInstance.Activity.PublicEnvironment;
+            var isLocalEnvironment = true;
             while (environment != null)
             {
-                foreach (LocationReference locRef in environment.GetLocationReferences())
+                foreach (var locRef in environment.GetLocationReferences())
                 {
                     if (this.IncludesLocalVariables || !isLocalEnvironment || !(locRef is Variable))
                     {
-                        AddProperty(locRef, names, propertyList);
+                        this.AddProperty(locRef, names, propertyList);
                     }
                 }
 
@@ -96,6 +148,12 @@ namespace System.Activities
             return new PropertyDescriptorCollection(propertyList.ToArray(), true);
         }
 
+        /// <summary>
+        /// Adds the property.
+        /// </summary>
+        /// <param name="reference">The reference.</param>
+        /// <param name="names">The names.</param>
+        /// <param name="propertyList">The property list.</param>
         private void AddProperty(LocationReference reference, Dictionary<string, object> names,
             List<PropertyDescriptorImpl> propertyList)
         {
@@ -103,21 +161,25 @@ namespace System.Activities
                 !names.ContainsKey(reference.Name))
             {
                 names.Add(reference.Name, reference);
-                PropertyDescriptorImpl property = new PropertyDescriptorImpl(reference);
+                var property = new PropertyDescriptorImpl(reference);
                 propertyList.Add(property);
-                AddNotifyHandler(property);
+                this.AddNotifyHandler(property);
             }
         }
 
+        /// <summary>
+        /// Adds the notify handler.
+        /// </summary>
+        /// <param name="property">The property.</param>
         private void AddNotifyHandler(PropertyDescriptorImpl property)
         {
-            ActivityContext activityContext = this.ResolutionContext;
+            var activityContext = this.ResolutionContext;
             try
             {
-                Location location = property.LocationReference.GetLocation(activityContext);
+                var location = property.LocationReference.GetLocation(activityContext);
                 if (location is INotifyPropertyChanged notify)
                 {
-                    notify.PropertyChanged += PropertyChangedEventHandler;
+                    notify.PropertyChanged += this.PropertyChangedEventHandler;
 
                     if (this.locationMapping == null)
                     {
@@ -132,15 +194,20 @@ namespace System.Activities
             }
         }
 
+        /// <summary>
+        /// Handles the <see cref="LocationChanged" /> event.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The <see cref="PropertyChangedEventArgs"/> instance containing the event data.</param>
         private void OnLocationChanged(object sender, PropertyChangedEventArgs e)
         {
-            PropertyChangedEventHandler handler = this.PropertyChanged;
+            var handler = this.PropertyChanged;
             if (handler != null)
             {
-                Location location = (Location)sender;
+                var location = (Location)sender;
 
                 Fx.Assert(this.locationMapping != null, "Location mapping must not be null.");
-                if (this.locationMapping.TryGetValue(location, out PropertyDescriptorImpl property))
+                if (this.locationMapping.TryGetValue(location, out var property))
                 {
                     if (e.PropertyName == "Value")
                     {
@@ -154,27 +221,34 @@ namespace System.Activities
             }
         }
 
+        /// <summary>
+        /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+        /// </summary>
         public void Dispose()
         {
             if (this.locationMapping != null)
             {
-                foreach (KeyValuePair<Location, PropertyDescriptorImpl> pair in this.locationMapping)
+                foreach (var pair in this.locationMapping)
                 {
                     if (pair.Key is INotifyPropertyChanged notify)
                     {
-                        notify.PropertyChanged -= PropertyChangedEventHandler;
+                        notify.PropertyChanged -= this.PropertyChangedEventHandler;
                     }
                 }
             }
         }
 
-        // We need a separate method here from Dispose(), because Dispose currently
-        // doesn't make the WDC uncallable, it just unhooks it from notifications.
-        internal void DisposeEnvironment()
-        {
-            this.activityInstance = null;
-        }
+        /// <summary>
+        /// Disposes the environment.
+        /// </summary>
+        /// <remarks>We need a separate method here from Dispose(), because Dispose currently
+        /// doesn't make the WDC uncallable, it just unhooks it from notifications.</remarks>
+        internal void DisposeEnvironment() => this.activityInstance = null;
 
+        /// <summary>
+        /// Throws if environment disposed.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException"></exception>
         private void ThrowIfEnvironmentDisposed()
         {
             if (this.activityInstance == null)
@@ -184,68 +258,76 @@ namespace System.Activities
             }
         }
 
-        public override PropertyDescriptorCollection GetProperties()
-        {
-            return this.properties;
-        }
+        /// <summary>
+        /// Returns a collection of property descriptors for the object represented by this type descriptor.
+        /// </summary>
+        /// <returns>A <see cref="PropertyDescriptorCollection" /> containing the property descriptions for the object represented by this type descriptor. The default is <see cref="PropertyDescriptorCollection.Empty" />.</returns>
+        public override PropertyDescriptorCollection GetProperties() => this.properties;
 
+        /// <summary>
+        /// The PropertyDescriptorImpl class.
+        /// Implements the <see cref="System.ComponentModel.PropertyDescriptor" />
+        /// </summary>
+        /// <seealso cref="System.ComponentModel.PropertyDescriptor" />
         private class PropertyDescriptorImpl : PropertyDescriptor
         {
-            private readonly LocationReference reference;
             // TODO 131998, We should support readonly LocationReferences.
             // bool isReadOnly;
 
-
+            /// <summary>
+            /// Initializes a new instance of the <see cref="PropertyDescriptorImpl"/> class.
+            /// </summary>
+            /// <param name="reference">The reference.</param>
             public PropertyDescriptorImpl(LocationReference reference)
-                : base(reference.Name, new Attribute[0])
-            {
-                this.reference = reference;
-            }
+                : base(reference.Name, Array.Empty<Attribute>()) => this.LocationReference = reference;
 
-            public override Type ComponentType
-            {
-                get { return typeof(WorkflowDataContext); }
-            }
+            /// <summary>
+            /// When overridden in a derived class, gets the type of the component this property is bound to.
+            /// </summary>
+            /// <value>The type of the component.</value>
+            public override Type ComponentType => typeof(WorkflowDataContext);
 
-            public override bool IsReadOnly
-            {
-                get
-                {
+            /// <summary>
+            /// When overridden in a derived class, gets a value indicating whether this property is read-only.
+            /// </summary>
+            /// <value><c>true</c> if this instance is read only; otherwise, <c>false</c>.</value>
+            public override bool IsReadOnly =>
                     // TODO 131998, We should support readonly LocationReferences.
                     // return this.isReadOnly;
-                    return false;
-                }
-            }
+                    false;
 
-            public override Type PropertyType
-            {
-                get
-                {
-                    return this.reference.Type;
-                }
-            }
+            /// <summary>
+            /// When overridden in a derived class, gets the type of the property.
+            /// </summary>
+            /// <value>The type of the property.</value>
+            public override Type PropertyType => this.LocationReference.Type;
 
-            public LocationReference LocationReference
-            {
-                get
-                {
-                    return this.reference;
-                }
-            }
+            /// <summary>
+            /// Gets the location reference.
+            /// </summary>
+            /// <value>The location reference.</value>
+            public LocationReference LocationReference { get; }
 
-            public override bool CanResetValue(object component)
-            {
-                return false;
-            }
+            /// <summary>
+            /// When overridden in a derived class, returns whether resetting an object changes its value.
+            /// </summary>
+            /// <param name="component">The component to test for reset capability.</param>
+            /// <returns><see langword="true" /> if resetting the component changes its value; otherwise, <see langword="false" />.</returns>
+            public override bool CanResetValue(object component) => false;
 
+            /// <summary>
+            /// When overridden in a derived class, gets the current value of the property on a component.
+            /// </summary>
+            /// <param name="component">The component with the property for which to retrieve the value.</param>
+            /// <returns>The value of a property for a given component.</returns>
             public override object GetValue(object component)
             {
-                WorkflowDataContext dataContext = (WorkflowDataContext)component;
+                var dataContext = (WorkflowDataContext)component;
 
-                ActivityContext activityContext = dataContext.ResolutionContext;
+                var activityContext = dataContext.ResolutionContext;
                 try
                 {
-                    return this.reference.GetLocation(activityContext).Value;
+                    return this.LocationReference.GetLocation(activityContext).Value;
                 }
                 finally
                 {
@@ -253,24 +335,32 @@ namespace System.Activities
                 }
             }
 
-            public override void ResetValue(object component)
-            {
-                throw FxTrace.Exception.AsError(new NotSupportedException(SR.CannotResetPropertyInDataContext));
-            }
+            /// <summary>
+            /// When overridden in a derived class, resets the value for this property of the component to the default value.
+            /// </summary>
+            /// <param name="component">The component with the property value that is to be reset to the default value.</param>
+            /// <exception cref="NotSupportedException"></exception>
+            public override void ResetValue(object component) => throw FxTrace.Exception.AsError(new NotSupportedException(SR.CannotResetPropertyInDataContext));
 
+            /// <summary>
+            /// When overridden in a derived class, sets the value of the component to a different value.
+            /// </summary>
+            /// <param name="component">The component with the property value that is to be set.</param>
+            /// <param name="value">The new value.</param>
+            /// <exception cref="NotSupportedException"></exception>
             public override void SetValue(object component, object value)
             {
-                if (IsReadOnly)
+                if (this.IsReadOnly)
                 {
                     throw FxTrace.Exception.AsError(new NotSupportedException(SR.PropertyReadOnlyInWorkflowDataContext(this.Name)));
                 }
 
-                WorkflowDataContext dataContext = (WorkflowDataContext)component;
+                var dataContext = (WorkflowDataContext)component;
 
-                ActivityContext activityContext = dataContext.ResolutionContext;
+                var activityContext = dataContext.ResolutionContext;
                 try
                 {
-                    Location location = this.reference.GetLocation(activityContext);
+                    var location = this.LocationReference.GetLocation(activityContext);
                     location.Value = value;
                 }
                 finally
@@ -279,10 +369,12 @@ namespace System.Activities
                 }
             }
 
-            public override bool ShouldSerializeValue(object component)
-            {
-                return true;
-            }
+            /// <summary>
+            /// When overridden in a derived class, determines a value indicating whether the value of this property needs to be persisted.
+            /// </summary>
+            /// <param name="component">The component with the property to be examined for persistence.</param>
+            /// <returns><see langword="true" /> if the property should be persisted; otherwise, <see langword="false" />.</returns>
+            public override bool ShouldSerializeValue(object component) => true;
         }
     }
 }

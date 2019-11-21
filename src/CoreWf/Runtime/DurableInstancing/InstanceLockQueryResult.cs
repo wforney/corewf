@@ -21,7 +21,7 @@ namespace System.Activities.Runtime.DurableInstancing
         // One
         public InstanceLockQueryResult(Guid instanceId, Guid instanceOwnerId)
         {
-            Dictionary<Guid, Guid> owners = new Dictionary<Guid, Guid>(1);
+            var owners = new Dictionary<Guid, Guid>(1);
             owners.Add(instanceId, instanceOwnerId);
             InstanceOwnerIds = new ReadOnlyDictionary<Guid, Guid>(owners);
         }
@@ -29,7 +29,7 @@ namespace System.Activities.Runtime.DurableInstancing
         // N
         public InstanceLockQueryResult(IDictionary<Guid, Guid> instanceOwnerIds)
         {
-            Dictionary<Guid, Guid> copy = new Dictionary<Guid, Guid>(instanceOwnerIds);
+            var copy = new Dictionary<Guid, Guid>(instanceOwnerIds);
             InstanceOwnerIds = new ReadOnlyDictionary<Guid, Guid>(copy);
         }
 

@@ -18,7 +18,7 @@ namespace System.Activities.XamlIntegration
         {
             this.ForImplementation = forImplementation;
 
-            VisitRoot(activity, out bool exit);
+            VisitRoot(activity, out var exit);
         }
 
         private void VisitCore(Activity activity, out bool exit)
@@ -120,7 +120,7 @@ namespace System.Activities.XamlIntegration
         {
             //
             // Walk the contained variables' default expressions
-            foreach (Variable v in activity.RuntimeVariables)
+            foreach (var v in activity.RuntimeVariables)
             {
                 if (v.Default != null)
                 {
@@ -149,7 +149,7 @@ namespace System.Activities.XamlIntegration
 
         protected virtual void VisitRootImplementationScope(Activity activity, out bool exit)
         {
-            foreach (Variable v in activity.RuntimeVariables)
+            foreach (var v in activity.RuntimeVariables)
             {
                 if (v.Default != null)
                 {
@@ -183,7 +183,7 @@ namespace System.Activities.XamlIntegration
         {
             if (activity.Children != null)
             {
-                for (int i = 0; i < activity.Children.Count; i++)
+                for (var i = 0; i < activity.Children.Count; i++)
                 {
                     if (activity == activity.Children[i].Parent)
                     {
@@ -202,7 +202,7 @@ namespace System.Activities.XamlIntegration
         {
             if (activity.ImportedChildren != null)
             {
-                for (int i = 0; i < activity.ImportedChildren.Count; i++)
+                for (var i = 0; i < activity.ImportedChildren.Count; i++)
                 {
                     VisitCore(activity.ImportedChildren[i], out exit);
                     if (exit)
@@ -218,7 +218,7 @@ namespace System.Activities.XamlIntegration
         {
             if (activity.Delegates != null)
             {
-                foreach (ActivityDelegate activityDelegate in activity.Delegates)
+                foreach (var activityDelegate in activity.Delegates)
                 {
                     if (activity == activityDelegate.Owner)
                     {
@@ -238,7 +238,7 @@ namespace System.Activities.XamlIntegration
         {
             if (activity.ImportedDelegates != null)
             {
-                foreach (ActivityDelegate activityDelegate in activity.ImportedDelegates)
+                foreach (var activityDelegate in activity.ImportedDelegates)
                 {
                     VisitDelegate(activityDelegate, out exit);
 
@@ -271,7 +271,7 @@ namespace System.Activities.XamlIntegration
 
         protected virtual void VisitDelegateArguments(ActivityDelegate activityDelegate, out bool exit)
         {
-            foreach (RuntimeDelegateArgument delegateArgument in activityDelegate.RuntimeDelegateArguments)
+            foreach (var delegateArgument in activityDelegate.RuntimeDelegateArguments)
             {
                 if (delegateArgument.BoundArgument != null)
                 {
@@ -382,7 +382,7 @@ namespace System.Activities.XamlIntegration
 
             if (activity.ImplementationChildren != null)
             {
-                for (int i = 0; i < activity.ImplementationChildren.Count; i++)
+                for (var i = 0; i < activity.ImplementationChildren.Count; i++)
                 {
                     VisitCore(activity.ImplementationChildren[i], out exit);
                     if (exit)
@@ -423,7 +423,7 @@ namespace System.Activities.XamlIntegration
 
         private void VisitArguments(Activity activity, out bool exit, VisitArgumentDelegate visitArgument)
         {
-            foreach (RuntimeArgument runtimeArgument in activity.RuntimeArguments)
+            foreach (var runtimeArgument in activity.RuntimeArguments)
             {
                 visitArgument(runtimeArgument, out exit);
                 if (exit)

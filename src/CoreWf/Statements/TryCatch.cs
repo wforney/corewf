@@ -128,13 +128,13 @@ using System.Activities.DynamicUpdate;
                 metadata.AddChild(this.Finally);
             }
 
-            Collection<ActivityDelegate> delegates = new Collection<ActivityDelegate>();
+            var delegates = new Collection<ActivityDelegate>();
 
             if (this.catches != null)
             {
-                foreach (Catch item in this.catches)
+                foreach (var item in this.catches)
                 {
-                    ActivityDelegate catchDelegate = item.GetAction();
+                    var catchDelegate = item.GetAction();
                     if (catchDelegate != null)
                     {
                         delegates.Add(catchDelegate);
@@ -156,7 +156,7 @@ using System.Activities.DynamicUpdate;
 
         internal static Catch FindCatchActivity(Type typeToMatch, IList<Catch> catches)
         {
-            foreach (Catch item in catches)
+            foreach (var item in catches)
             {
                 if (item.ExceptionType == typeToMatch)
                 {
@@ -169,7 +169,7 @@ using System.Activities.DynamicUpdate;
 
         protected override void Execute(NativeActivityContext context)
         {
-            ExceptionPersistenceExtension extension = context.GetExtension<ExceptionPersistenceExtension>();
+            var extension = context.GetExtension<ExceptionPersistenceExtension>();
             if ((extension != null) && !extension.PersistExceptions)
             {
                 // We will need a NoPersistProperty if we catch an exception.
@@ -193,7 +193,7 @@ using System.Activities.DynamicUpdate;
 
         protected override void Cancel(NativeActivityContext context)
         {
-            TryCatchState state = this.state.Get(context);
+            var state = this.state.Get(context);
             if (!state.SuppressCancel)
             {
                 context.CancelChildren();
@@ -202,14 +202,14 @@ using System.Activities.DynamicUpdate;
 
         private void OnTryComplete(NativeActivityContext context, ActivityInstance completedInstance)
         {
-            TryCatchState state = this.state.Get(context);
+            var state = this.state.Get(context);
 
             // We only allow the Try to be canceled.
             state.SuppressCancel = true;
 
             if (state.CaughtException != null)
             {
-                Catch toSchedule = FindCatch(state.CaughtException.Exception);
+                var toSchedule = FindCatch(state.CaughtException.Exception);
 
                 if (toSchedule != null)
                 {
@@ -241,7 +241,7 @@ using System.Activities.DynamicUpdate;
             }
             else
             {
-                Catch catchHandler = FindCatch(propagatedException);
+                var catchHandler = FindCatch(propagatedException);
                 if (catchHandler != null)
                 {
                     if (TD.TryCatchExceptionFromTryIsEnabled())
@@ -250,13 +250,13 @@ using System.Activities.DynamicUpdate;
                     }
 
                     context.CancelChild(propagatedFrom);
-                    TryCatchState state = this.state.Get(context);
+                    var state = this.state.Get(context);
 
                     // If we are not supposed to persist exceptions, enter our noPersistScope
-                    ExceptionPersistenceExtension extension = context.GetExtension<ExceptionPersistenceExtension>();
+                    var extension = context.GetExtension<ExceptionPersistenceExtension>();
                     if ((extension != null) && !extension.PersistExceptions)
                     {
-                        NoPersistProperty noPersistProperty = (NoPersistProperty)context.Properties.FindAtCurrentScope(NoPersistProperty.Name);
+                        var noPersistProperty = (NoPersistProperty)context.Properties.FindAtCurrentScope(NoPersistProperty.Name);
                         if (noPersistProperty != null)
                         {
                             // The property will be exited when the activity completes or aborts.
@@ -273,7 +273,7 @@ using System.Activities.DynamicUpdate;
         private void OnCatchComplete(NativeActivityContext context, ActivityInstance completedInstance)
         {
             // Start suppressing cancel for the finally activity
-            TryCatchState state = this.state.Get(context);
+            var state = this.state.Get(context);
             state.SuppressCancel = true;
 
             if (completedInstance != null && completedInstance.State != ActivityInstanceState.Closed)
@@ -295,7 +295,7 @@ using System.Activities.DynamicUpdate;
 
         private void OnFinallyComplete(NativeActivityContext context, ActivityInstance completedInstance)
         {
-            TryCatchState state = this.state.Get(context);
+            var state = this.state.Get(context);
             if (context.IsCancellationRequested && !state.ExceptionHandled)
             {
                 context.MarkCanceled();
@@ -310,16 +310,16 @@ using System.Activities.DynamicUpdate;
             }
 
             // We allow cancel through if there is an exception from the catch or finally
-            TryCatchState state = this.state.Get(context);
+            var state = this.state.Get(context);
             state.SuppressCancel = false;
         }
 
         private Catch FindCatch(Exception exception)
         {
-            Type exceptionType = exception.GetType();
+            var exceptionType = exception.GetType();
             Catch potentialCatch = null;
 
-            foreach (Catch catchHandler in this.Catches)
+            foreach (var catchHandler in this.Catches)
             {
                 if (catchHandler.ExceptionType == exceptionType)
                 {
@@ -392,7 +392,7 @@ using System.Activities.DynamicUpdate;
                     throw FxTrace.Exception.ArgumentNull(nameof(item));
                 }
 
-                Catch existingCatch = TryCatch.FindCatchActivity(item.ExceptionType, this.Items);
+                var existingCatch = TryCatch.FindCatchActivity(item.ExceptionType, this.Items);
 
                 if (existingCatch != null)
                 {
@@ -409,7 +409,7 @@ using System.Activities.DynamicUpdate;
                     throw FxTrace.Exception.ArgumentNull(nameof(item));
                 }
 
-                Catch existingCatch = TryCatch.FindCatchActivity(item.ExceptionType, this.Items);
+                var existingCatch = TryCatch.FindCatchActivity(item.ExceptionType, this.Items);
 
                 if (existingCatch != null && !object.ReferenceEquals(this[index], existingCatch))
                 {

@@ -36,7 +36,7 @@ namespace System.Activities.Expressions
 
         protected override void CacheMetadata(CodeActivityMetadata metadata)
         {
-            Type literalType = typeof(T);
+            var literalType = typeof(T);
 
             if (!literalType.IsValueType && literalType != TypeHelper.StringType)
             {
@@ -70,7 +70,7 @@ namespace System.Activities.Expressions
 
             if (valueType == TypeHelper.StringType)
             {
-                string myValue = this.Value as string;
+                var myValue = this.Value as string;
                 if (string.IsNullOrEmpty(myValue))
                 {
                     return false;
@@ -85,13 +85,13 @@ namespace System.Activities.Expressions
             {               
                 if (valueType == typeof(DateTime))
                 {
-                    DateTime literalValue = (DateTime)(object)this.Value;
+                    var literalValue = (DateTime)(object)this.Value;
                     return IsShortTimeFormattingSafe(literalValue);
                 }
 
                 if (valueType == typeof(DateTimeOffset))
                 {
-                    DateTimeOffset literalValue = (DateTimeOffset)(object)this.Value;
+                    var literalValue = (DateTimeOffset)(object)this.Value;
                     return IsShortTimeFormattingSafe(literalValue);
                 }
 
@@ -109,7 +109,7 @@ namespace System.Activities.Expressions
                 // In Dev11, DateTime is special-cased, and is expanded to the property element syntax under a certain condition,
                 // so that all aspects of DateTime data are completely preserved after xaml roundtrip.
 
-                DateTime noLeftOverTicksDateTime = new DateTime(
+                var noLeftOverTicksDateTime = new DateTime(
                     literalValue.Year,
                     literalValue.Month,
                     literalValue.Day,
@@ -161,7 +161,7 @@ namespace System.Activities.Expressions
             // handle a Literal<string> of "[...]" by inserting escape chararcter '%' at the front
             if (typeArgument == TypeHelper.StringType)
             {
-                string originalString = Convert.ToString(this.Value);
+                var originalString = Convert.ToString(this.Value);
                 if (originalString.EndsWith("]", StringComparison.Ordinal) && ExpressionEscapeRegex.IsMatch(originalString))
                 {
                     return "%" + originalString;

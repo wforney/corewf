@@ -4,9 +4,7 @@
 namespace System.Activities.DynamicUpdate
 {
     using System;
-    using System.Collections.Generic;
     using System.Collections.ObjectModel;
-    using System.Runtime;
     using System.Runtime.Serialization;
 
     [Serializable]
@@ -14,12 +12,15 @@ namespace System.Activities.DynamicUpdate
     public class ActivityBlockingUpdate
     {
         [NonSerialized]
-        private Activity activity;
-
-        string activityInstanceId;
-        string originalActivityId;
-        string updatedActivityId;
-        string reason;       
+        private readonly Activity activity;
+        [NonSerialized]
+        private string activityInstanceId;
+        [NonSerialized]
+        private string originalActivityId;
+        [NonSerialized]
+        private string updatedActivityId;
+        [NonSerialized]
+        private string reason;       
 
         public ActivityBlockingUpdate(Activity activity, string originalActivityId, string reason)
             : this(activity, originalActivityId, reason, null)
@@ -51,88 +52,58 @@ namespace System.Activities.DynamicUpdate
             this.Reason = reason;
         }
 
-        public Activity Activity
-        {
-            get
-            {
-                return this.activity;
-            }
-        }
-        
+        public Activity Activity => this.activity;
+
         public string ActivityInstanceId
         {
-            get
-            {
-                return this.activityInstanceId;
-            }
-            private set
-            {
-                this.activityInstanceId = value;
-            }
+            get => this.activityInstanceId;
+            private set => this.activityInstanceId = value;
         }
-        
+
         public string OriginalActivityId
         {
-            get
-            {
-                return this.originalActivityId;
-            }
-            private set
-            {
-                this.originalActivityId = value;
-            }
+            get => this.originalActivityId;
+            private set => this.originalActivityId = value;
         }
-        
+
         public string UpdatedActivityId
         {
-            get
-            {
-                return this.updatedActivityId;
-            }
-            private set
-            {
-                this.updatedActivityId = value;
-            }
+            get => this.updatedActivityId;
+            private set => this.updatedActivityId = value;
         }
-        
+
         public string Reason
         {
-            get
-            {
-                return this.reason;
-            }
-            private set
-            {
-                this.reason = value;
-            }
+            get => this.reason;
+            private set => this.reason = value;
         }
 
         [DataMember(EmitDefaultValue = false, Name = "ActivityInstanceId")]
         internal string SerializedActivityInstanceId
         {
-            get { return this.ActivityInstanceId; }
-            set { this.ActivityInstanceId = value; }
+            get => this.ActivityInstanceId;
+            set => this.ActivityInstanceId = value;
         }
 
         [DataMember(EmitDefaultValue = false, Name = "OriginalActivityId")]
         internal string SerializedOriginalActivityId
         {
-            get { return this.OriginalActivityId; }
-            set { this.OriginalActivityId = value; }
+            get => this.OriginalActivityId;
+            set => this.OriginalActivityId = value;
         }
 
         [DataMember(EmitDefaultValue = false, Name = "UpdatedActivityId")]
         internal string SerializedUpdatedActivityId
         {
-            get { return this.UpdatedActivityId; }
-            set { this.UpdatedActivityId = value; }
+            get => this.UpdatedActivityId;
+            set => this.UpdatedActivityId = value;
         }
 
         [DataMember(EmitDefaultValue = false, Name = "Reason")]
         internal string SerializedReason
         {
-            get { return this.Reason; }
-            set { this.Reason = value; }
+            get => this.Reason;
+            set => this.Reason = value;
         }
 
         internal static void AddBlockingActivity(ref Collection<ActivityBlockingUpdate> blockingActivities, Activity activity, string originalActivityId, string reason, string activityInstanceId)
@@ -142,7 +113,7 @@ namespace System.Activities.DynamicUpdate
                 blockingActivities = new Collection<ActivityBlockingUpdate>();
             }
 
-            ActivityBlockingUpdate blockingActivity = new ActivityBlockingUpdate(activity, originalActivityId, reason, activityInstanceId);
+            var blockingActivity = new ActivityBlockingUpdate(activity, originalActivityId, reason, activityInstanceId);
             blockingActivities.Add(blockingActivity);
         }
 
@@ -153,7 +124,7 @@ namespace System.Activities.DynamicUpdate
                 blockingActivities = new Collection<ActivityBlockingUpdate>();
             }
 
-            ActivityBlockingUpdate blockingActivity = new ActivityBlockingUpdate(updatedActivityId, originalActivityId, reason, activityInstanceId);
+            var blockingActivity = new ActivityBlockingUpdate(updatedActivityId, originalActivityId, reason, activityInstanceId);
             blockingActivities.Add(blockingActivity);
         }
     }

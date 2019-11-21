@@ -68,7 +68,7 @@ namespace System.Activities.Runtime
 
         public Bookmark CreateBookmark(string name, BookmarkCallback callback, ActivityInstance owningInstance, BookmarkOptions options)
         {
-            Bookmark toAdd = new Bookmark(name);
+            var toAdd = new Bookmark(name);
 
             if (this.bookmarks != null && this.bookmarks.ContainsKey(toAdd))
             {
@@ -86,7 +86,7 @@ namespace System.Activities.Runtime
         {
             Fx.Assert(this.scope == null, "We only support named bookmarks within bookmark scopes right now.");
 
-            Bookmark bookmark = Bookmark.Create(GetNextBookmarkId());
+            var bookmark = Bookmark.Create(GetNextBookmarkId());
             AddBookmark(bookmark, callback, owningInstance, options);
             //Regular bookmarks are never important
             UpdateAllExclusiveHandles(bookmark, owningInstance);
@@ -109,22 +109,22 @@ namespace System.Activities.Runtime
                 return;
             }
 
-            List<ExclusiveHandle> handles = owningInstance.PropertyManager.FindAll<ExclusiveHandle>();
+            var handles = owningInstance.PropertyManager.FindAll<ExclusiveHandle>();
 
             if (handles == null)
             {
                 return;
             }
 
-            for (int i = 0; i < handles.Count; i++)
+            for (var i = 0; i < handles.Count; i++)
             {
-                ExclusiveHandle handle = handles[i];
+                var handle = handles[i];
                 if (handle != null)
                 {
                     if (this.scopeHandle != null)
                     {
-                        bool found = false;
-                        foreach (BookmarkScopeHandle bookmarkScopeHandle in handle.RegisteredBookmarkScopes)
+                        var found = false;
+                        foreach (var bookmarkScopeHandle in handle.RegisteredBookmarkScopes)
                         {
                             if (bookmarkScopeHandle == this.scopeHandle)
                             {
@@ -160,7 +160,7 @@ namespace System.Activities.Runtime
 
             bookmark.Scope = this.scope;
 
-            BookmarkCallbackWrapper bookmarkCallbackWrapper = new BookmarkCallbackWrapper(callback, owningInstance, options)
+            var bookmarkCallbackWrapper = new BookmarkCallbackWrapper(callback, owningInstance, options)
             {
                 Bookmark = bookmark
             };
@@ -181,7 +181,7 @@ namespace System.Activities.Runtime
                 throw FxTrace.Exception.AsError(new NotSupportedException(SR.OutOfInternalBookmarks));
             }
 
-            long result = this.nextId;
+            var result = this.nextId;
             this.nextId++;
             return result;
         }
@@ -199,7 +199,7 @@ namespace System.Activities.Runtime
                 return false;
             }
 
-            if (this.bookmarks.TryGetValue(bookmark, out BookmarkCallbackWrapper wrapper))
+            if (this.bookmarks.TryGetValue(bookmark, out var wrapper))
             {
                 internalBookmark = wrapper.Bookmark;
                 callbackWrapper = wrapper;
@@ -211,7 +211,7 @@ namespace System.Activities.Runtime
 
         public BookmarkResumptionResult TryGenerateWorkItem(ActivityExecutor executor, bool isExternal, ref Bookmark bookmark, object value, ActivityInstance isolationInstance, out ActivityExecutionWorkItem workItem)
         {
-            if (!this.TryGetBookmarkFromInternalList(bookmark, out Bookmark internalBookmark, out BookmarkCallbackWrapper callbackWrapper))
+            if (!this.TryGetBookmarkFromInternalList(bookmark, out var internalBookmark, out var callbackWrapper))
             {
                 workItem = null;
                 return BookmarkResumptionResult.NotFound;
@@ -241,7 +241,7 @@ namespace System.Activities.Runtime
         {
             Fx.Assert(this.HasBookmarks, "Should only be called if this actually has bookmarks.");
 
-            foreach (KeyValuePair<Bookmark, BookmarkCallbackWrapper> bookmarkEntry in this.bookmarks)
+            foreach (var bookmarkEntry in this.bookmarks)
             {
                 if (bookmarkEntry.Key.IsNamed)
                 {
@@ -262,9 +262,9 @@ namespace System.Activities.Runtime
             else
             {
                 Fx.Assert(multipleBookmarks != null, "caller should never pass null");
-                for (int i = 0; i < multipleBookmarks.Count; i++)
+                for (var i = 0; i < multipleBookmarks.Count; i++)
                 {
-                    Bookmark bookmark = multipleBookmarks[i];
+                    var bookmark = multipleBookmarks[i];
                     PurgeSingleBookmark(bookmark);
                 }
             }
@@ -279,7 +279,7 @@ namespace System.Activities.Runtime
 
         public bool Remove(Bookmark bookmark, ActivityInstance instanceAttemptingRemove)
         {
-            if (TryGetBookmarkFromInternalList(bookmark, out Bookmark internalBookmark, out BookmarkCallbackWrapper callbackWrapper))
+            if (TryGetBookmarkFromInternalList(bookmark, out var internalBookmark, out var callbackWrapper))
             {
                 if (callbackWrapper.ActivityInstance != instanceAttemptingRemove)
                 {
@@ -306,9 +306,9 @@ namespace System.Activities.Runtime
         {
             if (bookmark.ExclusiveHandles != null)
             {
-                for (int i = 0; i < bookmark.ExclusiveHandles.Count; i++)
+                for (var i = 0; i < bookmark.ExclusiveHandles.Count; i++)
                 {
-                    ExclusiveHandle handle = bookmark.ExclusiveHandles[i];
+                    var handle = bookmark.ExclusiveHandles[i];
                     Fx.Assert(handle != null, "Internal error.. ExclusiveHandle was null");
                     handle.RemoveBookmark(bookmark);
                 }

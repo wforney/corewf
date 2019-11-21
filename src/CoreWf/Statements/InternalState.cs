@@ -180,7 +180,7 @@ using System.Activities.DynamicUpdate;
             this.ProcessTransitions(metadata);
             metadata.SetVariablesCollection(this.Variables);
 
-            RuntimeArgument eventManagerArgument = new RuntimeArgument("EventManager", this.EventManager.ArgumentType, ArgumentDirection.In);
+            var eventManagerArgument = new RuntimeArgument("EventManager", this.EventManager.ArgumentType, ArgumentDirection.In);
             metadata.Bind(this.EventManager, eventManagerArgument);
 
             metadata.SetArgumentsCollection(
@@ -198,7 +198,7 @@ using System.Activities.DynamicUpdate;
                         Justification = "The context is used by workflow runtime. The parameter should be fine.")]
         protected override void Execute(NativeActivityContext context)
         {
-            StateMachineEventManager eventManager = this.EventManager.Get(context);
+            var eventManager = this.EventManager.Get(context);
             eventManager.CurrentBeingProcessedEvent = null;
             this.isExiting.Set(context, false);
             this.ScheduleEntry(context);
@@ -385,8 +385,8 @@ using System.Activities.DynamicUpdate;
 
         private static void AddTransitionData(NativeActivityMetadata metadata, InternalTransition internalTransition, Transition transition)
         {
-            TransitionData transitionData = new TransitionData();
-            Activity<bool> condition = transition.Condition;
+            var transitionData = new TransitionData();
+            var condition = transition.Condition;
             transitionData.Condition = condition;
 
             if (condition != null)
@@ -394,7 +394,7 @@ using System.Activities.DynamicUpdate;
                 metadata.AddChild(condition);
             }
 
-            Activity action = transition.Action;
+            var action = transition.Action;
             transitionData.Action = action;
 
             if (action != null)
@@ -415,11 +415,11 @@ using System.Activities.DynamicUpdate;
             eventManager.CurrentBeingProcessedEvent = null;
             eventManager.OnTransition = false;
 
-            TriggerCompletedEvent completedEvent = eventManager.GetNextCompletedEvent();
+            var completedEvent = eventManager.GetNextCompletedEvent();
 
             if (completedEvent != null)
             {
-                StateMachineExtension extension = context.GetExtension<StateMachineExtension>();
+                var extension = context.GetExtension<StateMachineExtension>();
                 Fx.Assert(extension != null, "Failed to obtain a StateMachineExtension.");
                 extension.ResumeBookmark(completedEvent.Bookmark);
             }
@@ -678,7 +678,7 @@ using System.Activities.DynamicUpdate;
 
             if (this.internalTransitions.Count > 0)
             {
-                foreach (InternalTransition transition in this.internalTransitions)
+                foreach (var transition in this.internalTransitions)
                 {
                     context.ScheduleActivity(transition.Trigger, this.onTriggerComplete);
                 }
@@ -689,9 +689,9 @@ using System.Activities.DynamicUpdate;
 
         private void OnTriggerComplete(NativeActivityContext context, ActivityInstance completedInstance)
         {
-            int runningTriggers = this.currentRunningTriggers.Get(context);
+            var runningTriggers = this.currentRunningTriggers.Get(context);
             this.currentRunningTriggers.Set(context, --runningTriggers);
-            bool isOnExit = this.isExiting.Get(context);
+            var isOnExit = this.isExiting.Get(context);
 
             if (!context.IsCancellationRequested && runningTriggers == 0 && isOnExit)
             {
@@ -699,13 +699,13 @@ using System.Activities.DynamicUpdate;
             }
             else if (completedInstance.State == ActivityInstanceState.Closed)
             {
-                this.triggerInternalTransitionMapping.TryGetValue(completedInstance.Activity, out InternalTransition internalTransition);
+                this.triggerInternalTransitionMapping.TryGetValue(completedInstance.Activity, out var internalTransition);
                 Fx.Assert(internalTransition != null, "internalTransition should be added into triggerInternalTransitionMapping in CacheMetadata.");
 
-                StateMachineEventManager eventManager = this.EventManager.Get(context);
+                var eventManager = this.EventManager.Get(context);
                 eventManager.RegisterCompletedEvent(
                     new TriggerCompletedEvent { Bookmark = this.evaluateConditionBookmark.Get(context), TriggedId = internalTransition.InternalTransitionIndex },
-                    out bool canBeProcessedImmediately);
+                    out var canBeProcessedImmediately);
 
                 if (canBeProcessedImmediately)
                 {
@@ -717,9 +717,9 @@ using System.Activities.DynamicUpdate;
         private void StartEvaluateCondition(NativeActivityContext context, Bookmark bookmark, object value)
         {
             // Start to evaluate conditions of the trigger which represented by currentTriggerIndex
-            StateMachineEventManager eventManager = this.EventManager.Get(context);
-            int triggerId = eventManager.CurrentBeingProcessedEvent.TriggedId;
-            InternalTransition transition = this.GetInternalTransition(triggerId);
+            var eventManager = this.EventManager.Get(context);
+            var triggerId = eventManager.CurrentBeingProcessedEvent.TriggedId;
+            var transition = this.GetInternalTransition(triggerId);
 
             if (transition.IsUnconditional)
             {
@@ -740,8 +740,8 @@ using System.Activities.DynamicUpdate;
 
         private void OnConditionComplete(NativeActivityContext context, ActivityInstance completedInstance, bool result)
         {
-            StateMachineEventManager eventManager = this.EventManager.Get(context);
-            int triggerId = eventManager.CurrentBeingProcessedEvent.TriggedId;
+            var eventManager = this.EventManager.Get(context);
+            var triggerId = eventManager.CurrentBeingProcessedEvent.TriggedId;
 
             if (result)
             {
@@ -750,9 +750,9 @@ using System.Activities.DynamicUpdate;
             else
             {
                 // condition failed: reschedule trigger
-                int currentConditionIndex = eventManager.CurrentConditionIndex;
+                var currentConditionIndex = eventManager.CurrentConditionIndex;
                 Fx.Assert(eventManager.CurrentConditionIndex >= 0, "Conditional Transition must have non-negative index.");
-                InternalTransition transition = this.GetInternalTransition(triggerId);
+                var transition = this.GetInternalTransition(triggerId);
                 currentConditionIndex++;
 
                 if (currentConditionIndex < transition.TransitionDataList.Count)
@@ -791,11 +791,11 @@ using System.Activities.DynamicUpdate;
 
         private void ScheduleAction(NativeActivityContext context)
         {
-            StateMachineEventManager eventManager = this.EventManager.Get(context);
+            var eventManager = this.EventManager.Get(context);
             if (eventManager.IsReferredByBeingProcessedEvent(this.evaluateConditionBookmark.Get(context)))
             {
-                InternalTransition transition = this.GetInternalTransition(eventManager.CurrentBeingProcessedEvent.TriggedId);
-                Activity action = transition.TransitionDataList[-1 == eventManager.CurrentConditionIndex ? 0 : eventManager.CurrentConditionIndex].Action;
+                var transition = this.GetInternalTransition(eventManager.CurrentBeingProcessedEvent.TriggedId);
+                var action = transition.TransitionDataList[-1 == eventManager.CurrentConditionIndex ? 0 : eventManager.CurrentConditionIndex].Action;
 
                 if (action != null)
                 {
@@ -808,12 +808,12 @@ using System.Activities.DynamicUpdate;
 
         private void ProcessTransitions(NativeActivityMetadata metadata)
         {
-            for (int i = 0; i < this.Transitions.Count; i++)
+            for (var i = 0; i < this.Transitions.Count; i++)
             {
-                Transition transition = this.Transitions[i];
-                Activity triggerActivity = transition.ActiveTrigger;
+                var transition = this.Transitions[i];
+                var triggerActivity = transition.ActiveTrigger;
 
-                if (!this.triggerInternalTransitionMapping.TryGetValue(triggerActivity, out InternalTransition internalTransition))
+                if (!this.triggerInternalTransitionMapping.TryGetValue(triggerActivity, out var internalTransition))
                 {
                     metadata.AddChild(triggerActivity);
 
@@ -848,7 +848,7 @@ using System.Activities.DynamicUpdate;
 
         private void AddEvaluateConditionBookmark(NativeActivityContext context)
         {
-            Bookmark bookmark = context.CreateBookmark(this.evaluateConditionCallback, BookmarkOptions.MultipleResume);
+            var bookmark = context.CreateBookmark(this.evaluateConditionCallback, BookmarkOptions.MultipleResume);
             this.evaluateConditionBookmark.Set(context, bookmark);
             this.EventManager.Get(context).AddActiveBookmark(bookmark);
         }
@@ -861,8 +861,8 @@ using System.Activities.DynamicUpdate;
 
         private void RemoveActiveBookmark(ActivityContext context)
         {
-            StateMachineEventManager eventManager = this.EventManager.Get(context);
-            Bookmark bookmark = this.evaluateConditionBookmark.Get(context);
+            var eventManager = this.EventManager.Get(context);
+            var bookmark = this.evaluateConditionBookmark.Get(context);
             if (bookmark != null)
             {
                 eventManager.RemoveActiveBookmark(bookmark);
@@ -872,7 +872,7 @@ using System.Activities.DynamicUpdate;
         private void TakeTransition(NativeActivityContext context, StateMachineEventManager eventManager, int triggerId)
         {
             this.EventManager.Get(context).OnTransition = true;
-            InternalTransition transition = this.GetInternalTransition(triggerId);
+            var transition = this.GetInternalTransition(triggerId);
 
             if (transition.IsUnconditional)
             {
@@ -888,7 +888,7 @@ using System.Activities.DynamicUpdate;
 
         private void PrepareForExit(NativeActivityContext context, string targetStateId)
         {
-            ReadOnlyCollection<ActivityInstance> children = context.GetChildren();
+            var children = context.GetChildren();
             this.Result.Set(context, targetStateId);
             this.isExiting.Set(context, true);
 

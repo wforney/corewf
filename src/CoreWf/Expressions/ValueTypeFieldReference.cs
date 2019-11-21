@@ -33,7 +33,7 @@ namespace System.Activities.Expressions
 
         protected override void CacheMetadata(CodeActivityMetadata metadata)
         {
-            bool isRequired = false;
+            var isRequired = false;
             if (!typeof(TOperand).IsValueType)
             {
                 metadata.AddValidationError(SR.TypeMustbeValueType(typeof(TOperand).Name));
@@ -65,7 +65,7 @@ namespace System.Activities.Expressions
 
         protected override Location<TResult> Execute(CodeActivityContext context)
         {
-            Location<TOperand> operandLocationValue = this.OperandLocation.GetLocation(context);
+            var operandLocationValue = this.OperandLocation.GetLocation(context);
             Fx.Assert(operandLocationValue != null, "OperandLocation must not be null");
             Fx.Assert(this.fieldInfo != null, "fieldInfo must not be null.");
             return new FieldLocation(this.fieldInfo, operandLocationValue);

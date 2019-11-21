@@ -62,7 +62,7 @@ using System.Activities.DynamicUpdate;
 
         protected override void CacheMetadata(NativeActivityMetadata metadata)
         {
-            RuntimeArgument valuesArgument = new RuntimeArgument("Values", typeof(IEnumerable<T>), ArgumentDirection.In, true);
+            var valuesArgument = new RuntimeArgument("Values", typeof(IEnumerable<T>), ArgumentDirection.In, true);
             metadata.Bind(this.Values, valuesArgument);
 
             metadata.AddArgument(valuesArgument);
@@ -72,13 +72,13 @@ using System.Activities.DynamicUpdate;
 
         protected override void Execute(NativeActivityContext context)
         {
-            IEnumerable<T> values = this.Values.Get(context);
+            var values = this.Values.Get(context);
             if (values == null)
             {
                 throw FxTrace.Exception.AsError(new InvalidOperationException(SR.ForEachRequiresNonNullValues(this.DisplayName)));
             }
 
-            IEnumerator<T> valueEnumerator = values.GetEnumerator();
+            var valueEnumerator = values.GetEnumerator();
             this.valueEnumerator.Set(context, valueEnumerator);
 
             if (this.Body == null || this.Body.Handler == null)
@@ -95,7 +95,7 @@ using System.Activities.DynamicUpdate;
 
         private void GetStateAndExecute(NativeActivityContext context, ActivityInstance completedInstance)
         {
-            IEnumerator<T> valueEnumerator = this.valueEnumerator.Get(context);
+            var valueEnumerator = this.valueEnumerator.Get(context);
             Fx.Assert(valueEnumerator != null, "GetStateAndExecute");
             InternalExecute(context, completedInstance, valueEnumerator);
         }

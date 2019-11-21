@@ -24,7 +24,7 @@ namespace System.Activities.Runtime
         public void Invoke(NativeActivityFaultContext faultContext, Exception propagatedException, ActivityInstance propagatedFrom)
         {
             EnsureCallback(faultCallbackType, faultCallbackParameters);
-            FaultCallback faultCallback = (FaultCallback)this.Callback;
+            var faultCallback = (FaultCallback)this.Callback;
             faultCallback(faultContext, propagatedException, propagatedFrom);
         }
 

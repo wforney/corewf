@@ -107,7 +107,7 @@ using System.Activities.DynamicUpdate;
 
         protected override void Cancel(NativeActivityContext context)
         {
-            bool suppressCancel = this.suppressCancel.Get(context);
+            var suppressCancel = this.suppressCancel.Get(context);
             if (!suppressCancel)
             {
                 context.CancelChildren();

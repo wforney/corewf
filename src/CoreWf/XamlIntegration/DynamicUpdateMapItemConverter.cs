@@ -17,12 +17,12 @@ namespace System.Activities.XamlIntegration
 
         public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
         {
-            string stringValue = value as string;
+            var stringValue = value as string;
             if (stringValue != null)
             {
                 int result1;
                 int result2;
-                string[] strArray = stringValue.Split(new char[] { '.' });
+                var strArray = stringValue.Split(new char[] { '.' });
                 if (strArray.Length == 1)
                 {
                     if (int.TryParse(strArray[0], NumberStyles.Integer, culture, out result1))
@@ -49,7 +49,7 @@ namespace System.Activities.XamlIntegration
 
         public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
         {
-            DynamicUpdateMapItem objectInfo = value as DynamicUpdateMapItem;
+            var objectInfo = value as DynamicUpdateMapItem;
             if (destinationType == typeof(string) && objectInfo != null)
             {
                 if (objectInfo.IsVariableMapItem)

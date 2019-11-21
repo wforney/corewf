@@ -38,7 +38,7 @@ namespace System.Activities.Runtime.DurableInstancing
         {
             if (bag != null)
             {
-                foreach (KeyValuePair<XName, InstanceValue> property in bag)
+                foreach (var property in bag)
                 {
                     property.ValidateProperty(allowDelete);
                 }
@@ -80,8 +80,8 @@ namespace System.Activities.Runtime.DurableInstancing
         {
             if (bag != null && bag.Count > 0)
             {
-                Dictionary<XName, InstanceValue> copy = new Dictionary<XName, InstanceValue>(bag.Count);
-                foreach (KeyValuePair<XName, InstanceValue> value in bag)
+                var copy = new Dictionary<XName, InstanceValue>(bag.Count);
+                foreach (var value in bag)
                 {
                     value.ValidateProperty();
                     if (!value.Value.IsWriteOnly())
@@ -107,8 +107,8 @@ namespace System.Activities.Runtime.DurableInstancing
 
             if (bag != null && bag.Count > 0)
             {
-                Dictionary<XName, InstanceValue> copy = existing == null ? new Dictionary<XName, InstanceValue>(bag.Count) : new Dictionary<XName, InstanceValue>(existing);
-                foreach (KeyValuePair<XName, InstanceValue> value in bag)
+                var copy = existing == null ? new Dictionary<XName, InstanceValue>(bag.Count) : new Dictionary<XName, InstanceValue>(existing);
+                foreach (var value in bag)
                 {
                     value.ValidateProperty(true);
                     if (value.Value.IsDeletedValue)

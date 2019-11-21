@@ -40,8 +40,8 @@ namespace System.Activities.XamlIntegration
             {
                 return null;
             }
-            XamlMember activityBody = GetXamlMember(schemaContextProvider.SchemaContext, typeof(Activity), "Implementation");
-            XamlMember dynamicActivityBody = GetXamlMember(schemaContextProvider.SchemaContext, typeof(DynamicActivity), "Implementation");
+            var activityBody = GetXamlMember(schemaContextProvider.SchemaContext, typeof(Activity), "Implementation");
+            var dynamicActivityBody = GetXamlMember(schemaContextProvider.SchemaContext, typeof(DynamicActivity), "Implementation");
             if (activityBody == null || dynamicActivityBody == null)
             {
                 return null;
@@ -56,12 +56,12 @@ namespace System.Activities.XamlIntegration
 
         private static XamlMember GetXamlMember(XamlSchemaContext schemaContext, Type type, string memberName)
         {
-            XamlType xamlType = schemaContext.GetXamlType(type);
+            var xamlType = schemaContext.GetXamlType(type);
             if (xamlType == null)
             {
                 return null;
             }
-            XamlMember xamlMember = xamlType.GetMember(memberName);
+            var xamlMember = xamlType.GetMember(memberName);
             return xamlMember;
         }
 
@@ -86,7 +86,7 @@ namespace System.Activities.XamlIntegration
                 {
                     Fx.Assert(this.valueType.IsGenericType && this.valueType.GetGenericArguments().Length == 1, "Should only get Location<T> here");
                     this.valueType = this.valueType.GetGenericArguments()[0];
-                    Type concreteHelperType = LocationHelperType.MakeGenericType(typeof(T), this.valueType);
+                    var concreteHelperType = LocationHelperType.MakeGenericType(typeof(T), this.valueType);
                     this.locationHelper = (LocationHelper)Activator.CreateInstance(concreteHelperType);
                 }
             }
@@ -109,7 +109,7 @@ namespace System.Activities.XamlIntegration
                 if (IsExpression(text))
                 {
                     // Expression.  Use the expression parser.
-                    string expressionText = text.Substring(1, text.Length - 2);
+                    var expressionText = text.Substring(1, text.Length - 2);
 
                     if (this.locationHelper != null)
                     {

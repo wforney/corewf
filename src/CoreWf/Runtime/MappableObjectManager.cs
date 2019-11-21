@@ -21,7 +21,7 @@ namespace System.Activities.Runtime
         {
             get
             {
-                int result = 0;
+                var result = 0;
                 if (this.mappableLocations != null)
                 {
                     result += this.mappableLocations.Count;
@@ -44,9 +44,9 @@ namespace System.Activities.Runtime
             if (this.mappableLocations != null && this.mappableLocations.Count > 0)
             {
                 result = new Dictionary<string, LocationInfo>(this.mappableLocations.Count);
-                for (int locationIndex = 0; locationIndex < this.mappableLocations.Count; locationIndex++)
+                for (var locationIndex = 0; locationIndex < this.mappableLocations.Count; locationIndex++)
                 {
-                    MappableLocation mappableLocation = this.mappableLocations[locationIndex];
+                    var mappableLocation = this.mappableLocations[locationIndex];
                     result.Add(mappableLocation.MappingKeyName, new LocationInfo(mappableLocation.Name, mappableLocation.OwnerDisplayName, mappableLocation.Location.Value));
                 }
             }
@@ -70,8 +70,8 @@ namespace System.Activities.Runtime
         {
             Fx.Assert(location.CanBeMapped, "should only register mappable locations");
 
-            int mappedLocationsCount = this.mappableLocations.Count;
-            for (int i = 0; i < mappedLocationsCount; i++)
+            var mappedLocationsCount = this.mappableLocations.Count;
+            for (var i = 0; i < mappedLocationsCount; i++)
             {
                 if (object.ReferenceEquals(this.mappableLocations[i].Location, location))
                 {

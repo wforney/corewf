@@ -159,7 +159,7 @@ namespace System.Activities.Runtime
                 return;
             }
 
-            CallbackData data = (CallbackData)result.AsyncState;
+            var data = (CallbackData)result.AsyncState;
 
             try
             {
@@ -185,7 +185,7 @@ namespace System.Activities.Runtime
                 return;
             }
 
-            CallbackData data = (CallbackData)result.AsyncState;
+            var data = (CallbackData)result.AsyncState;
 
             try
             {
@@ -262,14 +262,14 @@ namespace System.Activities.Runtime
             try
             {
                 // disassociation is local-only so we don't need to yield 
-                ICollection<InstanceKey> keysToDisassociate = executor.BookmarkScopeManager.GetKeysToDisassociate();
+                var keysToDisassociate = executor.BookmarkScopeManager.GetKeysToDisassociate();
                 if (keysToDisassociate != null && keysToDisassociate.Count > 0)
                 {
                     executor.DisassociateKeys(keysToDisassociate);
                 }
 
                 // if we have keys to associate, provide them for an asynchronous association
-                ICollection<InstanceKey> keysToAssociate = executor.BookmarkScopeManager.GetKeysToAssociate();
+                var keysToAssociate = executor.BookmarkScopeManager.GetKeysToAssociate();
 
                 // It could be that we only had keys to Disassociate. We should only do BeginAssociateKeys
                 // if we have keysToAssociate.
@@ -280,7 +280,7 @@ namespace System.Activities.Runtime
                         associateCallback = Fx.ThunkCallback(new AsyncCallback(OnAssociateComplete));
                     }
 
-                    IAsyncResult result = executor.BeginAssociateKeys(keysToAssociate, associateCallback, new CallbackData(executor, this));
+                    var result = executor.BeginAssociateKeys(keysToAssociate, associateCallback, new CallbackData(executor, this));
                     if (result.CompletedSynchronously)
                     {
                         executor.EndAssociateKeys(result);
@@ -315,7 +315,7 @@ namespace System.Activities.Runtime
                     trackingCallback = Fx.ThunkCallback(new AsyncCallback(OnTrackingComplete));
                 }
 
-                IAsyncResult result = executor.BeginTrackPendingRecords(
+                var result = executor.BeginTrackPendingRecords(
                     trackingCallback,
                     new CallbackData(executor, this));
 

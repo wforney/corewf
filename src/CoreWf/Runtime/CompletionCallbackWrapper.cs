@@ -178,7 +178,7 @@ namespace System.Activities.Runtime
 
             public override bool Execute(ActivityExecutor executor, BookmarkManager bookmarkManager)
             {
-                NativeActivityContext context = executor.NativeActivityContextPool.Acquire();
+                var context = executor.NativeActivityContextPool.Acquire();
 
                 Fx.Assert(this.completedInstance.Activity != null, "Activity definition should always be associated with an activity instance.");
 

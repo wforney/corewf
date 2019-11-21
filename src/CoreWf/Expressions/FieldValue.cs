@@ -31,7 +31,7 @@ namespace System.Activities.Expressions
 
         protected override void CacheMetadata(CodeActivityMetadata metadata)
         {
-            bool isRequired = false;
+            var isRequired = false;
 
             if (typeof(TOperand).IsEnum)
             {
@@ -45,7 +45,7 @@ namespace System.Activities.Expressions
             else
             {
                 FieldInfo fieldInfo = null;
-                Type operandType = typeof(TOperand);
+                var operandType = typeof(TOperand);
                 fieldInfo = operandType.GetField(this.FieldName);
 
                 if (fieldInfo == null)
@@ -57,7 +57,7 @@ namespace System.Activities.Expressions
                     this.isOperationFunctionStatic = fieldInfo.IsStatic;
                     isRequired = !this.isOperationFunctionStatic;
 
-                    if (!MemberExpressionHelper.TryGenerateLinqDelegate(this.FieldName, true, this.isOperationFunctionStatic, out this.operationFunction, out ValidationError validationError))
+                    if (!MemberExpressionHelper.TryGenerateLinqDelegate(this.FieldName, true, this.isOperationFunctionStatic, out this.operationFunction, out var validationError))
                     {
                         metadata.AddValidationError(validationError);
                     }
@@ -68,7 +68,7 @@ namespace System.Activities.Expressions
 
         protected override TResult Execute(CodeActivityContext context)
         {
-            TOperand operandValue = this.Operand.Get(context);
+            var operandValue = this.Operand.Get(context);
 
             if (!this.isOperationFunctionStatic && operandValue == null)
             {

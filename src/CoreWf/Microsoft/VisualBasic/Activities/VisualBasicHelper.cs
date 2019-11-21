@@ -29,7 +29,7 @@ namespace Microsoft.VisualBasic.Activities
     using System.Activities.Internals;
     using Microsoft.CodeAnalysis.Scripting;
 
-    class VisualBasicHelper
+    internal class VisualBasicHelper
     {
         internal static string Language
         {
@@ -57,21 +57,21 @@ namespace Microsoft.VisualBasic.Activities
 
         // cache for type's all base types, interfaces, generic arguments, element type
         // HopperCache is a psuedo-MRU cache
-        const int typeReferenceCacheMaxSize = 100;
-        static object typeReferenceCacheLock = new object();
-        static HopperCache typeReferenceCache = new HopperCache(typeReferenceCacheMaxSize, false);
-        static ulong lastTimestamp = 0;
+        private const int typeReferenceCacheMaxSize = 100;
+        private static object typeReferenceCacheLock = new object();
+        private static HopperCache typeReferenceCache = new HopperCache(typeReferenceCacheMaxSize, false);
+        private static ulong lastTimestamp = 0;
 
         // Cache<(expressionText+ReturnType+Assemblies+Imports), LambdaExpression>
         // LambdaExpression represents raw ExpressionTrees right out of the vb hosted compiler
         // these raw trees are yet to be rewritten with appropriate Variables
-        const int rawTreeCacheMaxSize = 128;
-        static object rawTreeCacheLock = new object();
+        private const int rawTreeCacheMaxSize = 128;
+        private static object rawTreeCacheLock = new object();
         [Fx.Tag.SecurityNote(Critical = "Critical because it caches objects created under a demand for FullTrust.")]
         [SecurityCritical]
-        static HopperCache rawTreeCache;
+        private static HopperCache rawTreeCache;
 
-        static HopperCache RawTreeCache
+        private static HopperCache RawTreeCache
         {
             [Fx.Tag.SecurityNote(Critical = "Critical because it access critical member rawTreeCache.")]
             [SecurityCritical]
@@ -85,14 +85,15 @@ namespace Microsoft.VisualBasic.Activities
             }
         }
 
-        const int HostedCompilerCacheSize = 10;
+        private const int HostedCompilerCacheSize = 10;
         [Fx.Tag.SecurityNote(Critical = "Critical because it holds HostedCompilerWrappers which hold HostedCompiler instances, which require FullTrust.")]
         [SecurityCritical]
-        static Dictionary<HashSet<Assembly>, HostedCompilerWrapper> HostedCompilerCache;
+        private static Dictionary<HashSet<Assembly>, HostedCompilerWrapper> HostedCompilerCache;
 
         [Fx.Tag.SecurityNote(Critical = "Critical because it creates Microsoft.Compiler.VisualBasic.HostedCompiler, which is in a non-APTCA assembly, and thus has a LinkDemand.",
             Safe = "Safe because it puts the HostedCompiler instance into the HostedCompilerCache member, which is SecurityCritical and we are demanding FullTrust.")]
         [SecuritySafeCritical]
+        private
         //[PermissionSet(SecurityAction.Demand, Name = "FullTrust")]
         static HostedCompilerWrapper GetCachedHostedCompiler(HashSet<Assembly> assemblySet)
         {            
@@ -116,9 +117,9 @@ namespace Microsoft.VisualBasic.Activities
                 if (HostedCompilerCache.Count >= HostedCompilerCacheSize)
                 {
                     // Find oldest used compiler to kick out
-                    ulong oldestTimestamp = ulong.MaxValue;
+                    var oldestTimestamp = ulong.MaxValue;
                     HashSet<Assembly> oldestCompiler = null;
-                    foreach (KeyValuePair<HashSet<Assembly>, HostedCompilerWrapper> kvp in HostedCompilerCache)
+                    foreach (var kvp in HostedCompilerCache)
                     {
                         if (oldestTimestamp > kvp.Value.Timestamp)
                         {
@@ -143,14 +144,14 @@ namespace Microsoft.VisualBasic.Activities
             }
         }
 
-        string textToCompile;
-        HashSet<Assembly> referencedAssemblies;
-        HashSet<string> namespaceImports;
-        LocationReferenceEnvironment environment;
-        CodeActivityPublicEnvironmentAccessor? publicAccessor;
+        private string textToCompile;
+        private HashSet<Assembly> referencedAssemblies;
+        private HashSet<string> namespaceImports;
+        private LocationReferenceEnvironment environment;
+        private CodeActivityPublicEnvironmentAccessor? publicAccessor;
 
         // this is a flag to differentiate the cached short-cut Rewrite from the normal post-compilation Rewrite
-        bool isShortCutRewrite = false;
+        private bool isShortCutRewrite = false;
 
         public VisualBasicHelper(string expressionText, HashSet<AssemblyName> refAssemNames, HashSet<string> namespaceImportsNames)
             : this(expressionText)
@@ -158,19 +159,19 @@ namespace Microsoft.VisualBasic.Activities
             Initialize(refAssemNames, namespaceImportsNames);
         }
 
-        VisualBasicHelper(string expressionText)
+        private VisualBasicHelper(string expressionText)
         {
             this.textToCompile = expressionText;
         }
 
         public string TextToCompile { get { return this.textToCompile; } }
 
-        void Initialize(HashSet<AssemblyName> refAssemNames, HashSet<string> namespaceImportsNames)
+        private void Initialize(HashSet<AssemblyName> refAssemNames, HashSet<string> namespaceImportsNames)
         {
             namespaceImportsNames.Add("System.Linq.Expressions");
             this.namespaceImports = namespaceImportsNames;
 
-            foreach (AssemblyName assemblyName in refAssemNames)
+            foreach (var assemblyName in refAssemNames)
             {
                 if (this.referencedAssemblies == null)
                 {
@@ -178,7 +179,7 @@ namespace Microsoft.VisualBasic.Activities
                 }
                 try
                 {
-                    Assembly loaded = AssemblyReference.GetAssembly(assemblyName);
+                    var loaded = AssemblyReference.GetAssembly(assemblyName);
                     if(loaded != null)
                     {
                         this.referencedAssemblies.Add(loaded);
@@ -197,14 +198,14 @@ namespace Microsoft.VisualBasic.Activities
 
         public static void GetAllImportReferences(Activity activity, bool isDesignTime, out IList<string> namespaces, out IList<AssemblyReference> assemblies)
         {
-            List<string> namespaceList = new List<string>();
-            List<AssemblyReference> assemblyList = new List<AssemblyReference>();
+            var namespaceList = new List<string>();
+            var assemblyList = new List<AssemblyReference>();
 
             // Start with the defaults; any settings on the Activity will be added to these
             // The default settings are mutable, so we need to re-copy this list on every call
             ExtractNamespacesAndReferences(VisualBasicSettings.Default, namespaceList, assemblyList);
 
-            LocationReferenceEnvironment environment = activity.GetParentEnvironment();
+            var environment = activity.GetParentEnvironment();
             if (environment == null || environment.Root == null)
             {
                 namespaces = namespaceList;
@@ -212,7 +213,7 @@ namespace Microsoft.VisualBasic.Activities
                 return;
             }
 
-            VisualBasicSettings rootVBSettings = VisualBasic.GetSettings(environment.Root);
+            var rootVBSettings = VisualBasic.GetSettings(environment.Root);
             if (rootVBSettings != null)
             {
                 // We have VBSettings
@@ -249,10 +250,10 @@ namespace Microsoft.VisualBasic.Activities
             assemblies = assemblyList;
         }
 
-        static void ExtractNamespacesAndReferences(VisualBasicSettings vbSettings,
+        private static void ExtractNamespacesAndReferences(VisualBasicSettings vbSettings,
             IList<string> namespaces, IList<AssemblyReference> assemblies)
         {
-            foreach (VisualBasicImportReference importReference in vbSettings.ImportReferences)
+            foreach (var importReference in vbSettings.ImportReferences)
             {
                 namespaces.Add(importReference.Import);
                 assemblies.Add(new AssemblyReference
@@ -270,10 +271,10 @@ namespace Microsoft.VisualBasic.Activities
             GetAllImportReferences(publicAccessor.ActivityMetadata.CurrentActivity,
                 false, out localNamespaces, out localAssemblies);
 
-            VisualBasicHelper helper = new VisualBasicHelper(expressionText);
-            HashSet<AssemblyName> localReferenceAssemblies = new HashSet<AssemblyName>();
-            HashSet<string> localImports = new HashSet<string>(localNamespaces);
-            foreach (AssemblyReference assemblyReference in localAssemblies)
+            var helper = new VisualBasicHelper(expressionText);
+            var localReferenceAssemblies = new HashSet<AssemblyName>();
+            var localImports = new HashSet<string>(localNamespaces);
+            foreach (var assemblyReference in localAssemblies)
             {
                 if (assemblyReference.Assembly != null)
                 {
@@ -311,18 +312,18 @@ namespace Microsoft.VisualBasic.Activities
             }
             this.referencedAssemblies.UnionWith(DefaultReferencedAssemblies);
 
-            RawTreeCacheKey rawTreeKey = new RawTreeCacheKey(
+            var rawTreeKey = new RawTreeCacheKey(
                 this.textToCompile,
                 null,
                 this.referencedAssemblies,
                 this.namespaceImports);
 
-            RawTreeCacheValueWrapper rawTreeHolder = RawTreeCache.GetValue(rawTreeCacheLock, rawTreeKey) as RawTreeCacheValueWrapper;
+            var rawTreeHolder = RawTreeCache.GetValue(rawTreeCacheLock, rawTreeKey) as RawTreeCacheValueWrapper;
             if (rawTreeHolder != null)
             {
                 // try short-cut
                 // if variable resolution fails at Rewrite, rewind and perform normal compile steps
-                LambdaExpression rawTree = rawTreeHolder.Value;
+                var rawTree = rawTreeHolder.Value;
                 this.isShortCutRewrite = true;
                 finalBody = Rewrite(rawTree.Body, null, false, out abort);
                 this.isShortCutRewrite = false;
@@ -336,7 +337,7 @@ namespace Microsoft.VisualBasic.Activities
                 // we don't want to see too many of vb expressions in this pass since we just wasted Rewrite time for no good.
             }
 
-            VisualBasicScriptAndTypeScope scriptAndTypeScope = new VisualBasicScriptAndTypeScope(
+            var scriptAndTypeScope = new VisualBasicScriptAndTypeScope(
                 this.environment,
                 this.referencedAssemblies.ToList<Assembly>());
 
@@ -345,8 +346,8 @@ namespace Microsoft.VisualBasic.Activities
             //options.OptionStrict = OptionStrictSetting.On;
             //CompilerContext context = new CompilerContext(scriptAndTypeScope, scriptAndTypeScope, importScope, options);
 
-            HostedCompilerWrapper compilerWrapper = GetCachedHostedCompiler(this.referencedAssemblies);
-            HostedCompiler compiler = compilerWrapper.Compiler;
+            var compilerWrapper = GetCachedHostedCompiler(this.referencedAssemblies);
+            var compiler = compilerWrapper.Compiler;
             LambdaExpression lambda = null;
             try
             {
@@ -400,7 +401,7 @@ namespace Microsoft.VisualBasic.Activities
             return Expression.Lambda(lambda.Type, finalBody, lambda.Parameters);
         }
 
-        ScriptOptions GetScriptOptions() =>
+        private ScriptOptions GetScriptOptions() =>
             ScriptOptions.Default
             .AddReferences(referencedAssemblies)
             .AddImports(namespaceImports.Where(n=>!string.IsNullOrEmpty(n)));
@@ -427,7 +428,7 @@ namespace Microsoft.VisualBasic.Activities
         {
             bool abort;
             Expression finalBody;
-            Type lambdaReturnType = typeof(T);
+            var lambdaReturnType = typeof(T);
 
             this.environment = environment;
             if (this.referencedAssemblies == null)
@@ -436,18 +437,18 @@ namespace Microsoft.VisualBasic.Activities
             }
             this.referencedAssemblies.UnionWith(DefaultReferencedAssemblies);
 
-            RawTreeCacheKey rawTreeKey = new RawTreeCacheKey(
+            var rawTreeKey = new RawTreeCacheKey(
                 this.textToCompile,
                 lambdaReturnType,
                 this.referencedAssemblies,
                 this.namespaceImports);
 
-            RawTreeCacheValueWrapper rawTreeHolder = RawTreeCache.GetValue(rawTreeCacheLock, rawTreeKey) as RawTreeCacheValueWrapper;
+            var rawTreeHolder = RawTreeCache.GetValue(rawTreeCacheLock, rawTreeKey) as RawTreeCacheValueWrapper;
             if (rawTreeHolder != null)
             {
                 // try short-cut
                 // if variable resolution fails at Rewrite, rewind and perform normal compile steps
-                LambdaExpression rawTree = rawTreeHolder.Value;
+                var rawTree = rawTreeHolder.Value;
                 this.isShortCutRewrite = true;
                 finalBody = Rewrite(rawTree.Body, null, isLocationReference, out abort);
                 this.isShortCutRewrite = false;
@@ -476,13 +477,13 @@ namespace Microsoft.VisualBasic.Activities
             // ensure the return type's assembly is added to ref assembly list
             HashSet<Type> allBaseTypes = null;
             EnsureTypeReferenced(lambdaReturnType, ref allBaseTypes);
-            foreach (Type baseType in allBaseTypes)
+            foreach (var baseType in allBaseTypes)
             {
                 // allBaseTypes list always contains lambdaReturnType
                 this.referencedAssemblies.Add(baseType.Assembly);
             }
 
-            VisualBasicScriptAndTypeScope scriptAndTypeScope = new VisualBasicScriptAndTypeScope(
+            var scriptAndTypeScope = new VisualBasicScriptAndTypeScope(
                 this.environment,
                 this.referencedAssemblies.ToList<Assembly>());
 
@@ -490,8 +491,8 @@ namespace Microsoft.VisualBasic.Activities
             //CompilerOptions options = new CompilerOptions();
             //options.OptionStrict = OptionStrictSetting.On;
             //CompilerContext context = new CompilerContext(scriptAndTypeScope, scriptAndTypeScope, importScope, options);
-            HostedCompilerWrapper compilerWrapper = GetCachedHostedCompiler(this.referencedAssemblies);
-            HostedCompiler compiler = compilerWrapper.Compiler;
+            var compilerWrapper = GetCachedHostedCompiler(this.referencedAssemblies);
+            var compiler = compilerWrapper.Compiler;
 
             if (TD.CompileVbExpressionStartIsEnabled())
             {
@@ -562,6 +563,7 @@ namespace Microsoft.VisualBasic.Activities
         [Fx.Tag.SecurityNote(Critical = "Critical because it access SecurityCritical member RawTreeCache, thus requiring FullTrust.",
             Safe = "Safe because we are demanding FullTrust.")]
         [SecuritySafeCritical]
+        private
         //[PermissionSet(SecurityAction.Demand, Name = "FullTrust")]
         static void AddToRawTreeCache(RawTreeCacheKey rawTreeKey, RawTreeCacheValueWrapper rawTreeHolder, LambdaExpression lambda)
         {
@@ -589,12 +591,13 @@ namespace Microsoft.VisualBasic.Activities
             }
         }
 
-        delegate bool FindMatch(LocationReference reference, string targetName, Type targetType, out bool terminateSearch);
-        static FindMatch delegateFindLocationReferenceMatchShortcut = new FindMatch(FindLocationReferenceMatchShortcut);
-        static FindMatch delegateFindFirstLocationReferenceMatch = new FindMatch(FindFirstLocationReferenceMatch);
-        static FindMatch delegateFindAllLocationReferenceMatch = new FindMatch(FindAllLocationReferenceMatch);
+        private delegate bool FindMatch(LocationReference reference, string targetName, Type targetType, out bool terminateSearch);
 
-        static bool FindLocationReferenceMatchShortcut(LocationReference reference, string targetName, Type targetType, out bool terminateSearch)
+        private static FindMatch delegateFindLocationReferenceMatchShortcut = new FindMatch(FindLocationReferenceMatchShortcut);
+        private static FindMatch delegateFindFirstLocationReferenceMatch = new FindMatch(FindFirstLocationReferenceMatch);
+        private static FindMatch delegateFindAllLocationReferenceMatch = new FindMatch(FindAllLocationReferenceMatch);
+
+        private static bool FindLocationReferenceMatchShortcut(LocationReference reference, string targetName, Type targetType, out bool terminateSearch)
         {
             terminateSearch = false;
             if (string.Equals(reference.Name, targetName, StringComparison.OrdinalIgnoreCase))
@@ -609,7 +612,7 @@ namespace Microsoft.VisualBasic.Activities
             return false;
         }
 
-        static bool FindFirstLocationReferenceMatch(LocationReference reference, string targetName, Type targetType, out bool terminateSearch)
+        private static bool FindFirstLocationReferenceMatch(LocationReference reference, string targetName, Type targetType, out bool terminateSearch)
         {
             terminateSearch = false;
             if (string.Equals(reference.Name, targetName, StringComparison.OrdinalIgnoreCase))
@@ -620,7 +623,7 @@ namespace Microsoft.VisualBasic.Activities
             return false;
         }
 
-        static bool FindAllLocationReferenceMatch(LocationReference reference, string targetName, Type targetType, out bool terminateSearch)
+        private static bool FindAllLocationReferenceMatch(LocationReference reference, string targetName, Type targetType, out bool terminateSearch)
         {
             terminateSearch = false;
             if (string.Equals(reference.Name, targetName, StringComparison.OrdinalIgnoreCase))
@@ -633,12 +636,12 @@ namespace Microsoft.VisualBasic.Activities
 
         // Returning null indicates the cached LambdaExpression used here doesn't coincide with current LocationReferenceEnvironment.
         // Null return value causes the process to rewind and start from HostedCompiler.CompileExpression().
-        Expression Rewrite(Expression expression, ReadOnlyCollection<ParameterExpression> lambdaParameters, out bool abort)
+        private Expression Rewrite(Expression expression, ReadOnlyCollection<ParameterExpression> lambdaParameters, out bool abort)
         {
             return Rewrite(expression, lambdaParameters, false, out abort);
         }
 
-        Expression Rewrite(Expression expression, ReadOnlyCollection<ParameterExpression> lambdaParameters, bool isLocationExpression, out bool abort)
+        private Expression Rewrite(Expression expression, ReadOnlyCollection<ParameterExpression> lambdaParameters, bool isLocationExpression, out bool abort)
         {
             int i;
             int j;
@@ -681,7 +684,7 @@ namespace Microsoft.VisualBasic.Activities
                 case ExpressionType.Subtract:
                 case ExpressionType.SubtractChecked:
 
-                    BinaryExpression binaryExpression = (BinaryExpression)expression;
+                    var binaryExpression = (BinaryExpression)expression;
                     expr1 = Rewrite(binaryExpression.Left, lambdaParameters, out abort);
                     if (abort)
                     {
@@ -694,7 +697,7 @@ namespace Microsoft.VisualBasic.Activities
                         return null;
                     }
 
-                    LambdaExpression conversion = (LambdaExpression)Rewrite(binaryExpression.Conversion, lambdaParameters, out abort);
+                    var conversion = (LambdaExpression)Rewrite(binaryExpression.Conversion, lambdaParameters, out abort);
                     if (abort)
                     {
                         return null;
@@ -710,7 +713,7 @@ namespace Microsoft.VisualBasic.Activities
 
                 case ExpressionType.Conditional:
 
-                    ConditionalExpression conditional = (ConditionalExpression)expression;
+                    var conditional = (ConditionalExpression)expression;
                     expr1 = Rewrite(conditional.Test, lambdaParameters, out abort);
                     if (abort)
                     {
@@ -735,7 +738,7 @@ namespace Microsoft.VisualBasic.Activities
 
                 case ExpressionType.Invoke:
 
-                    InvocationExpression invocation = (InvocationExpression)expression;
+                    var invocation = (InvocationExpression)expression;
                     expr1 = Rewrite(invocation.Expression, lambdaParameters, out abort);
                     if (abort)
                     {
@@ -762,7 +765,7 @@ namespace Microsoft.VisualBasic.Activities
 
                 case ExpressionType.Lambda:
 
-                    LambdaExpression lambda = (LambdaExpression)expression;
+                    var lambda = (LambdaExpression)expression;
                     expr1 = Rewrite(lambda.Body, lambda.Parameters, isLocationExpression, out abort);
                     if (abort)
                     {
@@ -772,16 +775,16 @@ namespace Microsoft.VisualBasic.Activities
 
                 case ExpressionType.ListInit:
 
-                    ListInitExpression listInit = (ListInitExpression)expression;
+                    var listInit = (ListInitExpression)expression;
                     newExpression = (NewExpression)Rewrite(listInit.NewExpression, lambdaParameters, out abort);
                     if (abort)
                     {
                         return null;
                     }
 
-                    ReadOnlyCollection<ElementInit> tmpInitializers = listInit.Initializers;
+                    var tmpInitializers = listInit.Initializers;
                     Fx.Assert(tmpInitializers != null, "ListInitExpression.Initializers must not be null");
-                    List<ElementInit> initializers = new List<ElementInit>(tmpInitializers.Count);
+                    var initializers = new List<ElementInit>(tmpInitializers.Count);
                     for (i = 0; i < tmpInitializers.Count; i++)
                     {
                         tmpArguments = tmpInitializers[i].Arguments;
@@ -801,7 +804,7 @@ namespace Microsoft.VisualBasic.Activities
                     return Expression.ListInit(newExpression, initializers);
 
                 case ExpressionType.Parameter:
-                    ParameterExpression variableExpression = (ParameterExpression)expression;
+                    var variableExpression = (ParameterExpression)expression;
                     {
                         if (lambdaParameters != null && lambdaParameters.Contains(variableExpression))
                         {
@@ -828,7 +831,7 @@ namespace Microsoft.VisualBasic.Activities
                         }
 
                         bool foundMultiple;
-                        LocationReference finalReference = FindLocationReferencesFromEnvironment(
+                        var finalReference = FindLocationReferencesFromEnvironment(
                             this.environment,
                             findMatch,
                             variableExpression.Name,
@@ -839,7 +842,7 @@ namespace Microsoft.VisualBasic.Activities
                         {
                             if (this.publicAccessor != null)
                             {
-                                CodeActivityPublicEnvironmentAccessor localPublicAccessor = this.publicAccessor.Value;
+                                var localPublicAccessor = this.publicAccessor.Value;
 
                                 LocationReference inlinedReference;
                                 if (ExpressionUtilities.TryGetInlinedReference(localPublicAccessor,
@@ -866,11 +869,11 @@ namespace Microsoft.VisualBasic.Activities
 
                 case ExpressionType.MemberAccess:
 
-                    MemberExpression memberExpression = (MemberExpression)expression;
+                    var memberExpression = (MemberExpression)expression;
 
                     // When creating a location for a member on a struct, we also need a location
                     // for the struct (so we don't just set the member on a copy of the struct)
-                    bool subTreeIsLocationExpression = isLocationExpression && memberExpression.Member.DeclaringType.IsValueType;
+                    var subTreeIsLocationExpression = isLocationExpression && memberExpression.Member.DeclaringType.IsValueType;
 
                     expr1 = Rewrite(memberExpression.Expression, lambdaParameters, subTreeIsLocationExpression, out abort);
                     if (abort)
@@ -881,19 +884,19 @@ namespace Microsoft.VisualBasic.Activities
 
                 case ExpressionType.MemberInit:
 
-                    MemberInitExpression memberInit = (MemberInitExpression)expression;
+                    var memberInit = (MemberInitExpression)expression;
                     newExpression = (NewExpression)Rewrite(memberInit.NewExpression, lambdaParameters, out abort);
                     if (abort)
                     {
                         return null;
                     }
 
-                    ReadOnlyCollection<MemberBinding> tmpMemberBindings = memberInit.Bindings;
+                    var tmpMemberBindings = memberInit.Bindings;
                     Fx.Assert(tmpMemberBindings != null, "MemberInitExpression.Bindings must not be null");
-                    List<MemberBinding> bindings = new List<MemberBinding>(tmpMemberBindings.Count);
+                    var bindings = new List<MemberBinding>(tmpMemberBindings.Count);
                     for (i = 0; i < tmpMemberBindings.Count; i++)
                     {
-                        MemberBinding binding = Rewrite(tmpMemberBindings[i], lambdaParameters, out abort);
+                        var binding = Rewrite(tmpMemberBindings[i], lambdaParameters, out abort);
                         if (abort)
                         {
                             return null;
@@ -905,7 +908,7 @@ namespace Microsoft.VisualBasic.Activities
                 case ExpressionType.ArrayIndex:
 
                     // ArrayIndex can be a MethodCallExpression or a BinaryExpression
-                    MethodCallExpression arrayIndex = expression as MethodCallExpression;
+                    var arrayIndex = expression as MethodCallExpression;
                     if (arrayIndex != null)
                     {
                         expr1 = Rewrite(arrayIndex.Object, lambdaParameters, out abort);
@@ -915,7 +918,7 @@ namespace Microsoft.VisualBasic.Activities
                         }
                         tmpArguments = arrayIndex.Arguments;
                         Fx.Assert(tmpArguments != null, "MethodCallExpression.Arguments must not be null");
-                        List<Expression> indexes = new List<Expression>(tmpArguments.Count);
+                        var indexes = new List<Expression>(tmpArguments.Count);
                         for (i = 0; i < tmpArguments.Count; i++)
                         {
                             expr2 = Rewrite(tmpArguments[i], lambdaParameters, out abort);
@@ -927,7 +930,7 @@ namespace Microsoft.VisualBasic.Activities
                         }
                         return Expression.ArrayIndex(expr1, indexes);
                     }
-                    BinaryExpression alternateIndex = (BinaryExpression)expression;
+                    var alternateIndex = (BinaryExpression)expression;
                     expr1 = Rewrite(alternateIndex.Left, lambdaParameters, out abort);
                     if (abort)
                     {
@@ -942,7 +945,7 @@ namespace Microsoft.VisualBasic.Activities
 
                 case ExpressionType.Call:
 
-                    MethodCallExpression methodCall = (MethodCallExpression)expression;
+                    var methodCall = (MethodCallExpression)expression;
                     expr1 = Rewrite(methodCall.Object, lambdaParameters, out abort);
                     if (abort)
                     {
@@ -968,10 +971,10 @@ namespace Microsoft.VisualBasic.Activities
 
                 case ExpressionType.NewArrayInit:
 
-                    NewArrayExpression newArray = (NewArrayExpression)expression;
-                    ReadOnlyCollection<Expression> tmpExpressions = newArray.Expressions;
+                    var newArray = (NewArrayExpression)expression;
+                    var tmpExpressions = newArray.Expressions;
                     Fx.Assert(tmpExpressions != null, "NewArrayExpression.Expressions must not be null");
-                    List<Expression> arrayInitializers = new List<Expression>(tmpExpressions.Count);
+                    var arrayInitializers = new List<Expression>(tmpExpressions.Count);
                     for (i = 0; i < tmpExpressions.Count; i++)
                     {
                         expr1 = Rewrite(tmpExpressions[i], lambdaParameters, out abort);
@@ -985,10 +988,10 @@ namespace Microsoft.VisualBasic.Activities
 
                 case ExpressionType.NewArrayBounds:
 
-                    NewArrayExpression newArrayBounds = (NewArrayExpression)expression;
+                    var newArrayBounds = (NewArrayExpression)expression;
                     tmpExpressions = newArrayBounds.Expressions;
                     Fx.Assert(tmpExpressions != null, "NewArrayExpression.Expressions must not be null");
-                    List<Expression> bounds = new List<Expression>(tmpExpressions.Count);
+                    var bounds = new List<Expression>(tmpExpressions.Count);
                     for (i = 0; i < tmpExpressions.Count; i++)
                     {
                         expr1 = Rewrite(tmpExpressions[i], lambdaParameters, out abort);
@@ -1029,7 +1032,7 @@ namespace Microsoft.VisualBasic.Activities
 
                 case ExpressionType.TypeIs:
 
-                    TypeBinaryExpression typeBinary = (TypeBinaryExpression)expression;
+                    var typeBinary = (TypeBinaryExpression)expression;
                     expr1 = Rewrite(typeBinary.Expression, lambdaParameters, out abort);
                     if (abort)
                     {
@@ -1046,7 +1049,7 @@ namespace Microsoft.VisualBasic.Activities
                 case ExpressionType.Quote:
                 case ExpressionType.TypeAs:
 
-                    UnaryExpression unary = (UnaryExpression)expression;
+                    var unary = (UnaryExpression)expression;
                     expr1 = Rewrite(unary.Operand, lambdaParameters, out abort);
                     if (abort)
                     {
@@ -1056,7 +1059,7 @@ namespace Microsoft.VisualBasic.Activities
 
                 case ExpressionType.UnaryPlus:
 
-                    UnaryExpression unaryPlus = (UnaryExpression)expression;
+                    var unaryPlus = (UnaryExpression)expression;
                     expr1 = Rewrite(unaryPlus.Operand, lambdaParameters, out abort);
                     if (abort)
                     {
@@ -1067,13 +1070,13 @@ namespace Microsoft.VisualBasic.Activities
                 // Expression Tree V2.0 types. This is due to the hosted VB compiler generating ET V2.0 nodes
                 case ExpressionType.Block:
 
-                    BlockExpression block = (BlockExpression)expression;
-                    ReadOnlyCollection<ParameterExpression> tmpVariables = block.Variables;
+                    var block = (BlockExpression)expression;
+                    var tmpVariables = block.Variables;
                     Fx.Assert(tmpVariables != null, "BlockExpression.Variables must not be null");
-                    List<ParameterExpression> parameterList = new List<ParameterExpression>(tmpVariables.Count);
+                    var parameterList = new List<ParameterExpression>(tmpVariables.Count);
                     for (i = 0; i < tmpVariables.Count; i++)
                     {
-                        ParameterExpression param = (ParameterExpression)Rewrite(tmpVariables[i], lambdaParameters, out abort);
+                        var param = (ParameterExpression)Rewrite(tmpVariables[i], lambdaParameters, out abort);
                         if (abort)
                         {
                             return null;
@@ -1082,7 +1085,7 @@ namespace Microsoft.VisualBasic.Activities
                     }
                     tmpExpressions = block.Expressions;
                     Fx.Assert(tmpExpressions != null, "BlockExpression.Expressions must not be null");
-                    List<Expression> expressionList = new List<Expression>(tmpExpressions.Count);
+                    var expressionList = new List<Expression>(tmpExpressions.Count);
                     for (i = 0; i < tmpExpressions.Count; i++)
                     {
                         expr1 = Rewrite(tmpExpressions[i], lambdaParameters, out abort);
@@ -1096,7 +1099,7 @@ namespace Microsoft.VisualBasic.Activities
 
                 case ExpressionType.Assign:
 
-                    BinaryExpression assign = (BinaryExpression)expression;
+                    var assign = (BinaryExpression)expression;
                     expr1 = Rewrite(assign.Left, lambdaParameters, out abort);
                     if (abort)
                     {
@@ -1114,7 +1117,7 @@ namespace Microsoft.VisualBasic.Activities
             return expression;
         }
 
-        MemberBinding Rewrite(MemberBinding binding, ReadOnlyCollection<ParameterExpression> lambdaParameters, out bool abort)
+        private MemberBinding Rewrite(MemberBinding binding, ReadOnlyCollection<ParameterExpression> lambdaParameters, out bool abort)
         {
             int i;
             int j;
@@ -1125,7 +1128,7 @@ namespace Microsoft.VisualBasic.Activities
             {
                 case MemberBindingType.Assignment:
 
-                    MemberAssignment assignment = (MemberAssignment)binding;
+                    var assignment = (MemberAssignment)binding;
                     expr1 = Rewrite(assignment.Expression, lambdaParameters, out abort);
                     if (abort)
                     {
@@ -1135,9 +1138,9 @@ namespace Microsoft.VisualBasic.Activities
 
                 case MemberBindingType.ListBinding:
 
-                    MemberListBinding list = (MemberListBinding)binding;
+                    var list = (MemberListBinding)binding;
                     List<ElementInit> initializers = null;
-                    ReadOnlyCollection<ElementInit> tmpInitializers = list.Initializers;
+                    var tmpInitializers = list.Initializers;
                     Fx.Assert(tmpInitializers != null, "MemberListBinding.Initializers must not be null");
                     if (tmpInitializers.Count > 0)
                     {
@@ -1167,13 +1170,13 @@ namespace Microsoft.VisualBasic.Activities
 
                 case MemberBindingType.MemberBinding:
 
-                    MemberMemberBinding member = (MemberMemberBinding)binding;
-                    ReadOnlyCollection<MemberBinding> tmpBindings = member.Bindings;
+                    var member = (MemberMemberBinding)binding;
+                    var tmpBindings = member.Bindings;
                     Fx.Assert(tmpBindings != null, "MemberMeberBinding.Bindings must not be null");
-                    List<MemberBinding> bindings = new List<MemberBinding>(tmpBindings.Count);
+                    var bindings = new List<MemberBinding>(tmpBindings.Count);
                     for (i = 0; i < tmpBindings.Count; i++)
                     {
-                        MemberBinding item = Rewrite(tmpBindings[i], lambdaParameters, out abort);
+                        var item = Rewrite(tmpBindings[i], lambdaParameters, out abort);
                         if (abort)
                         {
                             return null;
@@ -1188,7 +1191,7 @@ namespace Microsoft.VisualBasic.Activities
             }
         }
 
-        static ParameterExpression FindParameter(Expression expression)
+        private static ParameterExpression FindParameter(Expression expression)
         {
             if (expression == null)
             {
@@ -1219,61 +1222,61 @@ namespace Microsoft.VisualBasic.Activities
                 case ExpressionType.RightShift:
                 case ExpressionType.Subtract:
                 case ExpressionType.SubtractChecked:
-                    BinaryExpression binaryExpression = (BinaryExpression)expression;
+                    var binaryExpression = (BinaryExpression)expression;
                     return FindParameter(binaryExpression.Left) ?? FindParameter(binaryExpression.Right);
 
                 case ExpressionType.Conditional:
-                    ConditionalExpression conditional = (ConditionalExpression)expression;
+                    var conditional = (ConditionalExpression)expression;
                     return FindParameter(conditional.Test) ?? FindParameter(conditional.IfTrue) ?? FindParameter(conditional.IfFalse);
 
                 case ExpressionType.Constant:
                     return null;
 
                 case ExpressionType.Invoke:
-                    InvocationExpression invocation = (InvocationExpression)expression;
+                    var invocation = (InvocationExpression)expression;
                     return FindParameter(invocation.Expression) ?? FindParameter(invocation.Arguments);
 
                 case ExpressionType.Lambda:
-                    LambdaExpression lambda = (LambdaExpression)expression;
+                    var lambda = (LambdaExpression)expression;
                     return FindParameter(lambda.Body);
 
                 case ExpressionType.ListInit:
-                    ListInitExpression listInit = (ListInitExpression)expression;
+                    var listInit = (ListInitExpression)expression;
                     return FindParameter(listInit.NewExpression) ?? FindParameter(listInit.Initializers);
 
                 case ExpressionType.MemberAccess:
-                    MemberExpression memberExpression = (MemberExpression)expression;
+                    var memberExpression = (MemberExpression)expression;
                     return FindParameter(memberExpression.Expression);
 
                 case ExpressionType.MemberInit:
-                    MemberInitExpression memberInit = (MemberInitExpression)expression;
+                    var memberInit = (MemberInitExpression)expression;
                     return FindParameter(memberInit.NewExpression) ?? FindParameter(memberInit.Bindings);
 
                 case ExpressionType.ArrayIndex:
                     // ArrayIndex can be a MethodCallExpression or a BinaryExpression
-                    MethodCallExpression arrayIndex = expression as MethodCallExpression;
+                    var arrayIndex = expression as MethodCallExpression;
                     if (arrayIndex != null)
                     {
                         return FindParameter(arrayIndex.Object) ?? FindParameter(arrayIndex.Arguments);
                     }
-                    BinaryExpression alternateIndex = (BinaryExpression)expression;
+                    var alternateIndex = (BinaryExpression)expression;
                     return FindParameter(alternateIndex.Left) ?? FindParameter(alternateIndex.Right);
 
                 case ExpressionType.Call:
-                    MethodCallExpression methodCall = (MethodCallExpression)expression;
+                    var methodCall = (MethodCallExpression)expression;
                     return FindParameter(methodCall.Object) ?? FindParameter(methodCall.Arguments);
 
                 case ExpressionType.NewArrayInit:
                 case ExpressionType.NewArrayBounds:
-                    NewArrayExpression newArray = (NewArrayExpression)expression;
+                    var newArray = (NewArrayExpression)expression;
                     return FindParameter(newArray.Expressions);
 
                 case ExpressionType.New:
-                    NewExpression newExpression = (NewExpression)expression;
+                    var newExpression = (NewExpression)expression;
                     return FindParameter(newExpression.Arguments);
 
                 case ExpressionType.Parameter:
-                    ParameterExpression parameterExpression = (ParameterExpression)expression;
+                    var parameterExpression = (ParameterExpression)expression;
                     if (parameterExpression.Type == typeof(ActivityContext) && parameterExpression.Name == "context")
                     {
                         return parameterExpression;
@@ -1281,7 +1284,7 @@ namespace Microsoft.VisualBasic.Activities
                     return null;
 
                 case ExpressionType.TypeIs:
-                    TypeBinaryExpression typeBinary = (TypeBinaryExpression)expression;
+                    var typeBinary = (TypeBinaryExpression)expression;
                     return FindParameter(typeBinary.Expression);
 
                 case ExpressionType.ArrayLength:
@@ -1293,27 +1296,27 @@ namespace Microsoft.VisualBasic.Activities
                 case ExpressionType.Quote:
                 case ExpressionType.TypeAs:
                 case ExpressionType.UnaryPlus:
-                    UnaryExpression unary = (UnaryExpression)expression;
+                    var unary = (UnaryExpression)expression;
                     return FindParameter(unary.Operand);
 
                 // Expression Tree V2.0 types
 
                 case ExpressionType.Block:
-                    BlockExpression block = (BlockExpression)expression;
-                    ParameterExpression toReturn = FindParameter(block.Expressions);
+                    var block = (BlockExpression)expression;
+                    var toReturn = FindParameter(block.Expressions);
                     if (toReturn != null)
                     {
                         return toReturn;
                     }
-                    List<Expression> variableList = new List<Expression>();
-                    foreach (ParameterExpression variable in block.Variables)
+                    var variableList = new List<Expression>();
+                    foreach (var variable in block.Variables)
                     {
                         variableList.Add(variable);
                     }
                     return FindParameter(variableList);
 
                 case ExpressionType.Assign:
-                    BinaryExpression assign = (BinaryExpression)expression;
+                    var assign = (BinaryExpression)expression;
                     return FindParameter(assign.Left) ?? FindParameter(assign.Right);
             }
 
@@ -1321,11 +1324,11 @@ namespace Microsoft.VisualBasic.Activities
             return null;
         }
 
-        static ParameterExpression FindParameter(ICollection<Expression> collection)
+        private static ParameterExpression FindParameter(ICollection<Expression> collection)
         {
-            foreach (Expression expression in collection)
+            foreach (var expression in collection)
             {
-                ParameterExpression result = FindParameter(expression);
+                var result = FindParameter(expression);
                 if (result != null)
                 {
                     return result;
@@ -1334,11 +1337,11 @@ namespace Microsoft.VisualBasic.Activities
             return null;
         }
 
-        static ParameterExpression FindParameter(ICollection<ElementInit> collection)
+        private static ParameterExpression FindParameter(ICollection<ElementInit> collection)
         {
-            foreach (ElementInit init in collection)
+            foreach (var init in collection)
             {
-                ParameterExpression result = FindParameter(init.Arguments);
+                var result = FindParameter(init.Arguments);
                 if (result != null)
                 {
                     return result;
@@ -1347,25 +1350,25 @@ namespace Microsoft.VisualBasic.Activities
             return null;
         }
 
-        static ParameterExpression FindParameter(ICollection<MemberBinding> bindings)
+        private static ParameterExpression FindParameter(ICollection<MemberBinding> bindings)
         {
-            foreach (MemberBinding binding in bindings)
+            foreach (var binding in bindings)
             {
                 ParameterExpression result;
                 switch (binding.BindingType)
                 {
                     case MemberBindingType.Assignment:
-                        MemberAssignment assignment = (MemberAssignment)binding;
+                        var assignment = (MemberAssignment)binding;
                         result = FindParameter(assignment.Expression);
                         break;
 
                     case MemberBindingType.ListBinding:
-                        MemberListBinding list = (MemberListBinding)binding;
+                        var list = (MemberListBinding)binding;
                         result = FindParameter(list.Initializers);
                         break;
 
                     case MemberBindingType.MemberBinding:
-                        MemberMemberBinding member = (MemberMemberBinding)binding;
+                        var member = (MemberMemberBinding)binding;
                         result = FindParameter(member.Bindings);
                         break;
 
@@ -1382,12 +1385,12 @@ namespace Microsoft.VisualBasic.Activities
             return null;
         }
 
-        static void EnsureTypeReferenced(Type type, ref HashSet<Type> typeReferences)
+        private static void EnsureTypeReferenced(Type type, ref HashSet<Type> typeReferences)
         {
             // lookup cache 
             // underlying assumption is that type's inheritance(or interface) hierarchy 
             // stays static throughout the lifetime of AppDomain
-            HashSet<Type> alreadyVisited = (HashSet<Type>)typeReferenceCache.GetValue(typeReferenceCacheLock, type);
+            var alreadyVisited = (HashSet<Type>)typeReferenceCache.GetValue(typeReferenceCacheLock, type);
             if (alreadyVisited != null)
             {
                 if (typeReferences == null)
@@ -1427,7 +1430,7 @@ namespace Microsoft.VisualBasic.Activities
             return;
         }
 
-        static void EnsureTypeReferencedRecurse(Type type, HashSet<Type> alreadyVisited)
+        private static void EnsureTypeReferencedRecurse(Type type, HashSet<Type> alreadyVisited)
         {
             if (alreadyVisited.Contains(type))
             {
@@ -1439,14 +1442,14 @@ namespace Microsoft.VisualBasic.Activities
             alreadyVisited.Add(type);
 
             // make sure any interfaces needed by this type are referenced
-            Type[] interfaces = type.GetInterfaces();
-            for (int i = 0; i < interfaces.Length; ++i)
+            var interfaces = type.GetInterfaces();
+            for (var i = 0; i < interfaces.Length; ++i)
             {
                 EnsureTypeReferencedRecurse(interfaces[i], alreadyVisited);
             }
 
             // same for base types
-            Type baseType = type.BaseType;
+            var baseType = type.BaseType;
             while ((baseType != null) && (baseType != TypeHelper.ObjectType))
             {
                 EnsureTypeReferencedRecurse(baseType, alreadyVisited);
@@ -1456,8 +1459,8 @@ namespace Microsoft.VisualBasic.Activities
             // for generic types, all type arguments
             if (type.IsGenericType)
             {
-                Type[] typeArgs = type.GetGenericArguments();
-                for (int i = 1; i < typeArgs.Length; ++i)
+                var typeArgs = type.GetGenericArguments();
+                for (var i = 1; i < typeArgs.Length; ++i)
                 {
                     EnsureTypeReferencedRecurse(typeArgs[i], alreadyVisited);
                 }
@@ -1472,14 +1475,14 @@ namespace Microsoft.VisualBasic.Activities
             return;
         }
 
-        static LocationReference FindLocationReferencesFromEnvironment(LocationReferenceEnvironment environment, FindMatch findMatch, string targetName, Type targetType, out bool foundMultiple)
+        private static LocationReference FindLocationReferencesFromEnvironment(LocationReferenceEnvironment environment, FindMatch findMatch, string targetName, Type targetType, out bool foundMultiple)
         {            
-            LocationReferenceEnvironment currentEnvironment = environment;
+            var currentEnvironment = environment;
             foundMultiple = false;
             while (currentEnvironment != null)
             {
                 LocationReference toReturn = null;
-                foreach (LocationReference reference in currentEnvironment.GetLocationReferences())
+                foreach (var reference in currentEnvironment.GetLocationReferences())
                 {
                     bool terminateSearch;
                     if (findMatch(reference, targetName, targetType, out terminateSearch))
@@ -1511,22 +1514,20 @@ namespace Microsoft.VisualBasic.Activities
         // this is a place holder for LambdaExpression(raw Expression Tree) that is to be stored in the cache
         // this wrapper is necessary because HopperCache requires that once you already have a key along with its associated value in the cache
         // you cannot add the same key with a different value.
-        class RawTreeCacheValueWrapper
+        private class RawTreeCacheValueWrapper
         {
             public LambdaExpression Value { get; set; }
         }
 
-        class RawTreeCacheKey
+        private class RawTreeCacheKey
         {
-            static IEqualityComparer<HashSet<Assembly>> AssemblySetEqualityComparer = HashSet<Assembly>.CreateSetComparer();
-            static IEqualityComparer<HashSet<string>> NamespaceSetEqualityComparer = HashSet<string>.CreateSetComparer();
-
-            string expressionText;
-            Type returnType;
-            HashSet<Assembly> assemblies;
-            HashSet<string> namespaces;
-
-            readonly int hashCode;
+            private static IEqualityComparer<HashSet<Assembly>> AssemblySetEqualityComparer = HashSet<Assembly>.CreateSetComparer();
+            private static IEqualityComparer<HashSet<string>> NamespaceSetEqualityComparer = HashSet<string>.CreateSetComparer();
+            private string expressionText;
+            private Type returnType;
+            private HashSet<Assembly> assemblies;
+            private HashSet<string> namespaces;
+            private readonly int hashCode;
 
             public RawTreeCacheKey(string expressionText, Type returnType, HashSet<Assembly> assemblies, HashSet<string> namespaces)
             {
@@ -1546,7 +1547,7 @@ namespace Microsoft.VisualBasic.Activities
 
             public override bool Equals(object obj)
             {
-                RawTreeCacheKey rtcKey = obj as RawTreeCacheKey;
+                var rtcKey = obj as RawTreeCacheKey;
                 if (rtcKey == null || this.hashCode != rtcKey.hashCode)
                 {
                     return false;
@@ -1562,17 +1563,17 @@ namespace Microsoft.VisualBasic.Activities
                 return this.hashCode;
             }
 
-            static int CombineHashCodes(int h1, int h2)
+            private static int CombineHashCodes(int h1, int h2)
             {
                 return ((h1 << 5) + h1) ^ h2;
             }
         }
 
-        class VisualBasicScriptAndTypeScope
+        private class VisualBasicScriptAndTypeScope
         {
-            LocationReferenceEnvironment environmentProvider;
-            List<Assembly> assemblies;
-            string errorMessage;
+            private LocationReferenceEnvironment environmentProvider;
+            private List<Assembly> assemblies;
+            private string errorMessage;
 
             public VisualBasicScriptAndTypeScope(LocationReferenceEnvironment environmentProvider, List<Assembly> assemblies)
             {
@@ -1588,7 +1589,7 @@ namespace Microsoft.VisualBasic.Activities
             public Type FindVariable(string name)
             {
                 LocationReference referenceToReturn = null;
-                FindMatch findMatch = delegateFindAllLocationReferenceMatch;
+                var findMatch = delegateFindAllLocationReferenceMatch;
                 bool foundMultiple;
                 referenceToReturn = FindLocationReferencesFromEnvironment(this.environmentProvider, findMatch, name, null, out foundMultiple);
                 if (referenceToReturn != null)
@@ -1621,12 +1622,12 @@ namespace Microsoft.VisualBasic.Activities
 
         [Fx.Tag.SecurityNote(Critical = "Critical because it holds a HostedCompiler instance, which requires FullTrust.")]
         [SecurityCritical]
-        class HostedCompilerWrapper
+        private class HostedCompilerWrapper
         {
-            object wrapperLock;
-            HostedCompiler compiler;
-            bool isCached;
-            int refCount;
+            private object wrapperLock;
+            private HostedCompiler compiler;
+            private bool isCached;
+            private int refCount;
 
             public HostedCompilerWrapper(HostedCompiler compiler)
             {

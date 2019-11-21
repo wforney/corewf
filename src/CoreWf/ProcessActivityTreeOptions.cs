@@ -372,7 +372,7 @@ namespace System.Activities
 
         private static ProcessActivityTreeOptions AttachCancellationToken(ProcessActivityTreeOptions result, CancellationToken cancellationToken)
         {
-            ProcessActivityTreeOptions clone = result.Clone();
+            var clone = result.Clone();
             clone.CancellationToken = cancellationToken;
             return clone;
         }

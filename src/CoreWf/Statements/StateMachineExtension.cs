@@ -40,7 +40,7 @@ namespace System.Activities.Statements
         public void ResumeBookmark(Bookmark bookmark)
         {
             // This method is necessary due to CSDMain 223257.
-            IAsyncResult asyncResult = this.instance.BeginResumeBookmark(bookmark, null, Fx.ThunkCallback(new AsyncCallback(StateMachineExtension.OnResumeBookmarkCompleted)), this.instance);
+            var asyncResult = this.instance.BeginResumeBookmark(bookmark, null, Fx.ThunkCallback(new AsyncCallback(StateMachineExtension.OnResumeBookmarkCompleted)), this.instance);
             if (asyncResult.CompletedSynchronously)
             {
                 this.instance.EndResumeBookmark(asyncResult);
@@ -51,7 +51,7 @@ namespace System.Activities.Statements
         {
             if (!result.CompletedSynchronously)
             {
-                WorkflowInstanceProxy instance = result.AsyncState as WorkflowInstanceProxy;
+                var instance = result.AsyncState as WorkflowInstanceProxy;
                 Fx.Assert(instance != null, "BeginResumeBookmark should pass a WorkflowInstanceProxy object as the async state object.");
                 instance.EndResumeBookmark(result);
             }

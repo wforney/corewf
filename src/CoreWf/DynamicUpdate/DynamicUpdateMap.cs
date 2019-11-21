@@ -4,7 +4,6 @@
 namespace System.Activities.DynamicUpdate
 {
     using System;
-    using System.Activities.DynamicUpdate;
     using System.Activities.Internals;
     using System.Activities.Runtime;
     using System.Activities.XamlIntegration;
@@ -12,91 +11,62 @@ namespace System.Activities.DynamicUpdate
     using System.Collections.ObjectModel;
     using System.ComponentModel;
     using System.Globalization;
-    using System.Runtime;
     using System.Runtime.Serialization;
 
     [DataContract]
     [TypeConverter(typeof(DynamicUpdateMapConverter))]
     public class DynamicUpdateMap
     {
-        static DynamicUpdateMap noChanges = new DynamicUpdateMap();
-        static DynamicUpdateMap dummyMap = new DynamicUpdateMap();
+        internal EntryCollection entries;
 
-        internal EntryCollection entries;        
-        IList<ArgumentInfo> newArguments;
-        IList<ArgumentInfo> oldArguments;        
-        
         internal DynamicUpdateMap()
         {
         }
 
-        public static DynamicUpdateMap NoChanges
-        {
-            get
-            {
-                return noChanges;
-            }
-        }
+        public static DynamicUpdateMap NoChanges { get; } = new DynamicUpdateMap();
 
         [DataMember(EmitDefaultValue = false, Name = "entries")]
         internal EntryCollection SerializedEntries
         {
-            get { return this.entries; }
-            set { this.entries = value; }
+            get => this.entries;
+            set => this.entries = value;
         }
 
         [DataMember(EmitDefaultValue = false, Name = "newArguments")]
-        internal IList<ArgumentInfo> SerializedNewArguments
-        {
-            get { return this.newArguments; }
-            set { this.newArguments = value; }
-        }
+        internal IList<ArgumentInfo> SerializedNewArguments { get; set; }
 
         [DataMember(EmitDefaultValue = false, Name = "oldArguments")]
-        internal IList<ArgumentInfo> SerializedOldArguments
-        {
-            get { return this.oldArguments; }
-            set { this.oldArguments = value; }
-        }
+        internal IList<ArgumentInfo> SerializedOldArguments { get; set; }
 
         // this is a dummy map to be used for creating a NativeActivityUpdateContext
         // for calling UpdateInstance() on activities without map entries.
         // this should not be used anywhere except for creating NativeActivityUpdateContext.
-        internal static DynamicUpdateMap DummyMap
-        {
-            get { return dummyMap; }
-        }
+        internal static DynamicUpdateMap DummyMap { get; } = new DynamicUpdateMap();
 
         internal IList<ArgumentInfo> NewArguments
         {
             get
             {
-                if (this.newArguments == null)
+                if (this.SerializedNewArguments == null)
                 {
-                    this.newArguments = new List<ArgumentInfo>();
+                    this.SerializedNewArguments = new List<ArgumentInfo>();
                 }
-                return this.newArguments;
+                return this.SerializedNewArguments;
             }
-            set
-            {
-                this.newArguments = value;
-            }
+            set => this.SerializedNewArguments = value;
         }
 
         internal IList<ArgumentInfo> OldArguments
         {
             get
             {
-                if (this.oldArguments == null)
+                if (this.SerializedOldArguments == null)
                 {
-                    this.oldArguments = new List<ArgumentInfo>();
+                    this.SerializedOldArguments = new List<ArgumentInfo>();
                 }
-                return this.oldArguments;
+                return this.SerializedOldArguments;
             }
-            set
-            {
-                this.oldArguments = value;
-            }
+            set => this.SerializedOldArguments = value;
         }
 
         [DataMember(EmitDefaultValue = false)]
@@ -120,26 +90,14 @@ namespace System.Activities.DynamicUpdate
             set;
         }
 
-        internal int OldDefinitionMemberCount
-        {
-            get
-            {
-                return this.Entries.Count;
-            }
-        }
+        internal int OldDefinitionMemberCount => this.Entries.Count;
 
         [DataMember(EmitDefaultValue = false)]
         internal bool IsForImplementation { get; set; }
 
         // IdSpaces always have at least one member. So a count of 0 means that this is
         // DynamicUpdateMap.NoChanges, or a serialized equivalent.
-        internal bool IsNoChanges
-        {
-            get
-            {
-                return this.NewDefinitionMemberCount == 0;
-            }
-        }
+        internal bool IsNoChanges => this.NewDefinitionMemberCount == 0;
 
         // use the internal method AddEntry() instead
         private IList<DynamicUpdateMapEntry> Entries
@@ -155,43 +113,28 @@ namespace System.Activities.DynamicUpdate
             }
         }
 
-        public static IDictionary<object, DynamicUpdateMapItem> CalculateMapItems(Activity workflowDefinitionToBeUpdated)
-        {
-            return CalculateMapItems(workflowDefinitionToBeUpdated, null);
-        }
+        public static IDictionary<object, DynamicUpdateMapItem> CalculateMapItems(Activity workflowDefinitionToBeUpdated) => CalculateMapItems(workflowDefinitionToBeUpdated, null);
 
-        public static IDictionary<object, DynamicUpdateMapItem> CalculateMapItems(Activity workflowDefinitionToBeUpdated, LocationReferenceEnvironment environment)
-        {
-            return InternalCalculateMapItems(workflowDefinitionToBeUpdated, environment, false);
-        }
+        public static IDictionary<object, DynamicUpdateMapItem> CalculateMapItems(Activity workflowDefinitionToBeUpdated, LocationReferenceEnvironment environment) => InternalCalculateMapItems(workflowDefinitionToBeUpdated, environment, false);
 
-        public static IDictionary<object, DynamicUpdateMapItem> CalculateImplementationMapItems(Activity activityDefinitionToBeUpdated)
-        {
-            return CalculateImplementationMapItems(activityDefinitionToBeUpdated, null);
-        }
+        public static IDictionary<object, DynamicUpdateMapItem> CalculateImplementationMapItems(Activity activityDefinitionToBeUpdated) => CalculateImplementationMapItems(activityDefinitionToBeUpdated, null);
 
-        public static IDictionary<object, DynamicUpdateMapItem> CalculateImplementationMapItems(Activity activityDefinitionToBeUpdated, LocationReferenceEnvironment environment)
-        {
-            return InternalCalculateMapItems(activityDefinitionToBeUpdated, environment, true);
-        }
+        public static IDictionary<object, DynamicUpdateMapItem> CalculateImplementationMapItems(Activity activityDefinitionToBeUpdated, LocationReferenceEnvironment environment) => InternalCalculateMapItems(activityDefinitionToBeUpdated, environment, true);
 
-        public static DynamicUpdateMap Merge(params DynamicUpdateMap[] maps)
-        {
-            return Merge((IEnumerable<DynamicUpdateMap>)maps);
-        }
+        public static DynamicUpdateMap Merge(params DynamicUpdateMap[] maps) => Merge((IEnumerable<DynamicUpdateMap>)maps);
 
         public static DynamicUpdateMap Merge(IEnumerable<DynamicUpdateMap> maps)
         {
             if (maps == null)
             {
-                throw FxTrace.Exception.ArgumentNull("maps");
+                throw FxTrace.Exception.ArgumentNull(nameof(maps));
             }
 
             // We could try to optimize this by merging the entire set at once, but it's simpler
             // to just do pairwise merging
-            int index = 0;
+            var index = 0;
             DynamicUpdateMap result = null;
-            foreach (DynamicUpdateMap nextMap in maps)
+            foreach (var nextMap in maps)
             {
                 result = Merge(result, nextMap, new MergeErrorContext { MapIndex = index });
                 index++;
@@ -200,14 +143,14 @@ namespace System.Activities.DynamicUpdate
             return result;
         }
 
-        static IDictionary<object, DynamicUpdateMapItem> InternalCalculateMapItems(Activity workflowDefinitionToBeUpdated, LocationReferenceEnvironment environment, bool forImplementation)
+        private static IDictionary<object, DynamicUpdateMapItem> InternalCalculateMapItems(Activity workflowDefinitionToBeUpdated, LocationReferenceEnvironment environment, bool forImplementation)
         {
             if (workflowDefinitionToBeUpdated == null)
             {
-                throw FxTrace.Exception.ArgumentNull("workflowDefinitionToBeUpdated");
+                throw FxTrace.Exception.ArgumentNull(nameof(workflowDefinitionToBeUpdated));
             }
 
-            DynamicUpdateMapBuilder.Preparer preparer = new DynamicUpdateMapBuilder.Preparer(workflowDefinitionToBeUpdated, environment, forImplementation);
+            var preparer = new DynamicUpdateMapBuilder.Preparer(workflowDefinitionToBeUpdated, environment, forImplementation);
             return preparer.Prepare();
         }        
 
@@ -260,16 +203,16 @@ namespace System.Activities.DynamicUpdate
 
             ThrowIfMapsIncompatible(first, second, errorContext);
 
-            DynamicUpdateMap result = new DynamicUpdateMap
+            var result = new DynamicUpdateMap
             {
                 IsForImplementation = first.IsForImplementation,
                 NewDefinitionMemberCount = second.NewDefinitionMemberCount,
                 ArgumentsAreUnknown = first.ArgumentsAreUnknown && second.ArgumentsAreUnknown,
-                oldArguments = first.ArgumentsAreUnknown ? second.oldArguments : first.oldArguments,
-                newArguments = second.ArgumentsAreUnknown ? first.newArguments : second.newArguments
+                SerializedOldArguments = first.ArgumentsAreUnknown ? second.SerializedOldArguments : first.SerializedOldArguments,
+                SerializedNewArguments = second.ArgumentsAreUnknown ? first.SerializedNewArguments : second.SerializedNewArguments
             };
 
-            foreach (DynamicUpdateMapEntry firstEntry in first.Entries)
+            foreach (var firstEntry in first.Entries)
             {
                 DynamicUpdateMapEntry parent = null;
                 if (firstEntry.Parent != null)
@@ -283,18 +226,15 @@ namespace System.Activities.DynamicUpdate
                 }
                 else
                 {
-                    DynamicUpdateMapEntry secondEntry = second.entries[firstEntry.NewActivityId];
+                    var secondEntry = second.entries[firstEntry.NewActivityId];
                     result.AddEntry(DynamicUpdateMapEntry.Merge(firstEntry, secondEntry, parent, errorContext));
                 }
             }
 
             return result;
-        }        
-
-        internal void AddEntry(DynamicUpdateMapEntry entry)
-        {
-            this.Entries.Add(entry);
         }
+
+        internal void AddEntry(DynamicUpdateMapEntry entry) => this.Entries.Add(entry);
 
         // Wrap an implementation map in a dummy map. This allows use of an implementation map as the
         // root map in the case when the root is an x:Class with no public children.
@@ -307,7 +247,7 @@ namespace System.Activities.DynamicUpdate
                 throw FxTrace.Exception.AsError(new InstanceUpdateException(SR.InvalidImplementationAsWorkflowRootForRuntimeStateBecauseArgumentsChanged));
             }
 
-            DynamicUpdateMap result = new DynamicUpdateMap
+            var result = new DynamicUpdateMap
             {
                 IsImplementationAsRoot = true,
                 NewDefinitionMemberCount = 1
@@ -333,7 +273,7 @@ namespace System.Activities.DynamicUpdate
         // Conversely, we could check the correctness of every environment map, but it doesn't seem worth
         // doing that much work. If we find a mismatch on the environment of an executing activity, we'll
         // throw at that point.
-        void ThrowIfInvalid(IdSpace updatedIdSpace)
+        private void ThrowIfInvalid(IdSpace updatedIdSpace)
         {
             if (this.IsNoChanges)
             {
@@ -347,14 +287,14 @@ namespace System.Activities.DynamicUpdate
                     SR.WrongMemberCount(updatedIdSpace.Owner, updatedIdSpace.MemberCount, this.NewDefinitionMemberCount))));
             }
 
-            foreach (DynamicUpdateMapEntry entry in this.Entries)
+            foreach (var entry in this.Entries)
             {
                 if (entry.ImplementationUpdateMap != null)
                 {
-                    Activity implementationOwner = updatedIdSpace[entry.NewActivityId];
+                    var implementationOwner = updatedIdSpace[entry.NewActivityId];
                     if (implementationOwner == null)
                     {
-                        string expectedId = entry.NewActivityId.ToString(CultureInfo.InvariantCulture);
+                        var expectedId = entry.NewActivityId.ToString(CultureInfo.InvariantCulture);
                         if (updatedIdSpace.Owner != null)
                         {
                             expectedId = updatedIdSpace.Owner.Id + "." + expectedId;
@@ -380,9 +320,9 @@ namespace System.Activities.DynamicUpdate
 
             entry = null;
 
-            for (int i = 0; i < this.Entries.Count; i++)
+            for (var i = 0; i < this.Entries.Count; i++)
             {
-                DynamicUpdateMapEntry currentEntry = this.Entries[i];
+                var currentEntry = this.Entries[i];
                 if (currentEntry.NewActivityId == newId)
                 {
                     entry = currentEntry;
@@ -410,26 +350,25 @@ namespace System.Activities.DynamicUpdate
         // rootIdSpace is optional.  if it's null, result.NewActivity will be null
         internal UpdatedActivity GetUpdatedActivity(QualifiedId oldQualifiedId, IdSpace rootIdSpace)
         {
-            UpdatedActivity result = new UpdatedActivity();
-            int[] oldIdSegments = oldQualifiedId.AsIDArray();
+            var result = new UpdatedActivity();
+            var oldIdSegments = oldQualifiedId.AsIDArray();
             int[] newIdSegments = null;
-            IdSpace currentIdSpace = rootIdSpace;
-            DynamicUpdateMap currentMap = this;
+            var currentIdSpace = rootIdSpace;
+            var currentMap = this;
 
             Fx.Assert(!this.IsForImplementation, "This method is never supposed to be called on an implementation map.");
 
-            for (int i = 0; i < oldIdSegments.Length; i++)
+            for (var i = 0; i < oldIdSegments.Length; i++)
             {
                 if (currentMap == null || currentMap.Entries.Count == 0)
                 {
                     break;
                 }
 
-                DynamicUpdateMapEntry entry;
-                if (!currentMap.TryGetUpdateEntry(oldIdSegments[i], out entry))
+                if (!currentMap.TryGetUpdateEntry(oldIdSegments[i], out var entry))
                 {
                     // UpdateMap should contain entries for all old activities in the IdSpace
-                    int[] subIdSegments = new int[i + 1];
+                    var subIdSegments = new int[i + 1];
                     Array.Copy(oldIdSegments, subIdSegments, subIdSegments.Length);
                     throw FxTrace.Exception.AsError(new InstanceUpdateException(SR.InvalidUpdateMap(
                         SR.MapEntryNotFound(new QualifiedId(subIdSegments)))));
@@ -453,7 +392,7 @@ namespace System.Activities.DynamicUpdate
                     if (currentActivity == null)
                     {
                         // New Activity pointed to by UpdateMap should exist
-                        string activityId = currentIdSpace.Owner.Id + "." + entry.NewActivityId.ToString(CultureInfo.InvariantCulture);
+                        var activityId = currentIdSpace.Owner.Id + "." + entry.NewActivityId.ToString(CultureInfo.InvariantCulture);
                         throw FxTrace.Exception.AsError(new InstanceUpdateException(SR.InvalidUpdateMap(
                             SR.ActivityNotFound(activityId))));
                     }
@@ -482,7 +421,7 @@ namespace System.Activities.DynamicUpdate
             return result;
         }
 
-        static void ThrowIfMapsIncompatible(DynamicUpdateMap first, DynamicUpdateMap second, MergeErrorContext errorContext)
+        private static void ThrowIfMapsIncompatible(DynamicUpdateMap first, DynamicUpdateMap second, MergeErrorContext errorContext)
         {
             Fx.Assert(!first.IsNoChanges && !second.IsNoChanges, "This method is never supposed to be called on the NoChanges map.");
 
@@ -495,7 +434,7 @@ namespace System.Activities.DynamicUpdate
                 errorContext.Throw(SR.InvalidMergeMapMemberCount(first.NewDefinitionMemberCount, second.OldDefinitionMemberCount));
             }
             if (!first.ArgumentsAreUnknown && !second.ArgumentsAreUnknown && first.IsForImplementation && 
-                !ActivityComparer.ListEquals(first.newArguments, second.oldArguments))
+                !ActivityComparer.ListEquals(first.SerializedNewArguments, second.SerializedOldArguments))
             {
                 if (first.NewArguments.Count != second.OldArguments.Count)
                 {
@@ -508,7 +447,7 @@ namespace System.Activities.DynamicUpdate
             }
         }
 
-        static void ValidateDefinitionMatchesMap(Activity activity, int memberCount, string parameterName)
+        private static void ValidateDefinitionMatchesMap(Activity activity, int memberCount, string parameterName)
         {
             if (activity == null)
             {
@@ -529,7 +468,7 @@ namespace System.Activities.DynamicUpdate
             }
         }
 
-        static void ValidateDefinitionMatchesImplementationMap(Activity activity, int memberCount, string parameterName)
+        private static void ValidateDefinitionMatchesImplementationMap(Activity activity, int memberCount, string parameterName)
         {
             if (activity == null)
             {
@@ -589,34 +528,22 @@ namespace System.Activities.DynamicUpdate
                 this.currentIdSpace.Push(id);
             }
 
-            public void PopIdSpace()
-            {
-                this.currentIdSpace.Pop();
-            }
+            public void PopIdSpace() => this.currentIdSpace.Pop();
 
             public void Throw(string detail)
             {
                 QualifiedId id = null;
                 if (this.currentIdSpace != null && this.currentIdSpace.Count > 0)
                 {
-                    int[] idSegments = new int[this.currentIdSpace.Count];
-                    for (int i = idSegments.Length - 1; i >= 0; i--)
+                    var idSegments = new int[this.currentIdSpace.Count];
+                    for (var i = idSegments.Length - 1; i >= 0; i--)
                     {
                         idSegments[i] = this.currentIdSpace.Pop();
                     }
                     id = new QualifiedId(idSegments);
                 }
 
-                string errorMessage;
-                if (id == null)
-                {
-                    errorMessage = SR.InvalidRootMergeMap(this.MapIndex, detail);
-                }
-                else
-                {
-                    errorMessage = SR.InvalidMergeMap(this.MapIndex, id, detail);
-                }
-
+                var errorMessage = id == null ? SR.InvalidRootMergeMap(this.MapIndex, detail) : SR.InvalidMergeMap(this.MapIndex, id, detail);
                 throw FxTrace.Exception.Argument("maps", errorMessage);
             }
         }
@@ -628,10 +555,7 @@ namespace System.Activities.DynamicUpdate
             {
             }
 
-            protected override int GetKeyForItem(DynamicUpdateMapEntry item)
-            {
-                return item.OldActivityId;
-            }
+            protected override int GetKeyForItem(DynamicUpdateMapEntry item) => item.OldActivityId;
         }
     }
 }

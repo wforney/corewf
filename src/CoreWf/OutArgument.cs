@@ -227,7 +227,7 @@ namespace System.Activities
 
             if (this.Expression.UseOldFastPath)
             {
-                Location<T> argumentValue = executor.ExecuteInResolutionContext<Location<T>>(targetActivityInstance, this.Expression);
+                var argumentValue = executor.ExecuteInResolutionContext<Location<T>>(targetActivityInstance, this.Expression);
                 targetEnvironment.Declare(this.RuntimeArgument, argumentValue.CreateReference(true), targetActivityInstance);
                 return true;
             }

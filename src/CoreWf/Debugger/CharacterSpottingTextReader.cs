@@ -76,7 +76,7 @@ namespace System.Activities.Debugger
 
         public override int Read()
         {
-            int result = this.underlyingReader.Read();
+            var result = this.underlyingReader.Read();
             if (result != -1)
             {
                 result = this.AnalyzeReadData((char)result);
@@ -87,13 +87,13 @@ namespace System.Activities.Debugger
 
         internal DocumentLocation FindCharacterStrictlyAfter(char c, DocumentLocation afterLocation)
         {
-            List<DocumentLocation> locationList = this.GetLocationList(c);
+            var locationList = this.GetLocationList(c);
             UnitTestUtility.Assert(locationList != null, "We should always find character for special characters only");
 
             // Note that this 'nextLocation' may not represent a real document location (we could hit an end line character here so that there is no next line
             // position. This is merely used for the search algorithm below:
-            DocumentLocation nextLocation = new DocumentLocation(afterLocation.LineNumber, new OneBasedCounter(afterLocation.LinePosition.Value + 1));
-            BinarySearchResult result = locationList.MyBinarySearch(nextLocation);
+            var nextLocation = new DocumentLocation(afterLocation.LineNumber, new OneBasedCounter(afterLocation.LinePosition.Value + 1));
+            var result = locationList.MyBinarySearch(nextLocation);
             if (result.IsFound)
             {
                 // It is possible that the next location is a quote itself, or
@@ -113,10 +113,10 @@ namespace System.Activities.Debugger
 
         internal DocumentLocation FindCharacterStrictlyBefore(char c, DocumentLocation documentLocation)
         {
-            List<DocumentLocation> locationList = this.GetLocationList(c);
+            var locationList = this.GetLocationList(c);
             UnitTestUtility.Assert(locationList != null, "We should always find character for special characters only");
 
-            BinarySearchResult result = locationList.MyBinarySearch(documentLocation);
+            var result = locationList.MyBinarySearch(documentLocation);
             if (result.IsFound)
             {
                 if (result.FoundIndex > 0)
@@ -180,7 +180,7 @@ namespace System.Activities.Debugger
             if (lastCharacterRead == CarriageReturn)
             {
                 // if reading \r and peek next char is \n, then process \n as well
-                int nextChar = this.underlyingReader.Peek();
+                var nextChar = this.underlyingReader.Peek();
                 if (nextChar == EndLine)
                 {
                     lastCharacterRead = (char)this.underlyingReader.Read();
@@ -198,7 +198,7 @@ namespace System.Activities.Debugger
             }
             else
             {
-                List<DocumentLocation> locations = this.GetLocationList(lastCharacterRead);
+                var locations = this.GetLocationList(lastCharacterRead);
                 if (locations != null)
                 {
                     locations.Add(this.CurrentLocation);

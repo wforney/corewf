@@ -11,24 +11,12 @@ namespace System.Activities.Expressions
         private readonly LocationReference locationReference;
 
         // Ctors are internal because we rely on validation from creator or descendant
-        internal EnvironmentLocationValue()
-        {
-            this.UseOldFastPath = true;
-        }
+        internal EnvironmentLocationValue() => this.UseOldFastPath = true;
 
         internal EnvironmentLocationValue(LocationReference locationReference)
-            : this()
-        {
-            this.locationReference = locationReference;
-        }
+            : this() => this.locationReference = locationReference;
 
-        public virtual LocationReference LocationReference
-        {
-            get
-            {
-                return this.locationReference;
-            }
-        }
+        public virtual LocationReference LocationReference => this.locationReference;
 
         protected override void CacheMetadata(CodeActivityMetadata metadata)
         {
@@ -38,6 +26,11 @@ namespace System.Activities.Expressions
 
         protected override T Execute(CodeActivityContext context)
         {
+            if (context == null)
+            {
+                throw new ArgumentNullException(nameof(context));
+            }
+
             try
             {
                 context.AllowChainedEnvironmentAccess = true;
@@ -49,9 +42,7 @@ namespace System.Activities.Expressions
             }
         }
 
-        ActivityWithResult ILocationReferenceExpression.CreateNewInstance(LocationReference locationReference)
-        {
-            return new EnvironmentLocationValue<T>(locationReference);
-        }
+        ActivityWithResult ILocationReferenceExpression.CreateNewInstance(LocationReference locationReference) =>
+            new EnvironmentLocationValue<T>(locationReference);
     }
 }

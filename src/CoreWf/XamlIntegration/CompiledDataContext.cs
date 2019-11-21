@@ -87,15 +87,15 @@ namespace System.Activities.XamlIntegration
 
         protected static object GetDataContextActivities(Activity compiledRoot, bool forImplementation)
         {
-            CompiledDataContextActivityVistor vistor = new CompiledDataContextActivityVistor();
+            var vistor = new CompiledDataContextActivityVistor();
             vistor.Visit(compiledRoot, forImplementation);
-            CompiledDataContextActivitiesCache cache = new CompiledDataContextActivitiesCache(vistor.DataContextActivities);
+            var cache = new CompiledDataContextActivitiesCache(vistor.DataContextActivities);
             return cache;
         }
 
         protected static CompiledDataContext[] GetCompiledDataContextCache(object dataContextActivities, ActivityContext activityContext, Activity compiledRoot, bool forImplementation, int compiledDataContextCount)
         {
-            ActivityInstance cacheInstance = GetDataContextInstance((CompiledDataContextActivitiesCache)dataContextActivities, activityContext, compiledRoot);
+            var cacheInstance = GetDataContextInstance((CompiledDataContextActivitiesCache)dataContextActivities, activityContext, compiledRoot);
 
             HybridDictionary<Activity, CompiledDataContext[]> cache = null;
             if (forImplementation)
@@ -121,7 +121,7 @@ namespace System.Activities.XamlIntegration
                 }
             }
 
-            if (!cache.TryGetValue(compiledRoot, out CompiledDataContext[] result))
+            if (!cache.TryGetValue(compiledRoot, out var result))
             {
                 result = new CompiledDataContext[compiledDataContextCount];
                 cache.Add(compiledRoot, result);
@@ -134,7 +134,7 @@ namespace System.Activities.XamlIntegration
         {
             ActivityInstance dataContextInstance = null;
 
-            ActivityInstance currentInstance = activityContext.CurrentInstance;
+            var currentInstance = activityContext.CurrentInstance;
 
             while (currentInstance != null)
             {
@@ -174,7 +174,7 @@ namespace System.Activities.XamlIntegration
         {
             IList<Location> temp = new List<Location>(locationReferences.Count);
 
-            foreach (LocationReference reference in locationReferences)
+            foreach (var reference in locationReferences)
             {
                 temp.Add(reference.GetLocation(activityContext));
             }
@@ -198,7 +198,7 @@ namespace System.Activities.XamlIntegration
 
                 if (this.activities != null && this.activities.Count <= 5)
                 {
-                    Activity[] activitiesArray = new Activity[5];
+                    var activitiesArray = new Activity[5];
                     this.activities.CopyTo(activitiesArray);
 
                     activity0 = activitiesArray[0];

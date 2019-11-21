@@ -41,10 +41,10 @@ namespace System.Activities.Expressions
 
         protected override void CacheMetadata(CodeActivityMetadata metadata)
         {
-            CodeActivityPublicEnvironmentAccessor publicAccessor = CodeActivityPublicEnvironmentAccessor.Create(metadata);
+            var publicAccessor = CodeActivityPublicEnvironmentAccessor.Create(metadata);
 
             // We need to rewrite the tree.
-            if (ExpressionUtilities.TryRewriteLambdaExpression(this.locationExpression, out Expression newTree, publicAccessor, true))
+            if (ExpressionUtilities.TryRewriteLambdaExpression(this.locationExpression, out var newTree, publicAccessor, true))
             {
                 this.rewrittenTree = (Expression<Func<ActivityContext, T>>)newTree;
             }
@@ -54,9 +54,9 @@ namespace System.Activities.Expressions
             }
 
             // inspect the expressionTree to see if it is a valid location expression(L-value)
-            if (!ExpressionUtilities.IsLocation(this.rewrittenTree, typeof(T), out string extraErrorMessage))
+            if (!ExpressionUtilities.IsLocation(this.rewrittenTree, typeof(T), out var extraErrorMessage))
             {
-                string errorMessage = SR.InvalidLValueExpression;
+                var errorMessage = SR.InvalidLValueExpression;
                 if (extraErrorMessage != null)
                 {
                     errorMessage += ":" + extraErrorMessage;

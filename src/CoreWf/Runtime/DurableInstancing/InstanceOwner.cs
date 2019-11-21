@@ -78,7 +78,7 @@ namespace System.Activities.Runtime.DurableInstancing
             lock (HandlesLock)
             {
                 // The handle may have already been bumped - only remove it if it's still it.
-                if (BoundHandles.TryGetValue(handle.Id, out InstanceHandle existingHandle) && object.ReferenceEquals(handle, existingHandle))
+                if (BoundHandles.TryGetValue(handle.Id, out var existingHandle) && object.ReferenceEquals(handle, existingHandle))
                 {
                     BoundHandles.Remove(handle.Id);
                 }
@@ -113,7 +113,7 @@ namespace System.Activities.Runtime.DurableInstancing
             {
                 try
                 {
-                    if (BoundHandles.TryGetValue(reference.InstanceHandle.Id, out InstanceHandle existingHandle))
+                    if (BoundHandles.TryGetValue(reference.InstanceHandle.Id, out var existingHandle))
                     {
                         Fx.AssertAndFailFast(!object.ReferenceEquals(existingHandle, reference.InstanceHandle), "InstanceStore lock state is not correct.");
                         if (existingHandle.Version <= 0 || reference.InstanceHandle.Version <= 0)
@@ -179,11 +179,11 @@ namespace System.Activities.Runtime.DurableInstancing
 
             lock (HandlesLock)
             {
-                InstanceHandleReference cancelReference = reference;
+                var cancelReference = reference;
                 LockResolutionMarker markerReference = null;
                 try
                 {
-                    if (BoundHandles.TryGetValue(reference.InstanceHandle.Id, out InstanceHandle existingHandle))
+                    if (BoundHandles.TryGetValue(reference.InstanceHandle.Id, out var existingHandle))
                     {
                         Fx.AssertAndFailFast(!object.ReferenceEquals(existingHandle, reference.InstanceHandle), "InstanceStore lock state is not correct in InitiateLockResolution.");
                         if (existingHandle.Version <= 0 || instanceVersion <= 0)
@@ -297,7 +297,7 @@ namespace System.Activities.Runtime.DurableInstancing
 
             lock (HandlesLock)
             {
-                LockResolutionMarker marker = (LockResolutionMarker)reference;
+                var marker = (LockResolutionMarker)reference;
                 Fx.AssertAndThrow(marker.IsComplete, "Called FinishBind prematurely.");
                 if (marker.NonConflicting)
                 {
@@ -325,7 +325,7 @@ namespace System.Activities.Runtime.DurableInstancing
         // Must be called with HandlesLock held.
         private void CancelReference(ref InstanceHandleReference reference, ref List<InstanceHandleReference> handlesPendingResolution)
         {
-            Guid wasBoundToInstanceId = reference.InstanceHandle.Id;
+            var wasBoundToInstanceId = reference.InstanceHandle.Id;
 
             try
             {
@@ -348,11 +348,11 @@ namespace System.Activities.Runtime.DurableInstancing
 
             if (wasBoundToInstanceId != Guid.Empty)
             {
-                if (InProgressHandlesPerInstance.TryGetValue(wasBoundToInstanceId, out Queue<InstanceHandleReference> instanceQueue))
+                if (InProgressHandlesPerInstance.TryGetValue(wasBoundToInstanceId, out var instanceQueue))
                 {
                     while (instanceQueue.Count > 0)
                     {
-                        InstanceHandleReference handleRef = instanceQueue.Peek();
+                        var handleRef = instanceQueue.Peek();
                         if (handleRef.InstanceHandle != null)
                         {
                             if (CheckOldestReference(handleRef, ref handlesPendingResolution))
@@ -377,7 +377,7 @@ namespace System.Activities.Runtime.DurableInstancing
         {
             while (InProgressHandles.Count > 0)
             {
-                InstanceHandleReference handleRef = InProgressHandles.Peek();
+                var handleRef = InProgressHandles.Peek();
                 if (handleRef.InstanceHandle != null)
                 {
                     if (handleRef.InstanceHandle.Id == Guid.Empty)
@@ -385,7 +385,7 @@ namespace System.Activities.Runtime.DurableInstancing
                         break;
                     }
 
-                    if (!InProgressHandlesPerInstance.TryGetValue(handleRef.InstanceHandle.Id, out Queue<InstanceHandleReference> acceptingQueue))
+                    if (!InProgressHandlesPerInstance.TryGetValue(handleRef.InstanceHandle.Id, out var acceptingQueue))
                     {
                         if (CheckOldestReference(handleRef, ref handlesPendingResolution))
                         {
@@ -413,7 +413,7 @@ namespace System.Activities.Runtime.DurableInstancing
             }
             else if (handleRef.InstanceHandle.Id != Guid.Empty)
             {
-                if (!InProgressHandlesPerInstance.TryGetValue(handleRef.InstanceHandle.Id, out Queue<InstanceHandleReference> queue))
+                if (!InProgressHandlesPerInstance.TryGetValue(handleRef.InstanceHandle.Id, out var queue))
                 {
                     queue = new Queue<InstanceHandleReference>(2);
                     InProgressHandlesPerInstance.Add(handleRef.InstanceHandle.Id, queue);
@@ -436,10 +436,10 @@ namespace System.Activities.Runtime.DurableInstancing
                 return true;
             }
 
-            bool returnValue = true;
+            var returnValue = true;
             try
             {
-                if (BoundHandles.TryGetValue(marker.InstanceHandle.Id, out InstanceHandle existingHandle))
+                if (BoundHandles.TryGetValue(marker.InstanceHandle.Id, out var existingHandle))
                 {
                     Fx.AssertAndFailFast(!object.ReferenceEquals(existingHandle, marker.InstanceHandle), "InstanceStore lock state is not correct in CheckOldestReference.");
                     if (existingHandle.Version <= 0 || marker.InstanceVersion <= 0)
@@ -482,9 +482,9 @@ namespace System.Activities.Runtime.DurableInstancing
         {
             if (handlesPendingResolution != null)
             {
-                foreach (InstanceHandleReference handleRef in handlesPendingResolution)
+                foreach (var handleRef in handlesPendingResolution)
                 {
-                    LockResolutionMarker marker = handleRef as LockResolutionMarker;
+                    var marker = handleRef as LockResolutionMarker;
                     Fx.Assert(marker != null, "How did a non-marker get in here.");
                     marker.MarkerWaitHandle.Set();
                 }

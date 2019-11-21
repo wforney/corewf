@@ -60,7 +60,7 @@ namespace System.Activities.Runtime
                 // NOTE: exceptionToPropagate could be non-null here if this is a Fault work item.
                 // That means that the next line could potentially overwrite the exception with a
                 // new exception.
-                Exception newException = executor.CompleteActivityInstance(this.ActivityInstance);
+                var newException = executor.CompleteActivityInstance(this.ActivityInstance);
 
                 if (newException != null)
                 {

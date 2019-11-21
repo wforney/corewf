@@ -21,7 +21,7 @@ namespace System.Activities.Debugger
         public XmlReaderWithSourceLocation(TextReader underlyingTextReader)
         {
             UnitTestUtility.Assert(underlyingTextReader != null, "CharacterSpottingTextReader cannot be null and should be ensured by caller.");
-            CharacterSpottingTextReader characterSpottingTextReader = new CharacterSpottingTextReader(underlyingTextReader);
+            var characterSpottingTextReader = new CharacterSpottingTextReader(underlyingTextReader);
             this.BaseReader = XmlReader.Create(characterSpottingTextReader);
             UnitTestUtility.Assert(this.BaseReaderAsLineInfo != null, "The XmlReader created by XmlReader.Create should ensure this.");
             UnitTestUtility.Assert(this.BaseReaderAsLineInfo.HasLineInfo(), "The XmlReader created by XmlReader.Create should ensure this.");
@@ -104,18 +104,18 @@ namespace System.Activities.Debugger
 
         public override bool Read()
         {
-            bool result = base.Read();
+            var result = base.Read();
             if (this.NodeType == System.Xml.XmlNodeType.Element)
             {
-                DocumentLocation elementLocation = this.CurrentLocation;
+                var elementLocation = this.CurrentLocation;
                 if (this.IsEmptyElement)
                 {
-                    DocumentRange emptyElementRange = this.FindEmptyElementRange(elementLocation);
+                    var emptyElementRange = this.FindEmptyElementRange(elementLocation);
                     this.EmptyElementRanges.Add(elementLocation, emptyElementRange);
                 }
                 else
                 {
-                    DocumentLocation startElementBracket = this.FindStartElementBracket(elementLocation);
+                    var startElementBracket = this.FindStartElementBracket(elementLocation);
                     this.StartElementLocations.Add(elementLocation, startElementBracket);
 
                     // Push a null as a place holder. In XmlNodeType.Text part, we replace this
@@ -127,14 +127,14 @@ namespace System.Activities.Debugger
                     this.contentStartLocationStack.Push(null);
                 }
 
-                int attributeCount = this.AttributeCount;
+                var attributeCount = this.AttributeCount;
                 if (attributeCount > 0)
                 {
-                    for (int i = 0; i < attributeCount; i++)
+                    for (var i = 0; i < attributeCount; i++)
                     {
                         this.MoveToAttribute(i);
-                        DocumentLocation memberLocation = this.CurrentLocation;
-                        DocumentRange attributeValueRange = this.FindAttributeValueLocation(memberLocation);
+                        var memberLocation = this.CurrentLocation;
+                        var attributeValueRange = this.FindAttributeValueLocation(memberLocation);
                         this.AttributeValueRanges.Add(memberLocation, attributeValueRange);
                     }
 
@@ -143,16 +143,16 @@ namespace System.Activities.Debugger
             }
             else if (this.NodeType == System.Xml.XmlNodeType.EndElement)
             {
-                DocumentLocation endElementLocation = this.CurrentLocation;
-                DocumentLocation endElementBracket = this.FindEndElementBracket(endElementLocation);
+                var endElementLocation = this.CurrentLocation;
+                var endElementBracket = this.FindEndElementBracket(endElementLocation);
                 this.EndElementLocations.Add(endElementLocation, endElementBracket);
                 UnitTestUtility.Assert(
                     this.contentStartLocationStack.Count > 0, 
                     "The stack should contain at least a null we pushed in StartElement.");
-                DocumentLocation contentStartLocation = this.contentStartLocationStack.Pop();
+                var contentStartLocation = this.contentStartLocationStack.Pop();
                 if (contentStartLocation != null)
                 {
-                    DocumentLocation contentEnd = this.FindContentEndBefore(endElementLocation);
+                    var contentEnd = this.FindContentEndBefore(endElementLocation);
                     this.ContentValueRanges.Add(endElementLocation, new DocumentRange(contentStartLocation, contentEnd));
                 }
             }
@@ -200,28 +200,28 @@ namespace System.Activities.Debugger
 
         private DocumentRange FindEmptyElementRange(DocumentLocation elementLocation)
         {
-            DocumentLocation startBracket = this.FindStartElementBracket(elementLocation);
-            DocumentLocation endBracket = this.FindEndElementBracket(elementLocation);
+            var startBracket = this.FindStartElementBracket(elementLocation);
+            var endBracket = this.FindEndElementBracket(elementLocation);
             UnitTestUtility.Assert(startBracket != null, "XmlReader should guarantee there must be a start angle bracket.");
             UnitTestUtility.Assert(endBracket != null, "XmlReader should guarantee there must be an end angle bracket.");
-            DocumentRange emptyElementRange = new DocumentRange(startBracket, endBracket);
+            var emptyElementRange = new DocumentRange(startBracket, endBracket);
             return emptyElementRange;
         }
 
         private DocumentRange FindAttributeValueLocation(DocumentLocation memberLocation)
         {
             UnitTestUtility.Assert(this.characterSpottingTextReader != null, "Ensured by constructor.");
-            DocumentLocation attributeStart = this.characterSpottingTextReader.FindCharacterStrictlyAfter(this.QuoteChar, memberLocation);
+            var attributeStart = this.characterSpottingTextReader.FindCharacterStrictlyAfter(this.QuoteChar, memberLocation);
             UnitTestUtility.Assert(attributeStart != null, "Read should ensure the two quote characters exists");
-            DocumentLocation attributeEnd = this.characterSpottingTextReader.FindCharacterStrictlyAfter(this.QuoteChar, attributeStart);
+            var attributeEnd = this.characterSpottingTextReader.FindCharacterStrictlyAfter(this.QuoteChar, attributeStart);
             UnitTestUtility.Assert(attributeEnd != null, "Read should ensure the two quote characters exists");
             return new DocumentRange(attributeStart, attributeEnd);
         }
 
         private DocumentLocation FindContentEndBefore(DocumentLocation location)
         {
-            DocumentLocation contentEnd = this.FindStartElementBracket(location);
-            int linePosition = contentEnd.LinePosition.Value - 1;
+            var contentEnd = this.FindStartElementBracket(location);
+            var linePosition = contentEnd.LinePosition.Value - 1;
 
             // Line position is 1-based
             if (linePosition < 1)

@@ -200,7 +200,7 @@ using System.Activities.DynamicUpdate;
             this.ProcessStates(metadata);
 
             metadata.AddImplementationVariable(this.eventManager);
-            foreach (Variable variable in this.Variables)
+            foreach (var variable in this.Variables)
             {
                 metadata.AddVariable(variable);
             }
@@ -217,10 +217,10 @@ using System.Activities.DynamicUpdate;
         protected override void Execute(NativeActivityContext context)
         {
             // We view the duration before moving to initial state is on transition.
-            StateMachineEventManager localEventManager = this.eventManager.Get(context);
+            var localEventManager = this.eventManager.Get(context);
             localEventManager.OnTransition = true;
             localEventManager.CurrentBeingProcessedEvent = null;
-            int index = StateMachineIdHelper.GetChildStateIndex(RootId, this.InitialState.StateId);
+            var index = StateMachineIdHelper.GetChildStateIndex(RootId, this.InitialState.StateId);
 
             context.ScheduleFunc<StateMachineEventManager, string>(
                 this.internalStateFuncs[index],
@@ -240,9 +240,9 @@ using System.Activities.DynamicUpdate;
         {
             if (state.Transitions.Count > 0)
             {
-                for (int i = 0; i < state.Transitions.Count; i++)
+                for (var i = 0; i < state.Transitions.Count; i++)
                 {
-                    Transition transition = state.Transitions[i];
+                    var transition = state.Transitions[i];
                     if (!string.IsNullOrEmpty(state.StateId))
                     {
                         transition.Id = StateMachineIdHelper.GenerateTransitionId(state.StateId, i);
@@ -258,7 +258,7 @@ using System.Activities.DynamicUpdate;
 
         private static void ClearStates(Collection<State> states)
         {
-            foreach (State state in states)
+            foreach (var state in states)
             {
                 ClearState(state);
             }
@@ -273,7 +273,7 @@ using System.Activities.DynamicUpdate;
 
         private static void ClearTransitions(State state)
         {
-            foreach (Transition transition in state.Transitions)
+            foreach (var transition in state.Transitions)
             {
                 ClearTransition(transition);
             }
@@ -286,7 +286,7 @@ using System.Activities.DynamicUpdate;
 
         private static void ValidateStates(NativeActivityMetadata metadata, Collection<State> states)
         {
-            foreach (State state in states)
+            foreach (var state in states)
             {
                 // only validate reached state.
                 ValidateState(metadata, state);
@@ -334,11 +334,11 @@ using System.Activities.DynamicUpdate;
 
         private static void ValidateTransitions(NativeActivityMetadata metadata, State currentState)
         {
-            Collection<Transition> transitions = currentState.Transitions;
-            HashSet<Activity> conditionalTransitionTriggers = new HashSet<Activity>();
-            Dictionary<Activity, List<Transition>> unconditionalTransitionMapping = new Dictionary<Activity, List<Transition>>();
+            var transitions = currentState.Transitions;
+            var conditionalTransitionTriggers = new HashSet<Activity>();
+            var unconditionalTransitionMapping = new Dictionary<Activity, List<Transition>>();
 
-            foreach (Transition transition in transitions)
+            foreach (var transition in transitions)
             {
                 if (transition.Source != null)
                 {
@@ -373,7 +373,7 @@ using System.Activities.DynamicUpdate;
                         sourceDetail: transition));
                 }
 
-                Activity triggerActivity = transition.ActiveTrigger;
+                var triggerActivity = transition.ActiveTrigger;
 
                 if (transition.Condition == null)
                 {
@@ -390,12 +390,12 @@ using System.Activities.DynamicUpdate;
                 }
             }
 
-            foreach (KeyValuePair<Activity, List<Transition>> unconditionalTransitions in unconditionalTransitionMapping)
+            foreach (var unconditionalTransitions in unconditionalTransitionMapping)
             {
                 if (conditionalTransitionTriggers.Contains(unconditionalTransitions.Key) ||
                     unconditionalTransitions.Value.Count > 1)
                 {
-                    foreach (Transition transition in unconditionalTransitions.Value)
+                    foreach (var transition in unconditionalTransitions.Value)
                     {
                         if (transition.Trigger != null)
                         {
@@ -436,17 +436,17 @@ using System.Activities.DynamicUpdate;
         private void ProcessStates(NativeActivityMetadata metadata)
         {
             // remove duplicate state in the collection during evaluation
-            IEnumerable<State> distinctStates = this.states.Distinct();
+            var distinctStates = this.states.Distinct();
 
-            foreach (State state in distinctStates)
+            foreach (var state in distinctStates)
             {
-                InternalState internalState = state.InternalState;
+                var internalState = state.InternalState;
                 this.internalStates.Add(internalState);
 
-                DelegateInArgument<StateMachineEventManager> eventManager = new DelegateInArgument<Statements.StateMachineEventManager>();
+                var eventManager = new DelegateInArgument<Statements.StateMachineEventManager>();
                 internalState.EventManager = eventManager;
 
-                ActivityFunc<StateMachineEventManager, string> activityFunc = new ActivityFunc<StateMachineEventManager, string>
+                var activityFunc = new ActivityFunc<StateMachineEventManager, string>
                 {
                     Argument = eventManager,
                     Handler = internalState,
@@ -466,7 +466,7 @@ using System.Activities.DynamicUpdate;
         {
             if (StateMachineIdHelper.IsAncestor(RootId, result))
             {
-                int index = StateMachineIdHelper.GetChildStateIndex(RootId, result);
+                var index = StateMachineIdHelper.GetChildStateIndex(RootId, result);
                 context.ScheduleFunc<StateMachineEventManager, string>(
                     this.internalStateFuncs[index],
                     this.eventManager.Get(context),
@@ -511,10 +511,10 @@ using System.Activities.DynamicUpdate;
                 actionForStates(metadata, this.States);
             }
 
-            uint passNumber = this.PassNumber;
+            var passNumber = this.PassNumber;
 
-            IEnumerable<State> distinctStates = this.States.Distinct();
-            foreach (State state in distinctStates)
+            var distinctStates = this.States.Distinct();
+            foreach (var state in distinctStates)
             {
                 if (!checkReached || state.Reachable)
                 {
@@ -532,9 +532,9 @@ using System.Activities.DynamicUpdate;
         {
             if (states.Count > 0)
             {
-                for (int i = 0; i < states.Count; i++)
+                for (var i = 0; i < states.Count; i++)
                 {
-                    State state = states[i];
+                    var state = states[i];
 
                     if (string.IsNullOrEmpty(state.StateId))
                     {
@@ -556,12 +556,12 @@ using System.Activities.DynamicUpdate;
 
         private void TraverseViaTransitions(Action<State> actionForState, Action<Transition> actionForTransition)
         {
-            Stack<State> stack = new Stack<State>();
+            var stack = new Stack<State>();
             stack.Push(this.InitialState);
-            uint passNumber = this.PassNumber;
+            var passNumber = this.PassNumber;
             while (stack.Count > 0)
             {
-                State currentState = stack.Pop();
+                var currentState = stack.Pop();
                 if (currentState == null || currentState.PassNumber == passNumber)
                 {
                     continue;
@@ -574,7 +574,7 @@ using System.Activities.DynamicUpdate;
                     actionForState(currentState);
                 }
 
-                foreach (Transition transition in currentState.Transitions)
+                foreach (var transition in currentState.Transitions)
                 {
                     if (actionForTransition != null)
                     {
@@ -604,7 +604,7 @@ using System.Activities.DynamicUpdate;
                     this.Result = new OutArgument<StateMachineEventManager>();
                 }
                 
-                RuntimeArgument eventManagerArgument = new RuntimeArgument("Result", this.ResultType, ArgumentDirection.Out);
+                var eventManagerArgument = new RuntimeArgument("Result", this.ResultType, ArgumentDirection.Out);
                 metadata.Bind(this.Result, eventManagerArgument);
                 metadata.AddArgument(eventManagerArgument);
             }

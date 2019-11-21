@@ -10,7 +10,7 @@ namespace System.Activities.DynamicUpdate
     using System.Runtime;
     using System.Text;
 
-    enum UpdateBlockedReason
+    internal enum UpdateBlockedReason
     {
         NotBlocked = 0,
         Custom = 1,
@@ -27,7 +27,7 @@ namespace System.Activities.DynamicUpdate
         NewHandle
     }
 
-    static class UpdateBlockedReasonMessages
+    internal static class UpdateBlockedReasonMessages
     {
         public static string Get(UpdateBlockedReason reason)
         {

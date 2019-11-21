@@ -4,27 +4,20 @@
 namespace System.Activities.DynamicUpdate
 {
     using System;
-    using System.Activities.DynamicUpdate;
-    using System.Activities.Validation;
-    using System.Collections;
-    using System.Collections.Generic;
-    using System.Diagnostics.CodeAnalysis;
-    using System.Globalization;
-    using System.Linq;
-    using System.Runtime;
-    using System.Runtime.CompilerServices;
     using System.Activities;
     using System.Activities.Runtime;
+    using System.Collections.Generic;
+    using System.Linq;
 
-    static class ActivityComparer
+    internal static class ActivityComparer
     {
         public static bool HasPrivateMemberOtherThanArgumentsChanged(DynamicUpdateMapBuilder.NestedIdSpaceFinalizer nestedFinalizer, Activity currentElement, Activity originalElement, bool isMemberOfUpdatedIdSpace, out DynamicUpdateMap argumentChangesMap)
         {
             Fx.Assert(currentElement != null && originalElement != null, "Both activities must be non-null.");
          
             argumentChangesMap = null;
-            IdSpace currentPrivateIdSpace = currentElement.ParentOf;
-            IdSpace originalPrivateIdSpace = originalElement.ParentOf;
+            var currentPrivateIdSpace = currentElement.ParentOf;
+            var originalPrivateIdSpace = originalElement.ParentOf;
 
             // for the implementation of an activity in the IdSpace being updated--but not anywhere deeper
             // in the tree--we allow adding, removing or rearranging named private variables.
@@ -51,19 +44,13 @@ namespace System.Activities.DynamicUpdate
             }
 
             // compare structural equality of members in the private IdSpaces                              
-            PrivateIdSpaceMatcher privateIdSpaceMatcher = new PrivateIdSpaceMatcher(nestedFinalizer, originalPrivateIdSpace, currentPrivateIdSpace);
+            var privateIdSpaceMatcher = new PrivateIdSpaceMatcher(nestedFinalizer, originalPrivateIdSpace, currentPrivateIdSpace);
             return !privateIdSpaceMatcher.Match(out argumentChangesMap);
         }
 
-        public static bool ListEquals(IList<RuntimeDelegateArgument> currentArguments, IList<RuntimeDelegateArgument> originalArguments)
-        {
-            return ListEquals(currentArguments, originalArguments, CompareRuntimeDelegateArgumentEquality);
-        }
+        public static bool ListEquals(IList<RuntimeDelegateArgument> currentArguments, IList<RuntimeDelegateArgument> originalArguments) => ListEquals(currentArguments, originalArguments, CompareRuntimeDelegateArgumentEquality);
 
-        public static bool ListEquals(IList<ArgumentInfo> currentArguments, IList<ArgumentInfo> originalArguments)
-        {
-            return ListEquals(currentArguments, originalArguments, ArgumentInfo.Equals);
-        }
+        public static bool ListEquals(IList<ArgumentInfo> currentArguments, IList<ArgumentInfo> originalArguments) => ListEquals(currentArguments, originalArguments, ArgumentInfo.Equals);
 
         public static bool ListEquals<T>(IList<T> currentMembers, IList<T> originalMembers, Func<T, T, bool> comparer)
         {
@@ -84,7 +71,7 @@ namespace System.Activities.DynamicUpdate
 
             if (comparer != null)
             {
-                for (int i = 0; i < currentMembers.Count; i++)
+                for (var i = 0; i < currentMembers.Count; i++)
                 {
                     if (!comparer(currentMembers[i], originalMembers[i]))
                     {
@@ -96,12 +83,9 @@ namespace System.Activities.DynamicUpdate
             return true;
         }
 
-        public static bool SignatureEquals(Variable leftVar, Variable rightVar)
-        {
-            return AreVariableNamesIdentical(leftVar.Name, rightVar.Name) && leftVar.Type == rightVar.Type && leftVar.Modifiers == rightVar.Modifiers;
-        }
+        public static bool SignatureEquals(Variable leftVar, Variable rightVar) => AreVariableNamesIdentical(leftVar.Name, rightVar.Name) && leftVar.Type == rightVar.Type && leftVar.Modifiers == rightVar.Modifiers;
 
-        static bool AreVariableNamesIdentical(string leftName, string rightName)
+        private static bool AreVariableNamesIdentical(string leftName, string rightName)
         {
             if (string.IsNullOrEmpty(leftName) && string.IsNullOrEmpty(rightName))
             {
@@ -111,22 +95,13 @@ namespace System.Activities.DynamicUpdate
             return leftName == rightName;
         }
 
-        static bool IsAnyNameless(IEnumerable<Variable> variables)
-        {
-            return variables.Any(v => string.IsNullOrEmpty(v.Name));
-        }        
+        private static bool IsAnyNameless(IEnumerable<Variable> variables) => variables.Any(v => string.IsNullOrEmpty(v.Name));
 
-        static IList<Activity> GetDeclaredChildren(IList<Activity> collection, Activity parent)
-        {
-            return collection.Where(a => a.Parent == parent).ToList();
-        }
+        private static IList<Activity> GetDeclaredChildren(IList<Activity> collection, Activity parent) => collection.Where(a => a.Parent == parent).ToList();
 
-        static IList<ActivityDelegate> GetDeclaredDelegates(IList<ActivityDelegate> collection, Activity parentActivity)
-        {
-            return collection.Where(d => d.Owner == parentActivity).ToList();
-        }
+        private static IList<ActivityDelegate> GetDeclaredDelegates(IList<ActivityDelegate> collection, Activity parentActivity) => collection.Where(d => d.Owner == parentActivity).ToList();
 
-        static bool CompareChildEquality(Activity currentChild, IdSpace currentIdSpace, Activity originalChild, IdSpace originalIdSpace)
+        private static bool CompareChildEquality(Activity currentChild, IdSpace currentIdSpace, Activity originalChild, IdSpace originalIdSpace)
         {
             if (currentChild == null && originalChild == null)
             {
@@ -137,15 +112,10 @@ namespace System.Activities.DynamicUpdate
                 return false;
             }
 
-            if ((currentChild.MemberOf == currentIdSpace && originalChild.MemberOf != originalIdSpace) || (currentChild.MemberOf != currentIdSpace && originalChild.MemberOf == originalIdSpace))
-            {
-                return false;
-            }
-
-            return true;
+            return (currentChild.MemberOf != currentIdSpace || originalChild.MemberOf == originalIdSpace) && (currentChild.MemberOf == currentIdSpace || originalChild.MemberOf != originalIdSpace);
         }
 
-        static bool CompareDelegateEquality(ActivityDelegate currentDelegate, ActivityDelegate originalDelegate)
+        private static bool CompareDelegateEquality(ActivityDelegate currentDelegate, ActivityDelegate originalDelegate)
         {
             Fx.Assert(currentDelegate != null && originalDelegate != null, "Both currentDelegate and originalDelegate must be non-null.");
 
@@ -154,15 +124,15 @@ namespace System.Activities.DynamicUpdate
                 return false;
             }
 
-            bool isImplementation = currentDelegate.ParentCollectionType == ActivityCollectionType.Implementation;
+            var isImplementation = currentDelegate.ParentCollectionType == ActivityCollectionType.Implementation;
             Fx.Assert(originalDelegate.ParentCollectionType == currentDelegate.ParentCollectionType, "Mismatched delegates");
-            IdSpace currentIdSpace = isImplementation ? currentDelegate.Owner.ParentOf : currentDelegate.Owner.MemberOf;
-            IdSpace originalIdSpace = isImplementation ? originalDelegate.Owner.ParentOf : originalDelegate.Owner.MemberOf;
+            var currentIdSpace = isImplementation ? currentDelegate.Owner.ParentOf : currentDelegate.Owner.MemberOf;
+            var originalIdSpace = isImplementation ? originalDelegate.Owner.ParentOf : originalDelegate.Owner.MemberOf;
 
             return CompareChildEquality(currentDelegate.Handler, currentIdSpace, originalDelegate.Handler, originalIdSpace);
         }
 
-        static bool CompareVariableEquality(Variable currentVariable, Variable originalVariable)
+        private static bool CompareVariableEquality(Variable currentVariable, Variable originalVariable)
         {
             Fx.Assert(currentVariable != null && originalVariable != null, "Both currentVariable and originalVariable must be non-null.");
 
@@ -172,12 +142,12 @@ namespace System.Activities.DynamicUpdate
             }
 
             Fx.Assert(currentVariable.IsPublic == originalVariable.IsPublic, "Mismatched variables");
-            IdSpace currentIdSpace = currentVariable.IsPublic ? currentVariable.Owner.MemberOf : currentVariable.Owner.ParentOf;
-            IdSpace originalIdSpace = originalVariable.IsPublic ? originalVariable.Owner.MemberOf : originalVariable.Owner.ParentOf;
+            var currentIdSpace = currentVariable.IsPublic ? currentVariable.Owner.MemberOf : currentVariable.Owner.ParentOf;
+            var originalIdSpace = originalVariable.IsPublic ? originalVariable.Owner.MemberOf : originalVariable.Owner.ParentOf;
             return CompareChildEquality(currentVariable.Default, currentIdSpace, originalVariable.Default, originalIdSpace);
         }
 
-        static bool CompareArgumentEquality(RuntimeArgument currentArgument, RuntimeArgument originalArgument)
+        private static bool CompareArgumentEquality(RuntimeArgument currentArgument, RuntimeArgument originalArgument)
         {
             Fx.Assert(currentArgument != null && originalArgument != null, "Both currentArgument and originalArgument must be non-null.");
 
@@ -200,10 +170,10 @@ namespace System.Activities.DynamicUpdate
             return CompareChildEquality(currentArgument.BoundArgument.Expression, currentArgument.Owner.MemberOf, originalArgument.BoundArgument.Expression, originalArgument.Owner.MemberOf);
         }
 
-        static bool CompareRuntimeDelegateArgumentEquality(RuntimeDelegateArgument newRuntimeDelegateArgument, RuntimeDelegateArgument oldRuntimeDelegateArgument)
+        private static bool CompareRuntimeDelegateArgumentEquality(RuntimeDelegateArgument newRuntimeDelegateArgument, RuntimeDelegateArgument oldRuntimeDelegateArgument)
         {
             // compare Name, Type and Direction
-            if (!newRuntimeDelegateArgument.Name.Equals(oldRuntimeDelegateArgument.Name) ||
+            if (!newRuntimeDelegateArgument.Name.Equals(oldRuntimeDelegateArgument.Name, StringComparison.Ordinal) ||
                 (newRuntimeDelegateArgument.Type != oldRuntimeDelegateArgument.Type) ||
                 (newRuntimeDelegateArgument.Direction != oldRuntimeDelegateArgument.Direction))
             {
@@ -213,7 +183,7 @@ namespace System.Activities.DynamicUpdate
             return CompareDelegateArgumentEquality(newRuntimeDelegateArgument.BoundArgument, oldRuntimeDelegateArgument.BoundArgument);
         }
 
-        static bool CompareDelegateArgumentEquality(DelegateArgument newBoundArgument, DelegateArgument oldBoundArgument)
+        private static bool CompareDelegateArgumentEquality(DelegateArgument newBoundArgument, DelegateArgument oldBoundArgument)
         {
             if (newBoundArgument == null)
             {
@@ -233,19 +203,17 @@ namespace System.Activities.DynamicUpdate
         // The only exception is addition/removal/rearrangement of RuntimeArguments and their Expressions.
         // Addition or removal of the RuntimeArguments with non-null Expressions will cause Id shift in the private IdSpace.
         // In such case, this PrivateIdSpaceMatcher returns an implementation Map which represents the id shift and RuntimeArguments change.
-        class PrivateIdSpaceMatcher
+        private class PrivateIdSpaceMatcher
         {
-            DynamicUpdateMap privateMap;
-            DynamicUpdateMapBuilder.NestedIdSpaceFinalizer nestedFinalizer;            
-
-            IdSpace originalPrivateIdSpace;
-            IdSpace updatedPrivateIdSpace;
+            private readonly DynamicUpdateMap privateMap;
+            private readonly DynamicUpdateMapBuilder.NestedIdSpaceFinalizer nestedFinalizer;
+            private readonly IdSpace originalPrivateIdSpace;
+            private readonly IdSpace updatedPrivateIdSpace;
 
             // As PrivateIdSpaceMatcher progresses through the IdSpace pair, 
             // only the structurally equal activity pairs that are members of the IdSpaces are enqueued to this queue.
-            Queue<Tuple<Activity, Activity>> matchedActivities;
-
-            bool argumentChangeDetected;
+            private readonly Queue<Tuple<Activity, Activity>> matchedActivities;
+            private bool argumentChangeDetected;
 
             public PrivateIdSpaceMatcher(DynamicUpdateMapBuilder.NestedIdSpaceFinalizer nestedFinalizer, IdSpace originalPrivateIdSpace, IdSpace updatedPrivateIdSpace)
             {
@@ -268,9 +236,9 @@ namespace System.Activities.DynamicUpdate
             {
                 argumentChangesMap = null;
                 
-                int nextOriginalSubrootId = 0;
-                int nextUpdatedSubrootId = 0;
-                bool allSubtreeRootsEnqueued = false;
+                var nextOriginalSubrootId = 0;
+                var nextUpdatedSubrootId = 0;
+                var allSubtreeRootsEnqueued = false;
 
                 // enqueue all subtree root pairs first
                 while (!allSubtreeRootsEnqueued)
@@ -297,9 +265,9 @@ namespace System.Activities.DynamicUpdate
 
                 while (this.matchedActivities.Count > 0)
                 {
-                    Tuple<Activity, Activity> pair = this.matchedActivities.Dequeue();
-                    Activity originalActivity = pair.Item1;
-                    Activity currentActivity = pair.Item2;
+                    var pair = this.matchedActivities.Dequeue();
+                    var originalActivity = pair.Item1;
+                    var currentActivity = pair.Item2;
 
                     Fx.Assert(originalActivity.MemberOf == this.originalPrivateIdSpace && currentActivity.MemberOf == this.updatedPrivateIdSpace, "neither activities must be a reference.");
 
@@ -350,7 +318,7 @@ namespace System.Activities.DynamicUpdate
                     // with all runtime metadata except arguments matching, 
                     // the current activities pair qualifies as a matching entry 
                     // let's create an entry
-                    DynamicUpdateMapEntry entry = new DynamicUpdateMapEntry(originalActivity.InternalId, currentActivity.InternalId);
+                    var entry = new DynamicUpdateMapEntry(originalActivity.InternalId, currentActivity.InternalId);
                     this.privateMap.AddEntry(entry);
 
                     if (!this.TryMatchingArguments(entry, originalActivity, currentActivity))
@@ -372,9 +340,9 @@ namespace System.Activities.DynamicUpdate
 
             // return -1 if no subroot is found since the previous index
             // idspace.Owner will always be non-null.
-            static int GetIndexOfNextSubtreeRoot(IdSpace idspace, int previousIndex)
+            private static int GetIndexOfNextSubtreeRoot(IdSpace idspace, int previousIndex)
             {
-                for (int i = previousIndex + 1; i <= idspace.MemberCount; i++)
+                for (var i = previousIndex + 1; i <= idspace.MemberCount; i++)
                 {
                     if (object.ReferenceEquals(idspace[i].Parent, idspace.Owner))
                     {
@@ -383,25 +351,25 @@ namespace System.Activities.DynamicUpdate
                 }
 
                 return -1;
-            }            
+            }
 
-            bool TryMatchingArguments(DynamicUpdateMapEntry entry, Activity originalActivity, Activity currentActivity)
+            private bool TryMatchingArguments(DynamicUpdateMapEntry entry, Activity originalActivity, Activity currentActivity)
             {
                 // now, let's try creating argument entries
-                IList<ArgumentInfo> oldArguments = ArgumentInfo.List(originalActivity);
+                var oldArguments = ArgumentInfo.List(originalActivity);
                 this.nestedFinalizer.CreateArgumentEntries(entry, currentActivity.RuntimeArguments, oldArguments);
                 if (entry.HasEnvironmentUpdates)
                 {
                     if (entry.EnvironmentUpdateMap.HasArgumentEntries)
                     {
-                        foreach (EnvironmentUpdateMapEntry argumentEntry in entry.EnvironmentUpdateMap.ArgumentEntries)
+                        foreach (var argumentEntry in entry.EnvironmentUpdateMap.ArgumentEntries)
                         {
                             if (!argumentEntry.IsAddition)
                             {
                                 // if it is a matching argument pair,
                                 // let's add them to the lists for further matching process.                            
-                                RuntimeArgument originalArg = originalActivity.RuntimeArguments[argumentEntry.OldOffset];
-                                RuntimeArgument updatedArg = currentActivity.RuntimeArguments[argumentEntry.NewOffset];
+                                var originalArg = originalActivity.RuntimeArguments[argumentEntry.OldOffset];
+                                var updatedArg = currentActivity.RuntimeArguments[argumentEntry.NewOffset];
                                 if (!this.TryPreparingArgumentExpressions(originalArg, updatedArg))
                                 {
                                     return false;
@@ -411,8 +379,8 @@ namespace System.Activities.DynamicUpdate
                     }
 
                     // we need to also visit subtrees of Expressions of removed arguments
-                    IList<ArgumentInfo> newArgumentInfos = ArgumentInfo.List(currentActivity);
-                    foreach (RuntimeArgument oldRuntimeArgument in originalActivity.RuntimeArguments)
+                    var newArgumentInfos = ArgumentInfo.List(currentActivity);
+                    foreach (var oldRuntimeArgument in originalActivity.RuntimeArguments)
                     {
                         if (newArgumentInfos.IndexOf(new ArgumentInfo(oldRuntimeArgument)) == EnvironmentUpdateMapEntry.NonExistent)
                         {
@@ -434,7 +402,7 @@ namespace System.Activities.DynamicUpdate
 
                     // if we are here, we know RuntimeArguments matched between currentActivity and originalActivity
                     // but we still need to prepare their Expressions for matching
-                    for (int i = 0; i < currentActivity.RuntimeArguments.Count; i++)
+                    for (var i = 0; i < currentActivity.RuntimeArguments.Count; i++)
                     {
                         if (!this.TryPreparingArgumentExpressions(originalActivity.RuntimeArguments[i], currentActivity.RuntimeArguments[i]))
                         {
@@ -451,7 +419,7 @@ namespace System.Activities.DynamicUpdate
                 return true;
             }
 
-            bool TryPreparingArgumentExpressions(RuntimeArgument originalArg, RuntimeArgument updatedArg)
+            private bool TryPreparingArgumentExpressions(RuntimeArgument originalArg, RuntimeArgument updatedArg)
             {
                 if (!ActivityComparer.CompareArgumentEquality(updatedArg, originalArg))
                 {
@@ -467,7 +435,7 @@ namespace System.Activities.DynamicUpdate
                 return true;
             }
 
-            void PrepareToMatchSubtree(Activity currentActivity, Activity originalActivity)
+            private void PrepareToMatchSubtree(Activity currentActivity, Activity originalActivity)
             {
                 Fx.Assert(currentActivity != null && originalActivity != null, "both activities must not be null.");
 
@@ -483,13 +451,13 @@ namespace System.Activities.DynamicUpdate
                 this.matchedActivities.Enqueue(new Tuple<Activity, Activity>(originalActivity, currentActivity));
             }
 
-            bool AddEqualChildren(Activity currentActivity, Activity originalActivity)
+            private bool AddEqualChildren(Activity currentActivity, Activity originalActivity)
             {
                 this.PrepareToMatchSubtree(currentActivity, originalActivity);
                 return true;
             }
 
-            bool CompareDelegateEqualityAndAddActivitiesPair(ActivityDelegate currentDelegate, ActivityDelegate originalDelegate)
+            private bool CompareDelegateEqualityAndAddActivitiesPair(ActivityDelegate currentDelegate, ActivityDelegate originalDelegate)
             {
                 if (!ActivityComparer.CompareDelegateEquality(currentDelegate, originalDelegate))
                 {
@@ -505,7 +473,7 @@ namespace System.Activities.DynamicUpdate
                 return true;
             }
 
-            bool CompareVariableEqualityAndAddActivitiesPair(Variable currentVariable, Variable originalVariable)
+            private bool CompareVariableEqualityAndAddActivitiesPair(Variable currentVariable, Variable originalVariable)
             {
                 if (!ActivityComparer.CompareVariableEquality(currentVariable, originalVariable))
                 {

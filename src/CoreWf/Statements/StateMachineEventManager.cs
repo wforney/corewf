@@ -120,7 +120,7 @@ namespace System.Activities.Statements
         {
             while (this.queue.Any())
             {
-                TriggerCompletedEvent completedEvent = this.queue.Dequeue();
+                var completedEvent = this.queue.Dequeue();
                 if (this.activeBookmarks.Contains(completedEvent.Bookmark))
                 {
                     this.CurrentBeingProcessedEvent = completedEvent;

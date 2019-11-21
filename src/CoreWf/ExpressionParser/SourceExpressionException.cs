@@ -3,20 +3,19 @@
 
 namespace System.Activities.ExpressionParser
 {
+    using System;
     using System.Activities.Internals;
     using System.Activities.Runtime;
-    using System;
     using System.CodeDom.Compiler;
     using System.Collections.Generic;
     using System.Globalization;
     using System.Runtime.Serialization;
     using System.Security;
-    using System.Security.Permissions;
 
     [Serializable]
     public class SourceExpressionException : Exception, ISerializable
     {
-        CompilerError[] errors;
+        private CompilerError[] errors;
 
         public SourceExpressionException()
             : base(SR.CompilerError)
@@ -36,7 +35,7 @@ namespace System.Activities.ExpressionParser
         public SourceExpressionException(string message, CompilerErrorCollection errors)
             : base(message)
         {
-            this.errors = new CompilerError[errors.Count];
+            this.errors = new CompilerError[errors?.Count ?? 0];
             errors.CopyTo(this.errors, 0);
         }
 
@@ -47,16 +46,17 @@ namespace System.Activities.ExpressionParser
             {
                 throw FxTrace.Exception.ArgumentNull(nameof(info));
             }
-            int length = info.GetInt32("count");
+
+            var length = info.GetInt32("count");
             this.errors = new CompilerError[length];
-            for (int i = 0; i < length; ++i)
+            for (var i = 0; i < length; ++i)
             {
-                string index = i.ToString(CultureInfo.InvariantCulture);
-                string fileName = info.GetString("file" + index);
-                int line = info.GetInt32("line" + index);
-                int column = info.GetInt32("column" + index);
-                string errorNumber = info.GetString("number" + index);
-                string errorText = info.GetString("text" + index);
+                var index = i.ToString(CultureInfo.InvariantCulture);
+                var fileName = info.GetString("file" + index);
+                var line = info.GetInt32("line" + index);
+                var column = info.GetInt32("column" + index);
+                var errorNumber = info.GetString("number" + index);
+                var errorText = info.GetString("text" + index);
                 this.errors[i] = new CompilerError(fileName, line, column, errorNumber, errorText);
             }
         }
@@ -67,8 +67,9 @@ namespace System.Activities.ExpressionParser
             {
                 if (this.errors == null)
                 {
-                    this.errors = new CompilerError[0];
+                    this.errors = Array.Empty<CompilerError>();
                 }
+
                 return this.errors;
             }
         }
@@ -81,6 +82,7 @@ namespace System.Activities.ExpressionParser
             {
                 throw FxTrace.Exception.ArgumentNull(nameof(info));
             }
+
             if (this.errors == null)
             {
                 info.AddValue("count", 0);
@@ -88,10 +90,10 @@ namespace System.Activities.ExpressionParser
             else
             {
                 info.AddValue("count", this.errors.Length);
-                for (int i = 0; i < this.errors.Length; ++i)
+                for (var i = 0; i < this.errors.Length; ++i)
                 {
-                    CompilerError error = this.errors[i];
-                    string index = i.ToString(CultureInfo.InvariantCulture);
+                    var error = this.errors[i];
+                    var index = i.ToString(CultureInfo.InvariantCulture);
                     info.AddValue("file" + index, error.FileName);
                     info.AddValue("line" + index, error.Line);
                     info.AddValue("column" + index, error.Column);
@@ -99,6 +101,7 @@ namespace System.Activities.ExpressionParser
                     info.AddValue("text" + index, error.ErrorText);
                 }
             }
+
             base.GetObjectData(info, context);
         }
     }

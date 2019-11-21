@@ -41,7 +41,7 @@ namespace System.Activities
         {
             if (this.refCount > 0)
             {
-                for (int i = 0; i < this.refCount; i++)
+                for (var i = 0; i < this.refCount; i++)
                 {
                     this.executor.ExitNoPersist();
                 }

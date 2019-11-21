@@ -4,21 +4,21 @@
 namespace System.Activities.Hosting
 {
     using System;
+    using System.Activities.Internals;
     using System.Activities.Runtime;
+    using System.Activities.Runtime.DurableInstancing;
     using System.Activities.Tracking;
     using System.Activities.Validation;
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
+    using System.Diagnostics.CodeAnalysis;
     using System.Threading;
-    using System.Activities.Runtime.DurableInstancing;
-    using System.Activities.Internals;
-
-using System.Activities.DynamicUpdate;
 
     [Fx.Tag.XamlVisible(false)]
     public abstract class WorkflowInstance
     {
-        private static readonly IDictionary<string, LocationInfo> EmptyMappedVariablesDictionary = new ReadOnlyDictionary<string, LocationInfo>(new Dictionary<string, LocationInfo>(0));
+        private static readonly IDictionary<string, LocationInfo> EmptyMappedVariablesDictionary =
+            new ReadOnlyDictionary<string, LocationInfo>(new Dictionary<string, LocationInfo>(0));
         private const int True = 1;
         private const int False = 0;
         private WorkflowInstanceControl controller;
@@ -27,7 +27,6 @@ using System.Activities.DynamicUpdate;
         private LocationReferenceEnvironment hostEnvironment;
         private ActivityExecutor executor;
         private int isPerformingOperation;
-        private bool isInitialized;
         private WorkflowInstanceExtensionCollection extensions;
 
         // Tracking for one-time actions per in-memory instance
@@ -76,26 +75,20 @@ using System.Activities.DynamicUpdate;
 
         public SynchronizationContext SynchronizationContext
         {
-            get
-            {
-                return this.syncContext;
-            }
+            get => this.syncContext;
             set
             {
-                ThrowIfReadOnly();
+                this.ThrowIfReadOnly();
                 this.syncContext = value;
             }
         }
 
         public LocationReferenceEnvironment HostEnvironment
         {
-            get
-            {
-                return this.hostEnvironment;
-            }
+            get => this.hostEnvironment;
             set
             {
-                ThrowIfReadOnly();
+                this.ThrowIfReadOnly();
                 this.hostEnvironment = value;
             }
         }
@@ -112,13 +105,7 @@ using System.Activities.DynamicUpdate;
             private set;
         }
 
-        protected bool IsReadOnly
-        {
-            get
-            {
-                return this.isInitialized;
-            }
-        }
+        protected bool IsReadOnly { get; private set; }
 
         protected internal abstract bool SupportsInstanceKeys
         {
@@ -130,16 +117,17 @@ using System.Activities.DynamicUpdate;
         {
             get
             {
-                Fx.Assert(HasTrackingParticipant, "we should only be called if we have a tracking participant");
+                Fx.Assert(this.HasTrackingParticipant, "we should only be called if we have a tracking participant");
                 return this.trackingProvider;
             }
         }
 
+        [SuppressMessage("Design", "CA1065:Do not raise exceptions in unexpected locations", Justification = "<Pending>")]
         protected WorkflowInstanceControl Controller
         {
             get
             {
-                if (!this.isInitialized)
+                if (!this.IsReadOnly)
                 {
                     throw FxTrace.Exception.AsError(new InvalidOperationException(SR.ControllerInvalidBeforeInitialize));
                 }
@@ -157,7 +145,7 @@ using System.Activities.DynamicUpdate;
             }
             else
             {
-                return default(T);
+                return default;
             }
         }
 
@@ -169,14 +157,14 @@ using System.Activities.DynamicUpdate;
             }
             else
             {
-                return new T[0];
+                return Array.Empty<T>();
             }
         }
 
         // locks down the given extensions manager and runs cache metadata on the workflow definition
         protected void RegisterExtensionManager(WorkflowInstanceExtensionManager extensionManager)
         {
-            ValidateWorkflow(extensionManager);
+            this.ValidateWorkflow(extensionManager);
             this.extensions = WorkflowInstanceExtensionManager.CreateInstanceExtensions(this.WorkflowDefinition, extensionManager);
             if (this.extensions != null)
             {
@@ -225,14 +213,14 @@ using System.Activities.DynamicUpdate;
         // used for Create scenarios where you are providing root information
         protected void Initialize(IDictionary<string, object> workflowArgumentValues, IList<Handle> workflowExecutionProperties)
         {
-            ThrowIfAborted();
-            ThrowIfReadOnly();
+            this.ThrowIfAborted();
+            this.ThrowIfReadOnly();
             this.executor = new ActivityExecutor(this);
 
-            EnsureDefinitionReady();
+            this.EnsureDefinitionReady();
             // workflowArgumentValues signals whether we are a new or loaded instance, so we can't pass in null.
             // workflowExecutionProperties is allowed to be null
-            InitializeCore(workflowArgumentValues ?? ActivityUtilities.EmptyParameters, workflowExecutionProperties);
+            this.InitializeCore(workflowArgumentValues ?? ActivityUtilities.EmptyParameters, workflowExecutionProperties);
         }
 
 #if NET45
@@ -341,8 +329,8 @@ using System.Activities.DynamicUpdate;
 #else
         protected void Initialize(object deserializedRuntimeState)
         {
-            ThrowIfAborted();
-            ThrowIfReadOnly();
+            this.ThrowIfAborted();
+            this.ThrowIfReadOnly();
             this.executor = deserializedRuntimeState as ActivityExecutor;
 
             if (this.executor == null)
@@ -351,17 +339,17 @@ using System.Activities.DynamicUpdate;
             }
             this.executor.ThrowIfNonSerializable();
 
-            EnsureDefinitionReady();
+            this.EnsureDefinitionReady();
 
-            InitializeCore(null, null);
+            this.InitializeCore(null, null);
         }
 #endif
 
         private void ValidateWorkflow(WorkflowInstanceExtensionManager extensionManager)
         {
-            if (!WorkflowDefinition.IsRuntimeReady)
+            if (!this.WorkflowDefinition.IsRuntimeReady)
             {
-                LocationReferenceEnvironment localEnvironment = this.hostEnvironment;
+                var localEnvironment = this.hostEnvironment;
                 if (localEnvironment == null)
                 {
                     LocationReferenceEnvironment parentEnvironment = null;
@@ -372,7 +360,7 @@ using System.Activities.DynamicUpdate;
                     localEnvironment = new ActivityLocationReferenceEnvironment(parentEnvironment);
                 }
                 IList<ValidationError> validationErrors = null;
-                ActivityUtilities.CacheRootMetadata(WorkflowDefinition, localEnvironment, ProcessActivityTreeOptions.FullCachingOptions, null, ref validationErrors);
+                ActivityUtilities.CacheRootMetadata(this.WorkflowDefinition, localEnvironment, ProcessActivityTreeOptions.FullCachingOptions, null, ref validationErrors);
                 ActivityValidationServices.ThrowIfViolationsExist(validationErrors);
             }
         }
@@ -396,7 +384,7 @@ using System.Activities.DynamicUpdate;
                         // case we want to preserve any pending tracking records (e.g. DU failure).
                         this.trackingProvider.ClearParticipants();
                     }
-                    foreach (TrackingParticipant trackingParticipant in GetExtensions<TrackingParticipant>())
+                    foreach (var trackingParticipant in this.GetExtensions<TrackingParticipant>())
                     {
                         this.trackingProvider.AddParticipant(trackingParticipant);
                     }
@@ -405,7 +393,7 @@ using System.Activities.DynamicUpdate;
             else
             {
                 // need to ensure the workflow has been validated since the host isn't using extensions (and so didn't register anything)
-                ValidateWorkflow(null);
+                this.ValidateWorkflow(null);
             }
         }
 
@@ -415,11 +403,11 @@ using System.Activities.DynamicUpdate;
             Fx.Assert(this.executor != null, "at this point, we better have an executor");
 
             // Do Argument validation for root activities
-            WorkflowDefinition.HasBeenAssociatedWithAnInstance = true;
+            this.WorkflowDefinition.HasBeenAssociatedWithAnInstance = true;
 
             if (workflowArgumentValues != null)
             {
-                IDictionary<string, object> actualInputs = workflowArgumentValues;
+                var actualInputs = workflowArgumentValues;
 
                 if (object.ReferenceEquals(actualInputs, ActivityUtilities.EmptyParameters))
                 {
@@ -440,15 +428,15 @@ using System.Activities.DynamicUpdate;
 
             this.executor.Open(this.SynchronizationContext);
             this.controller = new WorkflowInstanceControl(this, this.executor);
-            this.isInitialized = true;
+            this.IsReadOnly = true;
 
             if (this.extensions != null && this.extensions.HasWorkflowInstanceExtensions)
             {
-                WorkflowInstanceProxy proxy = new WorkflowInstanceProxy(this);
+                var proxy = new WorkflowInstanceProxy(this);
 
-                for (int i = 0; i < this.extensions.WorkflowInstanceExtensions.Count; i++)
+                for (var i = 0; i < this.extensions.WorkflowInstanceExtensions.Count; i++)
                 {
-                    IWorkflowInstanceExtension extension = this.extensions.WorkflowInstanceExtensions[i];
+                    var extension = this.extensions.WorkflowInstanceExtensions[i];
                     extension.SetInstance(proxy);
                 }
             }
@@ -456,7 +444,7 @@ using System.Activities.DynamicUpdate;
 
         protected void ThrowIfReadOnly()
         {
-            if (this.isInitialized)
+            if (this.IsReadOnly)
             {
                 throw FxTrace.Exception.AsError(new InvalidOperationException(SR.WorkflowInstanceIsReadOnly(this.Id)));
             }
@@ -473,15 +461,9 @@ using System.Activities.DynamicUpdate;
         protected internal abstract IAsyncResult OnBeginAssociateKeys(ICollection<InstanceKey> keys, AsyncCallback callback, object state);
         protected internal abstract void OnEndAssociateKeys(IAsyncResult result);
 
-        internal IAsyncResult BeginFlushTrackingRecordsInternal(AsyncCallback callback, object state)
-        {
-            return OnBeginFlushTrackingRecords(callback, state);
-        }
+        internal IAsyncResult BeginFlushTrackingRecordsInternal(AsyncCallback callback, object state) => this.OnBeginFlushTrackingRecords(callback, state);
 
-        internal void EndFlushTrackingRecordsInternal(IAsyncResult result)
-        {
-            OnEndFlushTrackingRecords(result);
-        }
+        internal void EndFlushTrackingRecordsInternal(IAsyncResult result) => this.OnEndFlushTrackingRecords(result);
 
         protected void FlushTrackingRecords(TimeSpan timeout)
         {
@@ -505,6 +487,11 @@ using System.Activities.DynamicUpdate;
 
         protected void EndFlushTrackingRecords(IAsyncResult result)
         {
+            if (result == null)
+            {
+                throw new ArgumentNullException(nameof(result));
+            }
+
             if (this.HasTrackingParticipant)
             {
                 this.TrackingProvider.EndFlushPendingRecords(result);
@@ -515,24 +502,18 @@ using System.Activities.DynamicUpdate;
             }
         }
 
-        protected virtual IAsyncResult OnBeginFlushTrackingRecords(AsyncCallback callback, object state)
-        {
-            return this.Controller.BeginFlushTrackingRecords(ActivityDefaults.TrackingTimeout, callback, state);
-        }
+        protected virtual IAsyncResult OnBeginFlushTrackingRecords(AsyncCallback callback, object state) => this.Controller.BeginFlushTrackingRecords(ActivityDefaults.TrackingTimeout, callback, state);
 
-        protected virtual void OnEndFlushTrackingRecords(IAsyncResult result)
-        {
-            this.Controller.EndFlushTrackingRecords(result);
-        }
+        protected virtual void OnEndFlushTrackingRecords(IAsyncResult result) => this.Controller.EndFlushTrackingRecords(result);
 
         internal void NotifyPaused()
         {
             if (this.executor.State != ActivityInstanceState.Executing)
             {
-                TrackCompletion();
+                this.TrackCompletion();
             }
 
-            OnNotifyPaused();
+            this.OnNotifyPaused();
         }
 
         protected abstract void OnNotifyPaused();
@@ -541,25 +522,22 @@ using System.Activities.DynamicUpdate;
         {
             if (this.controller.TrackingEnabled)
             {
-                ActivityInfo faultSourceInfo = new ActivityInfo(source.DisplayName, source.Id, sourceInstanceId, source.GetType().FullName);
+                var faultSourceInfo = new ActivityInfo(source.DisplayName, source.Id, sourceInstanceId, source.GetType().FullName);
                 this.controller.Track(new WorkflowInstanceUnhandledExceptionRecord(this.Id, this.WorkflowDefinition.DisplayName, faultSourceInfo, exception, this.DefinitionIdentity));
             }
 
-            OnNotifyUnhandledException(exception, source, sourceInstanceId);
+            this.OnNotifyUnhandledException(exception, source, sourceInstanceId);
         }
 
         protected abstract void OnNotifyUnhandledException(Exception exception, Activity source, string sourceInstanceId);
 
         protected internal abstract void OnRequestAbort(Exception reason);
 
-        internal void OnDeserialized(bool hasTrackedStarted)
-        {
-            this.HasTrackedStarted = hasTrackedStarted;
-        }
+        internal void OnDeserialized(bool hasTrackedStarted) => this.HasTrackedStarted = hasTrackedStarted;
 
         private void StartOperation(ref bool resetRequired)
         {
-            StartReadOnlyOperation(ref resetRequired);
+            this.StartReadOnlyOperation(ref resetRequired);
 
             // isRunning can only flip to true by an operation and therefore
             // we don't have to worry about this changing under us
@@ -571,7 +549,7 @@ using System.Activities.DynamicUpdate;
 
         private void StartReadOnlyOperation(ref bool resetRequired)
         {
-            bool wasPerformingOperation = false;
+            bool wasPerformingOperation;
             try
             {
             }
@@ -619,7 +597,7 @@ using System.Activities.DynamicUpdate;
                     // During abort we only track this one record
                     if (reason != null)
                     {
-                        string message = reason.Message;
+                        var message = reason.Message;
                         if (reason.InnerException != null)
                         {
                             message = SR.WorkflowAbortedReason(reason.Message, reason.InnerException.Message);
@@ -642,7 +620,7 @@ using System.Activities.DynamicUpdate;
 
         private void ValidatePrepareForSerialization()
         {
-            ThrowIfAborted();
+            this.ThrowIfAborted();
             if (!this.Controller.IsPersistable)
             {
                 throw FxTrace.Exception.AsError(new InvalidOperationException(SR.PrepareForSerializationRequiresPersistability));
@@ -651,23 +629,17 @@ using System.Activities.DynamicUpdate;
 
         private void ValidateScheduleResumeBookmark()
         {
-            ThrowIfAborted();
-            ThrowIfNotIdle();
+            this.ThrowIfAborted();
+            this.ThrowIfNotIdle();
         }
 
-        private void ValidateGetBookmarks()
-        {
-            ThrowIfAborted();
-        }
+        private void ValidateGetBookmarks() => this.ThrowIfAborted();
 
-        private void ValidateGetMappedVariables()
-        {
-            ThrowIfAborted();
-        }
+        private void ValidateGetMappedVariables() => this.ThrowIfAborted();
 
         private void ValidatePauseWhenPersistable()
         {
-            ThrowIfAborted();
+            this.ThrowIfAborted();
             if (this.Controller.IsPersistable)
             {
                 throw FxTrace.Exception.AsError(new InvalidOperationException(SR.PauseWhenPersistableInvalidIfPersistable));
@@ -677,13 +649,13 @@ using System.Activities.DynamicUpdate;
         private void Terminate(Exception reason)
         {
             // validate we're in an ok state
-            ThrowIfAborted();
+            this.ThrowIfAborted();
 
             // terminate the runtime
             this.executor.Terminate(reason);
 
             // and track if necessary
-            TrackCompletion();
+            this.TrackCompletion();
 
         }
 
@@ -691,7 +663,7 @@ using System.Activities.DynamicUpdate;
         {
             if (this.controller.TrackingEnabled && !this.hasTrackedCompletion)
             {
-                ActivityInstanceState completionState = this.executor.State;
+                var completionState = this.executor.State;
 
                 if (completionState == ActivityInstanceState.Faulted)
                 {
@@ -735,9 +707,9 @@ using System.Activities.DynamicUpdate;
         private void Run()
         {
             // validate we're in an ok state
-            ThrowIfAborted();
+            this.ThrowIfAborted();
 
-            TrackResumed();
+            this.TrackResumed();
 
             // and let the scheduler go
             this.executor.MarkSchedulerRunning();
@@ -746,9 +718,9 @@ using System.Activities.DynamicUpdate;
         private void ScheduleCancel()
         {
             // validate we're in an ok state
-            ThrowIfAborted();
+            this.ThrowIfAborted();
 
-            TrackResumed();
+            this.TrackResumed();
 
             this.executor.CancelRootActivity();
         }
@@ -756,9 +728,9 @@ using System.Activities.DynamicUpdate;
         private BookmarkResumptionResult ScheduleBookmarkResumption(Bookmark bookmark, object value)
         {
             // validate we're in an ok state
-            ValidateScheduleResumeBookmark();
+            this.ValidateScheduleResumeBookmark();
 
-            TrackResumed();
+            this.TrackResumed();
 
             return this.executor.TryResumeHostBookmark(bookmark, value);
         }
@@ -766,9 +738,9 @@ using System.Activities.DynamicUpdate;
         private BookmarkResumptionResult ScheduleBookmarkResumption(Bookmark bookmark, object value, BookmarkScope scope)
         {
             // validate we're in an ok state
-            ValidateScheduleResumeBookmark();
+            this.ValidateScheduleResumeBookmark();
 
-            TrackResumed();
+            this.TrackResumed();
 
             return this.executor.TryResumeBookmark(bookmark, value, scope);
         }
@@ -791,10 +763,10 @@ using System.Activities.DynamicUpdate;
 
         //[SuppressMessage(FxCop.Category.Design, FxCop.Rule.NestedTypesShouldNotBeVisible,
         //    Justification = "these are effectively protected methods, but encapsulated in a struct to avoid naming conflicts")]
-        protected struct WorkflowInstanceControl
+        protected struct WorkflowInstanceControl : IEquatable<WorkflowInstanceControl>
         {
             private readonly ActivityExecutor executor;
-            private WorkflowInstance instance;
+            private readonly WorkflowInstance instance;
 
             internal WorkflowInstanceControl(WorkflowInstance instance, ActivityExecutor executor)
             {
@@ -802,29 +774,11 @@ using System.Activities.DynamicUpdate;
                 this.executor = executor;
             }
 
-            public bool IsPersistable
-            {
-                get
-                {
-                    return this.executor.IsPersistable;
-                }
-            }
+            public bool IsPersistable => this.executor.IsPersistable;
 
-            public bool HasPendingTrackingRecords
-            {
-                get
-                {
-                    return this.instance.HasTrackingParticipant && this.instance.TrackingProvider.HasPendingRecords;
-                }
-            }
+            public bool HasPendingTrackingRecords => this.instance.HasTrackingParticipant && this.instance.TrackingProvider.HasPendingRecords;
 
-            public bool TrackingEnabled
-            {
-                get
-                {
-                    return this.instance.HasTrackingParticipant && this.instance.TrackingProvider.ShouldTrackWorkflowInstanceRecords;
-                }
-            }
+            public bool TrackingEnabled => this.instance.HasTrackingParticipant && this.instance.TrackingProvider.ShouldTrackWorkflowInstanceRecords;
 
             public WorkflowInstanceState State
             {
@@ -863,28 +817,19 @@ using System.Activities.DynamicUpdate;
                     return false;
                 }
 
-                WorkflowInstanceControl other = (WorkflowInstanceControl)obj;
+                var other = (WorkflowInstanceControl)obj;
                 return other.instance == this.instance;
             }
 
-            public override int GetHashCode()
-            {
-                return this.instance.GetHashCode();
-            }
+            public override int GetHashCode() => this.instance.GetHashCode();
 
-            public static bool operator ==(WorkflowInstanceControl left, WorkflowInstanceControl right)
-            {
-                return left.Equals(right);
-            }
+            public static bool operator ==(WorkflowInstanceControl left, WorkflowInstanceControl right) => left.Equals(right);
 
-            public static bool operator !=(WorkflowInstanceControl left, WorkflowInstanceControl right)
-            {
-                return !left.Equals(right);
-            }
+            public static bool operator !=(WorkflowInstanceControl left, WorkflowInstanceControl right) => !left.Equals(right);
 
             public ReadOnlyCollection<BookmarkInfo> GetBookmarks()
             {
-                bool resetRequired = false;
+                var resetRequired = false;
 
                 try
                 {
@@ -902,7 +847,7 @@ using System.Activities.DynamicUpdate;
 
             public ReadOnlyCollection<BookmarkInfo> GetBookmarks(BookmarkScope scope)
             {
-                bool resetRequired = false;
+                var resetRequired = false;
 
                 try
                 {
@@ -920,7 +865,7 @@ using System.Activities.DynamicUpdate;
 
             public IDictionary<string, LocationInfo> GetMappedVariables()
             {
-                bool resetRequired = false;
+                var resetRequired = false;
 
                 try
                 {
@@ -928,7 +873,7 @@ using System.Activities.DynamicUpdate;
 
                     this.instance.ValidateGetMappedVariables();
 
-                    IDictionary<string, LocationInfo> mappedLocations = this.instance.executor.GatherMappableVariables();
+                    var mappedLocations = this.instance.executor.GatherMappableVariables();
                     if (mappedLocations != null)
                     {
                         mappedLocations = new ReadOnlyDictionary<string, LocationInfo>(mappedLocations);
@@ -947,7 +892,7 @@ using System.Activities.DynamicUpdate;
 
             public void Run()
             {
-                bool resetRequired = false;
+                var resetRequired = false;
 
                 try
                 {
@@ -963,18 +908,16 @@ using System.Activities.DynamicUpdate;
                 this.executor.Run();
             }
 
-            public void RequestPause()
-            {
+            public void RequestPause() =>
                 // No validations for this because we do not
                 // require calls to Pause to be synchronized
                 // by the caller
                 this.executor.PauseScheduler();
-            }
 
             // Calls Pause when IsPersistable goes from false->true
             public void PauseWhenPersistable()
             {
-                bool resetRequired = false;
+                var resetRequired = false;
 
                 try
                 {
@@ -992,7 +935,7 @@ using System.Activities.DynamicUpdate;
 
             public void ScheduleCancel()
             {
-                bool resetRequired = false;
+                var resetRequired = false;
 
                 try
                 {
@@ -1008,7 +951,7 @@ using System.Activities.DynamicUpdate;
 
             public void Terminate(Exception reason)
             {
-                bool resetRequired = false;
+                var resetRequired = false;
 
                 try
                 {
@@ -1024,7 +967,7 @@ using System.Activities.DynamicUpdate;
 
             public BookmarkResumptionResult ScheduleBookmarkResumption(Bookmark bookmark, object value)
             {
-                bool resetRequired = false;
+                var resetRequired = false;
 
                 try
                 {
@@ -1040,7 +983,7 @@ using System.Activities.DynamicUpdate;
 
             public BookmarkResumptionResult ScheduleBookmarkResumption(Bookmark bookmark, object value, BookmarkScope scope)
             {
-                bool resetRequired = false;
+                var resetRequired = false;
 
                 try
                 {
@@ -1056,7 +999,7 @@ using System.Activities.DynamicUpdate;
 
             public void Abort()
             {
-                bool resetRequired = false;
+                var resetRequired = false;
 
                 try
                 {
@@ -1076,7 +1019,7 @@ using System.Activities.DynamicUpdate;
 
             public void Abort(Exception reason)
             {
-                bool resetRequired = false;
+                var resetRequired = false;
 
                 try
                 {
@@ -1098,30 +1041,27 @@ using System.Activities.DynamicUpdate;
             //    Justification = "Only want to allow WorkflowInstanceRecord subclasses for WorkflowInstance-level tracking")]
             public void Track(WorkflowInstanceRecord instanceRecord)
             {
+                if (instanceRecord == null)
+                {
+                    throw new ArgumentNullException(nameof(instanceRecord));
+                }
+
                 if (this.instance.HasTrackingParticipant)
                 {
                     this.instance.TrackingProvider.AddRecord(instanceRecord);
                 }
             }
 
-            public void FlushTrackingRecords(TimeSpan timeout)
-            {
-                this.instance.FlushTrackingRecords(timeout);
-            }
+            public void FlushTrackingRecords(TimeSpan timeout) => this.instance.FlushTrackingRecords(timeout);
 
-            public IAsyncResult BeginFlushTrackingRecords(TimeSpan timeout, AsyncCallback callback, object state)
-            {
-                return this.instance.BeginFlushTrackingRecords(timeout, callback, state);
-            }
+            public IAsyncResult BeginFlushTrackingRecords(TimeSpan timeout, AsyncCallback callback, object state) => 
+                this.instance.BeginFlushTrackingRecords(timeout, callback, state);
 
-            public void EndFlushTrackingRecords(IAsyncResult result)
-            {
-                this.instance.EndFlushTrackingRecords(result);
-            }
+            public void EndFlushTrackingRecords(IAsyncResult result) => this.instance.EndFlushTrackingRecords(result);
 
             public object PrepareForSerialization()
             {
-                bool resetRequired = false;
+                var resetRequired = false;
 
                 try
                 {
@@ -1137,10 +1077,7 @@ using System.Activities.DynamicUpdate;
                 }
             }
 
-            public ActivityInstanceState GetCompletionState()
-            {
-                return this.executor.State;
-            }
+            public ActivityInstanceState GetCompletionState() => this.executor.State;
 
             //[SuppressMessage(FxCop.Category.Design, FxCop.Rule.AvoidOutParameters,
             //    Justification = "Arch approved design. Requires the out argument for extra information provided")]
@@ -1159,10 +1096,9 @@ using System.Activities.DynamicUpdate;
                 return this.executor.State;
             }
 
-            public Exception GetAbortReason()
-            {
-                return this.instance.abortedException;
-            }
+            public Exception GetAbortReason() => this.instance.abortedException;
+
+            public bool Equals(WorkflowInstanceControl other) => other.instance == this.instance;
         }
     }
 }

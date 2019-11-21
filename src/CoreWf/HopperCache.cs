@@ -47,16 +47,15 @@ namespace System.Runtime.Collections
     // with two different values, even if GetValue returns null for the key in-between the first add and the second.
     // (If this particular behavior is a problem, it may be possible to tighten up, but it's not necessary for the
     // current use of HopperCache - UriPrefixTable.)
-    class HopperCache
+    internal class HopperCache
     {
-        readonly int hopperSize;
-        readonly bool weak;
-
-        Hashtable outstandingHopper;
-        Hashtable strongHopper;
-        Hashtable limitedHopper;
-        int promoting;
-        LastHolder mruEntry;
+        private readonly int hopperSize;
+        private readonly bool weak;
+        private Hashtable outstandingHopper;
+        private Hashtable strongHopper;
+        private Hashtable limitedHopper;
+        private int promoting;
+        private LastHolder mruEntry;
 
 
         public HopperCache(int hopperSize, bool weak)
@@ -88,7 +87,7 @@ namespace System.Runtime.Collections
 
             if (this.strongHopper.Count >= this.hopperSize * 2)
             {
-                Hashtable recycled = this.limitedHopper;
+                var recycled = this.limitedHopper;
                 recycled.Clear();
                 recycled.Add(key, value);
 
@@ -117,7 +116,7 @@ namespace System.Runtime.Collections
             object value;
 
             // The MruCache does this so we have to too.
-            LastHolder last = this.mruEntry;
+            var last = this.mruEntry;
             if (last != null && key.Equals(last.Key))
             {
                 if (this.weak && (weakRef = last.Value as WeakReference) != null)
@@ -136,7 +135,7 @@ namespace System.Runtime.Collections
             }
 
             // Try the first hopper.
-            object origValue = this.outstandingHopper[key];
+            var origValue = this.outstandingHopper[key];
             value = this.weak && (weakRef = origValue as WeakReference) != null ? weakRef.Target : origValue;
             if (value != null)
             {
@@ -161,7 +160,7 @@ namespace System.Runtime.Collections
             this.mruEntry = new LastHolder(key, origValue);
 
             // If we can get the promoting semaphore, move up to the outstanding hopper.
-            int wasPromoting = 1;
+            var wasPromoting = 1;
             try
             {
                 try { } finally
@@ -181,7 +180,7 @@ namespace System.Runtime.Collections
                     {
                         lock (syncObject)
                         {
-                            Hashtable recycled = this.limitedHopper;
+                            var recycled = this.limitedHopper;
                             recycled.Clear();
                             recycled.Add(key, origValue);
 
@@ -217,10 +216,10 @@ namespace System.Runtime.Collections
             return value;
         }
 
-        class LastHolder
+        private class LastHolder
         {
-            readonly object key;
-            readonly object value;
+            private readonly object key;
+            private readonly object value;
 
             internal LastHolder(object key, object value)
             {

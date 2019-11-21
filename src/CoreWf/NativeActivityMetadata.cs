@@ -69,7 +69,7 @@ namespace System.Activities
                 return false;
             }
 
-            NativeActivityMetadata other = (NativeActivityMetadata)obj;
+            var other = (NativeActivityMetadata)obj;
             return other.activity == this.activity && other.Environment == this.Environment
                 && other.CreateEmptyBindings == this.CreateEmptyBindings;
         }

@@ -56,11 +56,11 @@ using System.Activities.DynamicUpdate;
 
         protected override void CacheMetadata(NativeActivityMetadata metadata)
         {
-            Collection<RuntimeArgument> arguments = new Collection<RuntimeArgument>();
+            var arguments = new Collection<RuntimeArgument>();
 
-            foreach (KeyValuePair<string, Argument> entry in this.DelegateArguments)
+            foreach (var entry in this.DelegateArguments)
             {
-                RuntimeArgument argument = new RuntimeArgument(entry.Key, entry.Value.ArgumentType, entry.Value.Direction);
+                var argument = new RuntimeArgument(entry.Key, entry.Value.ArgumentType, entry.Value.Direction);
                 metadata.Bind(entry.Value, argument);
                 arguments.Add(argument);
             }
@@ -70,7 +70,7 @@ using System.Activities.DynamicUpdate;
 
             if (this.Delegate != null)
             {
-                IList<RuntimeDelegateArgument> targetDelegateArguments = this.Delegate.RuntimeDelegateArguments;
+                var targetDelegateArguments = this.Delegate.RuntimeDelegateArguments;
                 if (this.DelegateArguments.Count != targetDelegateArguments.Count)
                 {
                     metadata.AddValidationError(SR.WrongNumberOfArgumentsForActivityDelegate);
@@ -79,11 +79,11 @@ using System.Activities.DynamicUpdate;
                 // Validate that the names and directionality of arguments in DelegateArguments dictionary 
                 // match the names and directionality of arguments returned by the ActivityDelegate.GetDelegateParameters 
                 // call above. 
-                for (int i = 0; i < targetDelegateArguments.Count; i++)
+                for (var i = 0; i < targetDelegateArguments.Count; i++)
                 {
-                    RuntimeDelegateArgument expectedParameter = targetDelegateArguments[i];
-                    string parameterName = expectedParameter.Name;
-                    if (this.DelegateArguments.TryGetValue(parameterName, out Argument delegateArgument))
+                    var expectedParameter = targetDelegateArguments[i];
+                    var parameterName = expectedParameter.Name;
+                    if (this.DelegateArguments.TryGetValue(parameterName, out var delegateArgument))
                     {
                         if (delegateArgument.Direction != expectedParameter.Direction)
                         {
@@ -132,11 +132,11 @@ using System.Activities.DynamicUpdate;
                 return;
             }
 
-            Dictionary<string, object> inputParameters = new Dictionary<string, object>();
+            var inputParameters = new Dictionary<string, object>();
 
             if (DelegateArguments.Count > 0)
             {
-                foreach (KeyValuePair<string, Argument> entry in DelegateArguments)
+                foreach (var entry in DelegateArguments)
                 {
                     if (ArgumentDirectionHelper.IsIn(entry.Value.Direction))
                     {
@@ -152,9 +152,9 @@ using System.Activities.DynamicUpdate;
         {
             if (this.hasOutputArguments)
             {
-                foreach (KeyValuePair<string, object> entry in outArguments)
+                foreach (var entry in outArguments)
                 {
-                    if (DelegateArguments.TryGetValue(entry.Key, out Argument argument))
+                    if (DelegateArguments.TryGetValue(entry.Key, out var argument))
                     {
                         if (ArgumentDirectionHelper.IsOut(argument.Direction))
                         {

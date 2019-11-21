@@ -56,11 +56,8 @@ namespace System.Activities.DynamicUpdate
         }
 
         protected InstanceUpdateException(SerializationInfo info, StreamingContext context)
-            : base(info, context)
-        {
-            this.blockingActivities = (ReadOnlyCollection<ActivityBlockingUpdate>)info.GetValue(
+            : base(info, context) => this.blockingActivities = (ReadOnlyCollection<ActivityBlockingUpdate>)info.GetValue(
                 "blockingActivities", typeof(ReadOnlyCollection<ActivityBlockingUpdate>));
-        }
 
         public IList<ActivityBlockingUpdate> BlockingActivities
         {
@@ -68,7 +65,7 @@ namespace System.Activities.DynamicUpdate
             {
                 if (this.blockingActivities == null)
                 {
-                    this.blockingActivities = new ReadOnlyCollection<ActivityBlockingUpdate>(new ActivityBlockingUpdate[0]);
+                    this.blockingActivities = new ReadOnlyCollection<ActivityBlockingUpdate>(Array.Empty<ActivityBlockingUpdate>());
                 }
 
                 return this.blockingActivities;
@@ -87,8 +84,8 @@ namespace System.Activities.DynamicUpdate
         {
             if (blockingActivities != null && blockingActivities.Count > 0)
             {
-                StringBuilder errorMsgs = new StringBuilder();
-                for (int i = 0; i < blockingActivities.Count - 1; i++)
+                var errorMsgs = new StringBuilder();
+                for (var i = 0; i < blockingActivities.Count - 1; i++)
                 {
                     errorMsgs.AppendLine(GetMessage(blockingActivities[i]));
                 }
@@ -102,7 +99,7 @@ namespace System.Activities.DynamicUpdate
 
         private static string GetMessage(ActivityBlockingUpdate blockingActivity)
         {
-            object activity = (object)blockingActivity.Activity ?? blockingActivity.UpdatedActivityId;
+            var activity = (object)blockingActivity.Activity ?? blockingActivity.UpdatedActivityId;
             if (activity != null)
             {
                 return SR.ActivityBlockingUpdate(activity, blockingActivity.Reason);

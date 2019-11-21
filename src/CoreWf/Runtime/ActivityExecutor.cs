@@ -635,7 +635,7 @@ namespace System.Activities.Runtime
                 {
                     // If we have an ExceptionPersistenceExtension, set our cached "persistExceptions" value to its
                     // PersistExceptions property. If we don't have the extension, set the cached value to true.
-                    ExceptionPersistenceExtension extension = _host.GetExtension<ExceptionPersistenceExtension>();
+                    var extension = _host.GetExtension<ExceptionPersistenceExtension>();
                     if (extension != null)
                     {
                         _persistExceptions = extension.PersistExceptions;
@@ -776,11 +776,11 @@ namespace System.Activities.Runtime
 
                     if (_executingSecondaryRootInstances != null && _executingSecondaryRootInstances.Count > 0)
                     {
-                        foreach (ActivityInstance secondaryRoot in _executingSecondaryRootInstances)
+                        foreach (var secondaryRoot in _executingSecondaryRootInstances)
                         {
                             secondaryRoot.FillInstanceMap(_instanceMap);
 
-                            LocationEnvironment environment = secondaryRoot.Environment;
+                            var environment = secondaryRoot.Environment;
 
                             if (secondaryRoot.IsEnvironmentOwner)
                             {
@@ -931,7 +931,7 @@ namespace System.Activities.Runtime
             workItem.Release(this);
             try
             {
-                bool result = workItem.Execute(this, _bookmarkManager);
+                var result = workItem.Execute(this, _bookmarkManager);
                 Fx.AssertAndThrow(result, "Synchronous work item should not yield the scheduler");
             }
             finally
@@ -1112,7 +1112,7 @@ namespace System.Activities.Runtime
             // Get a local copy of _runtimeTransaction because it is possible for
             // _runtimeTransaction to be nulled out between the time we check for null
             // and the time we try to lock it.
-            RuntimeTransactionData localRuntimeTransaction = _runtimeTransaction;
+            var localRuntimeTransaction = _runtimeTransaction;
 
             if (localRuntimeTransaction != null)
             {
@@ -1154,11 +1154,11 @@ namespace System.Activities.Runtime
             // Get a local copy of _runtimeTransaction because it is possible for
             // _runtimeTransaction to be nulled out between the time we check for null
             // and the time we try to lock it.
-            RuntimeTransactionData localRuntimeTransaction = _runtimeTransaction;
+            var localRuntimeTransaction = _runtimeTransaction;
 
             if (localRuntimeTransaction != null)
             {
-                bool callPrepared = false;
+                var callPrepared = false;
 
                 lock (localRuntimeTransaction)
                 {
@@ -1191,7 +1191,7 @@ namespace System.Activities.Runtime
             // Get a local copy of _runtimeTransaction because it is possible for
             // _runtimeTransaction to be nulled out between the time we check for null
             // and the time we try to lock it.
-            RuntimeTransactionData localRuntimeTransaction = _runtimeTransaction;
+            var localRuntimeTransaction = _runtimeTransaction;
 
             if (localRuntimeTransaction != null)
             {
@@ -1229,7 +1229,7 @@ namespace System.Activities.Runtime
                 _transactionContextWaiters = new Quack<TransactionContextWaiter>();
             }
 
-            TransactionContextWaiter waiter = new TransactionContextWaiter(instance, isRequires, handle, new TransactionContextWaiterCallbackWrapper(callback, instance), state);
+            var waiter = new TransactionContextWaiter(instance, isRequires, handle, new TransactionContextWaiterCallbackWrapper(callback, instance), state);
 
             if (isRequires)
             {
@@ -1291,7 +1291,7 @@ namespace System.Activities.Runtime
         {
             if (callback != null)
             {
-                Bookmark bookmark = _bookmarkManager.CreateBookmark(callback, callbackOwner, BookmarkOptions.None);
+                var bookmark = _bookmarkManager.CreateBookmark(callback, callbackOwner, BookmarkOptions.None);
 
                 ActivityInstance isolationScope = null;
 
@@ -1300,7 +1300,7 @@ namespace System.Activities.Runtime
                     isolationScope = _runtimeTransaction.IsolationScope;
                 }
 
-                _bookmarkManager.TryGenerateWorkItem(this, false, ref bookmark, null, isolationScope, out ActivityExecutionWorkItem workItem);
+                _bookmarkManager.TryGenerateWorkItem(this, false, ref bookmark, null, isolationScope, out var workItem);
                 _scheduler.EnqueueWork(workItem);
             }
 
@@ -1331,7 +1331,7 @@ namespace System.Activities.Runtime
 
         public EmptyWorkItem CreateEmptyWorkItem(ActivityInstance instance)
         {
-            EmptyWorkItem workItem = this.EmptyWorkItemPool.Acquire();
+            var workItem = this.EmptyWorkItemPool.Acquire();
             workItem.Initialize(instance);
 
             return workItem;
@@ -1413,8 +1413,8 @@ namespace System.Activities.Runtime
                     {
                         if (isTerminate)
                         {
-                            HandleInitializationContext context = new HandleInitializationContext(this, null);
-                            foreach (ExecutionPropertyManager.ExecutionProperty executionProperty in _rootPropertyManager.Properties.Values)
+                            var context = new HandleInitializationContext(this, null);
+                            foreach (var executionProperty in _rootPropertyManager.Properties.Values)
                             {
                                 if (executionProperty.Property is Handle handle)
                                 {
@@ -1432,9 +1432,9 @@ namespace System.Activities.Runtime
                 {
                     // We have to walk this list backwards because the abort
                     // path removes from this collection.
-                    for (int i = _executingSecondaryRootInstances.Count - 1; i >= 0; i--)
+                    for (var i = _executingSecondaryRootInstances.Count - 1; i >= 0; i--)
                     {
-                        ActivityInstance secondaryRootInstance = _executingSecondaryRootInstances[i];
+                        var secondaryRootInstance = _executingSecondaryRootInstances[i];
 
                         Fx.Assert(!secondaryRootInstance.IsCompleted, "We should not have any complete instances in our list.");
 
@@ -1523,9 +1523,9 @@ namespace System.Activities.Runtime
 
         public bool Abort(Exception reason)
         {
-            bool hasTracedResume = TryTraceResume(out Guid oldActivityId);
+            var hasTracedResume = TryTraceResume(out var oldActivityId);
 
-            bool abortResult = Abort(reason, false);
+            var abortResult = Abort(reason, false);
 
             TraceSuspend(hasTracedResume, oldActivityId);
 
@@ -1567,7 +1567,7 @@ namespace System.Activities.Runtime
         {
             Fx.Assert(!_isDisposed, "We should not have been able to get here if we are disposed and Abort makes choices based on isDisposed");
 
-            bool hasTracedResume = TryTraceResume(out Guid oldActivityId);
+            var hasTracedResume = TryTraceResume(out var oldActivityId);
 
             Abort(reason, true);
 
@@ -1580,9 +1580,9 @@ namespace System.Activities.Runtime
             {
                 if (!_rootInstance.IsCancellationRequested)
                 {
-                    bool hasTracedResume = TryTraceResume(out Guid oldActivityId);
+                    var hasTracedResume = TryTraceResume(out var oldActivityId);
 
-                    bool trackCancelRequested = true;
+                    var trackCancelRequested = true;
 
                     if (_runtimeTransaction != null && _runtimeTransaction.IsolationScope != null)
                     {
@@ -1659,10 +1659,10 @@ namespace System.Activities.Runtime
 
         private void PropagateException(WorkItem workItem)
         {
-            ActivityInstance exceptionSource = workItem.ActivityInstance;
-            Exception exception = workItem.ExceptionToPropagate;
+            var exceptionSource = workItem.ActivityInstance;
+            var exception = workItem.ExceptionToPropagate;
 
-            ActivityInstance exceptionPropagator = exceptionSource;
+            var exceptionPropagator = exceptionSource;
             FaultBookmark targetBookmark = null;
 
             // If we are not supposed to persist exceptions, call EnterNoPersist so that we don't persist while we are
@@ -1741,7 +1741,7 @@ namespace System.Activities.Runtime
 
         internal ActivityInstanceReference CreateActivityInstanceReference(ActivityInstance toReference, ActivityInstance referenceOwner)
         {
-            ActivityInstanceReference reference = new ActivityInstanceReference(toReference);
+            var reference = new ActivityInstanceReference(toReference);
 
             if (_instanceMap != null)
             {
@@ -1803,10 +1803,10 @@ namespace System.Activities.Runtime
                 {
                     Fx.Assert(_executingSecondaryRootInstances.Count > 0, "We don't serialize out an empty list.");
 
-                    for (int i = 0; i < _executingSecondaryRootInstances.Count; i++)
+                    for (var i = 0; i < _executingSecondaryRootInstances.Count; i++)
                     {
-                        ActivityInstance secondaryRoot = _executingSecondaryRootInstances[i];
-                        LocationEnvironment environment = secondaryRoot.Environment.Parent;
+                        var secondaryRoot = _executingSecondaryRootInstances[i];
+                        var environment = secondaryRoot.Environment.Parent;
 
                         if (environment != null)
                         {
@@ -1844,7 +1844,7 @@ namespace System.Activities.Runtime
         internal Scheduler.RequestedAction TryExecuteNonEmptyWorkItem(WorkItem workItem)
         {
             Exception setupOrCleanupException = null;
-            ActivityInstance propertyManagerOwner = workItem.PropertyManagerOwner;
+            var propertyManagerOwner = workItem.PropertyManagerOwner;
             try
             {
                 if (propertyManagerOwner != null && propertyManagerOwner.PropertyManager != null)
@@ -1994,7 +1994,7 @@ namespace System.Activities.Runtime
 
         internal void FinishWorkItem(WorkItem workItem)
         {
-            Scheduler.RequestedAction resumptionAction = Scheduler.Continue;
+            var resumptionAction = Scheduler.Continue;
 
             try
             {
@@ -2059,7 +2059,7 @@ namespace System.Activities.Runtime
 
         internal void FinishWorkItemAfterTracking(WorkItem workItem)
         {
-            Scheduler.RequestedAction resumptionAction = Scheduler.Continue;
+            var resumptionAction = Scheduler.Continue;
 
             try
             {
@@ -2099,7 +2099,7 @@ namespace System.Activities.Runtime
             if (_persistenceWaiters != null && _persistenceWaiters.Count > 0 &&
                 this.IsPersistable)
             {
-                PersistenceWaiter waiter = _persistenceWaiters.Dequeue();
+                var waiter = _persistenceWaiters.Dequeue();
 
                 while (waiter != null && waiter.WaitingInstance.IsCompleted)
                 {
@@ -2174,7 +2174,7 @@ namespace System.Activities.Runtime
                     // We need to appropriately remove references, dispose
                     // environments, and remove instance map entries for
                     // all environments in this chain
-                    LocationEnvironment environment = targetInstance.Environment;
+                    var environment = targetInstance.Environment;
 
                     if (targetInstance.IsEnvironmentOwner)
                     {
@@ -2267,7 +2267,7 @@ namespace System.Activities.Runtime
 
         internal void CancelPendingOperation(ActivityInstance instance)
         {
-            if (TryGetPendingOperation(instance, out AsyncOperationContext asyncContext))
+            if (TryGetPendingOperation(instance, out var asyncContext))
             {
                 if (asyncContext.IsStillActive)
                 {
@@ -2308,8 +2308,8 @@ namespace System.Activities.Runtime
                     if (_rootPropertyManager != null)
                     {
                         // and uninitialize host-provided handles
-                        HandleInitializationContext context = new HandleInitializationContext(this, null);
-                        foreach (ExecutionPropertyManager.ExecutionProperty executionProperty in _rootPropertyManager.Properties.Values)
+                        var context = new HandleInitializationContext(this, null);
+                        foreach (var executionProperty in _rootPropertyManager.Properties.Values)
                         {
                             if (executionProperty.Property is Handle handle)
                             {
@@ -2342,11 +2342,11 @@ namespace System.Activities.Runtime
                 // We use rootElement here instead of _rootInstance.Activity
                 // because we don't always reload the root instance (like if it
                 // was complete when we last persisted).
-                IList<RuntimeArgument> rootArguments = _rootElement.RuntimeArguments;
+                var rootArguments = _rootElement.RuntimeArguments;
 
-                for (int i = 0; i < rootArguments.Count; i++)
+                for (var i = 0; i < rootArguments.Count; i++)
                 {
-                    RuntimeArgument argument = rootArguments[i];
+                    var argument = rootArguments[i];
 
                     if (ArgumentDirectionHelper.IsOut(argument.Direction))
                     {
@@ -2355,7 +2355,7 @@ namespace System.Activities.Runtime
                             _workflowOutputs = new Dictionary<string, object>();
                         }
 
-                        Location location = _rootEnvironment.GetSpecificLocation(argument.BoundArgument.Id);
+                        var location = _rootEnvironment.GetSpecificLocation(argument.BoundArgument.Id);
                         if (location == null)
                         {
                             throw FxTrace.Exception.AsError(new InvalidOperationException(SR.NoOutputLocationWasFound(argument.Name)));
@@ -2402,7 +2402,7 @@ namespace System.Activities.Runtime
                 {
                     if (this.IsPersistable || (_transactionContextWaiters[0].IsRequires && _noPersistCount == 1))
                     {
-                        TransactionContextWaiter waiter = _transactionContextWaiters.Dequeue();
+                        var waiter = _transactionContextWaiters.Dequeue();
 
                         waiter.WaitingInstance.DecrementBusyCount();
                         waiter.WaitingInstance.WaitingForTransactionContext = false;
@@ -2421,7 +2421,7 @@ namespace System.Activities.Runtime
                     _shouldRaiseMainBodyComplete = false;
                     if (_mainRootCompleteBookmark != null)
                     {
-                        BookmarkResumptionResult resumptionResult = this.TryResumeUserBookmark(_mainRootCompleteBookmark, _rootInstance.State, false);
+                        var resumptionResult = this.TryResumeUserBookmark(_mainRootCompleteBookmark, _rootInstance.State, false);
                         _mainRootCompleteBookmark = null;
                         if (resumptionResult == BookmarkResumptionResult.Success)
                         {
@@ -2469,7 +2469,7 @@ namespace System.Activities.Runtime
         {
             // Since we don't require calls to WorkflowInstanceControl.Pause to be synchronized
             // by the caller, we need to check for null here
-            Scheduler localScheduler = _scheduler;
+            var localScheduler = _scheduler;
 
             if (localScheduler != null)
             {
@@ -2520,9 +2520,9 @@ namespace System.Activities.Runtime
         // originated by the host
         internal BookmarkResumptionResult TryResumeHostBookmark(Bookmark bookmark, object value)
         {
-            bool hasTracedResume = TryTraceResume(out Guid oldActivityId);
+            var hasTracedResume = TryTraceResume(out var oldActivityId);
 
-            BookmarkResumptionResult result = TryResumeUserBookmark(bookmark, value, true);
+            var result = TryResumeUserBookmark(bookmark, value, true);
 
             TraceSuspend(hasTracedResume, oldActivityId);
 
@@ -2544,7 +2544,7 @@ namespace System.Activities.Runtime
             }
 
 
-            BookmarkResumptionResult result = _bookmarkManager.TryGenerateWorkItem(this, isExternal, ref bookmark, value, isolationInstance, out ActivityExecutionWorkItem resumeExecutionWorkItem);
+            var result = _bookmarkManager.TryGenerateWorkItem(this, isExternal, ref bookmark, value, isolationInstance, out var resumeExecutionWorkItem);
 
             if (result == BookmarkResumptionResult.Success)
             {
@@ -2564,7 +2564,7 @@ namespace System.Activities.Runtime
             {
                 Fx.Assert(result == BookmarkResumptionResult.NotFound, "This BookmarkNotFound is actually a well-known bookmark.");
 
-                AsyncOperationContext.CompleteData data = (AsyncOperationContext.CompleteData)value;
+                var data = (AsyncOperationContext.CompleteData)value;
 
                 data.CompleteOperation();
 
@@ -2576,7 +2576,7 @@ namespace System.Activities.Runtime
 
         internal ReadOnlyCollection<BookmarkInfo> GetAllBookmarks()
         {
-            List<BookmarkInfo> bookmarks = CollectExternalBookmarks();
+            var bookmarks = CollectExternalBookmarks();
 
             if (bookmarks != null)
             {
@@ -2622,7 +2622,7 @@ namespace System.Activities.Runtime
             }
             else
             {
-                ReadOnlyCollection<BookmarkInfo> bookmarks = _bookmarkScopeManager.GetBookmarks(scope);
+                var bookmarks = _bookmarkScopeManager.GetBookmarks(scope);
 
                 if (bookmarks == null)
                 {
@@ -2652,7 +2652,7 @@ namespace System.Activities.Runtime
             // We have to perform all of this work with tracing set up
             // since we might initialize a sub-instance while generating
             // the work item.
-            bool hasTracedResume = TryTraceResume(out Guid oldActivityId);
+            var hasTracedResume = TryTraceResume(out var oldActivityId);
 
             ActivityInstance isolationInstance = null;
 
@@ -2661,9 +2661,9 @@ namespace System.Activities.Runtime
                 isolationInstance = _runtimeTransaction.IsolationScope;
             }
 
-            bool hasOperations = _activeOperations != null && _activeOperations.Count > 0;
+            var hasOperations = _activeOperations != null && _activeOperations.Count > 0;
 
-            BookmarkResumptionResult result = this.BookmarkScopeManager.TryGenerateWorkItem(this, ref bookmark, scope, value, isolationInstance, hasOperations || _bookmarkManager.HasBookmarks, out ActivityExecutionWorkItem resumeExecutionWorkItem);
+            var result = this.BookmarkScopeManager.TryGenerateWorkItem(this, ref bookmark, scope, value, isolationInstance, hasOperations || _bookmarkManager.HasBookmarks, out var resumeExecutionWorkItem);
 
             if (result == BookmarkResumptionResult.Success)
             {
@@ -2706,11 +2706,11 @@ namespace System.Activities.Runtime
 
             if (hostProperties != null && hostProperties.Count > 0)
             {
-                Dictionary<string, ExecutionPropertyManager.ExecutionProperty> rootProperties = new Dictionary<string, ExecutionPropertyManager.ExecutionProperty>(hostProperties.Count);
-                HandleInitializationContext context = new HandleInitializationContext(this, null);
-                for (int i = 0; i < hostProperties.Count; i++)
+                var rootProperties = new Dictionary<string, ExecutionPropertyManager.ExecutionProperty>(hostProperties.Count);
+                var context = new HandleInitializationContext(this, null);
+                for (var i = 0; i < hostProperties.Count; i++)
                 {
-                    Handle handle = hostProperties[i];
+                    var handle = hostProperties[i];
                     handle.Initialize(context);
                     rootProperties.Add(handle.ExecutionPropertyName, new ExecutionPropertyManager.ExecutionProperty(handle.ExecutionPropertyName, handle, null));
                 }
@@ -2719,7 +2719,7 @@ namespace System.Activities.Runtime
                 _rootPropertyManager = new ExecutionPropertyManager(null, rootProperties);
             }
 
-            bool hasTracedStart = TryTraceStart(out Guid oldActivityId);
+            var hasTracedStart = TryTraceStart(out var oldActivityId);
 
             // Create and initialize the root instance
             _rootInstance = new ActivityInstance(activity)
@@ -2731,7 +2731,7 @@ namespace System.Activities.Runtime
             Fx.Assert(_lastInstanceId == 0, "We should only hit this path once");
             _lastInstanceId++;
 
-            bool requiresSymbolResolution = _rootInstance.Initialize(null, _instanceMap, null, _lastInstanceId, this);
+            var requiresSymbolResolution = _rootInstance.Initialize(null, _instanceMap, null, _lastInstanceId, this);
 
             if (TD.ActivityScheduledIsEnabled())
             {
@@ -2751,7 +2751,7 @@ namespace System.Activities.Runtime
 
         public ActivityInstance ScheduleSecondaryRootActivity(Activity activity, LocationEnvironment environment)
         {
-            ActivityInstance secondaryRoot = ScheduleActivity(activity, null, null, null, environment);
+            var secondaryRoot = ScheduleActivity(activity, null, null, null, environment);
 
             while (environment != null)
             {
@@ -2792,20 +2792,20 @@ namespace System.Activities.Runtime
             else
             {
                 handlerInstance = CreateUninitalizedActivityInstance(activityDelegate.Handler, parent, completionBookmark, faultBookmark);
-                bool requiresSymbolResolution = handlerInstance.Initialize(parent, _instanceMap, executionEnvironment, _lastInstanceId, this, activityDelegate.RuntimeDelegateArguments.Count);
+                var requiresSymbolResolution = handlerInstance.Initialize(parent, _instanceMap, executionEnvironment, _lastInstanceId, this, activityDelegate.RuntimeDelegateArguments.Count);
 
-                IList<RuntimeDelegateArgument> activityDelegateParameters = activityDelegate.RuntimeDelegateArguments;
-                for (int i = 0; i < activityDelegateParameters.Count; i++)
+                var activityDelegateParameters = activityDelegate.RuntimeDelegateArguments;
+                for (var i = 0; i < activityDelegateParameters.Count; i++)
                 {
-                    RuntimeDelegateArgument runtimeArgument = activityDelegateParameters[i];
+                    var runtimeArgument = activityDelegateParameters[i];
 
                     if (runtimeArgument.BoundArgument != null)
                     {
-                        string delegateParameterName = runtimeArgument.Name;
+                        var delegateParameterName = runtimeArgument.Name;
 
                         // Populate argument location. Set it's value in the activity handler's 
                         // instance environment only if it is a DelegateInArgument.
-                        Location newLocation = runtimeArgument.BoundArgument.CreateLocation();
+                        var newLocation = runtimeArgument.BoundArgument.CreateLocation();
                         handlerInstance.Environment.Declare(runtimeArgument.BoundArgument, newLocation, handlerInstance);
 
                         if (ArgumentDirectionHelper.IsIn(runtimeArgument.Direction))
@@ -2853,7 +2853,7 @@ namespace System.Activities.Runtime
             Fx.Assert(activity.IsMetadataCached, "Metadata must be cached for us to process this activity.");
 
             // 1. Create a new activity instance and setup bookmark callbacks
-            ActivityInstance activityInstance = new ActivityInstance(activity);
+            var activityInstance = new ActivityInstance(activity);
 
             if (parent != null)
             {
@@ -2882,8 +2882,8 @@ namespace System.Activities.Runtime
             CompletionBookmark completionBookmark, FaultBookmark faultBookmark, LocationEnvironment parentEnvironment,
             IDictionary<string, object> argumentValueOverrides, Location resultLocation)
         {
-            ActivityInstance activityInstance = CreateUninitalizedActivityInstance(activity, parent, completionBookmark, faultBookmark);
-            bool requiresSymbolResolution = activityInstance.Initialize(parent, _instanceMap, parentEnvironment, _lastInstanceId, this);
+            var activityInstance = CreateUninitalizedActivityInstance(activity, parent, completionBookmark, faultBookmark);
+            var requiresSymbolResolution = activityInstance.Initialize(parent, _instanceMap, parentEnvironment, _lastInstanceId, this);
 
             if (TD.ActivityScheduledIsEnabled())
             {
@@ -2940,7 +2940,7 @@ namespace System.Activities.Runtime
                 AddTrackingRecord(new ActivityScheduledRecord(this.WorkflowInstanceId, parent, new ActivityInfo(activity, instanceId)));
             }
 
-            ExecuteSynchronousExpressionWorkItem workItem = this.ExecuteSynchronousExpressionWorkItemPool.Acquire();
+            var workItem = this.ExecuteSynchronousExpressionWorkItemPool.Acquire();
             workItem.Initialize(parent, activity, _lastInstanceId, resultLocation, nextArgumentWorkItem);
             if (_instanceMap != null)
             {
@@ -2951,7 +2951,7 @@ namespace System.Activities.Runtime
 
         internal void ScheduleExpressionFaultPropagation(Activity activity, long instanceId, ActivityInstance parent, Exception exception)
         {
-            ActivityInstance instance = new ActivityInstance(activity);
+            var instance = new ActivityInstance(activity);
             instance.Initialize(parent, _instanceMap, parent.Environment, instanceId, this);
 
             if (!parent.HasPendingWork)
@@ -2959,7 +2959,7 @@ namespace System.Activities.Runtime
                 // Force the parent to stay alive, and to attempt to execute its body if the fault is handled
                 ScheduleItem(CreateEmptyWorkItem(parent));
             }
-            PropagateExceptionWorkItem workItem = new PropagateExceptionWorkItem(exception, instance);
+            var workItem = new PropagateExceptionWorkItem(exception, instance);
             ScheduleItem(workItem);
 
             parent.SetInitializationIncomplete();
@@ -2972,7 +2972,7 @@ namespace System.Activities.Runtime
         {
             if (resultLocation == null)
             {
-                ExecuteActivityWorkItem workItem = this.ExecuteActivityWorkItemPool.Acquire();
+                var workItem = this.ExecuteActivityWorkItemPool.Acquire();
                 workItem.Initialize(activityInstance, requiresSymbolResolution, argumentValueOverrides);
 
                 _scheduler.PushWork(workItem);
@@ -2997,7 +2997,7 @@ namespace System.Activities.Runtime
 
             this.EnterNoPersist();
 
-            AsyncOperationContext context = new AsyncOperationContext(this, owningActivity);
+            var context = new AsyncOperationContext(this, owningActivity);
 
             if (_activeOperations == null)
             {
@@ -3014,7 +3014,7 @@ namespace System.Activities.Runtime
         {
             Fx.Assert(callback != null, "Use the other overload if callback is null.");
 
-            CompleteAsyncOperationWorkItem workItem = new CompleteAsyncOperationWorkItem(
+            var workItem = new CompleteAsyncOperationWorkItem(
                 new BookmarkCallbackWrapper(callback, owningInstance),
                 _bookmarkManager.GenerateTempBookmark(),
                 state);
@@ -3201,7 +3201,7 @@ namespace System.Activities.Runtime
                         return;
                     }
 
-                    ActivityExecutor executor = (ActivityExecutor)result.AsyncState;
+                    var executor = (ActivityExecutor)result.AsyncState;
 
                     try
                     {
@@ -3819,7 +3819,7 @@ namespace System.Activities.Runtime
             public void Invoke(NativeActivityTransactionContext context, object value)
             {
                 EnsureCallback(callbackType, transactionCallbackParameterTypes);
-                Action<NativeActivityTransactionContext, object> callback = (Action<NativeActivityTransactionContext, object>)this.Callback;
+                var callback = (Action<NativeActivityTransactionContext, object>)this.Callback;
                 callback(context, value);
             }
         }
@@ -3997,8 +3997,8 @@ namespace System.Activities.Runtime
                     return;
                 }
 
-                CompleteTransactionWorkItem thisPtr = (CompleteTransactionWorkItem)result.AsyncState;
-                bool completeSelf = true;
+                var thisPtr = (CompleteTransactionWorkItem)result.AsyncState;
+                var completeSelf = true;
 
                 try
                 {
@@ -4051,9 +4051,9 @@ namespace System.Activities.Runtime
                     enlistment.Prepared();
                 }
 
-                Transaction original = _runtimeTransaction.OriginalTransaction;
+                var original = _runtimeTransaction.OriginalTransaction;
 
-                DependentTransaction dependentTransaction = original as DependentTransaction;
+                var dependentTransaction = original as DependentTransaction;
                 if (dependentTransaction != null)
                 {
                     dependentTransaction.Complete();
@@ -4061,10 +4061,10 @@ namespace System.Activities.Runtime
                 }
                 else
                 {
-                    CommittableTransaction committableTransaction = original as CommittableTransaction;
+                    var committableTransaction = original as CommittableTransaction;
                     if (committableTransaction != null)
                     {
-                        IAsyncResult result = committableTransaction.BeginCommit(CommitCompleteCallback, this);
+                        var result = committableTransaction.BeginCommit(CommitCompleteCallback, this);
 
                         if (result.CompletedSynchronously)
                         {
@@ -4089,8 +4089,8 @@ namespace System.Activities.Runtime
                     return;
                 }
 
-                CompleteTransactionWorkItem thisPtr = (CompleteTransactionWorkItem)result.AsyncState;
-                bool completeSelf = true;
+                var thisPtr = (CompleteTransactionWorkItem)result.AsyncState;
+                var completeSelf = true;
 
                 try
                 {
@@ -4130,7 +4130,7 @@ namespace System.Activities.Runtime
 
                 lock (_runtimeTransaction)
                 {
-                    TransactionStatus status = _runtimeTransaction.TransactionStatus;
+                    var status = _runtimeTransaction.TransactionStatus;
 
                     if (status == TransactionStatus.Active)
                     {
@@ -4152,8 +4152,8 @@ namespace System.Activities.Runtime
 
             private static void OnOutcomeDetermined(object state, TimeoutException asyncException)
             {
-                CompleteTransactionWorkItem thisPtr = (CompleteTransactionWorkItem)state;
-                bool completeSelf = true;
+                var thisPtr = (CompleteTransactionWorkItem)state;
+                var completeSelf = true;
 
                 if (asyncException != null)
                 {
@@ -4259,7 +4259,7 @@ namespace System.Activities.Runtime
 
                 private static bool OnPersistComplete(IAsyncResult result)
                 {
-                    TransactionalPersistAsyncResult thisPtr = (TransactionalPersistAsyncResult)result.AsyncState;
+                    var thisPtr = (TransactionalPersistAsyncResult)result.AsyncState;
 
                     try
                     {
@@ -4462,7 +4462,7 @@ namespace System.Activities.Runtime
 
             private static bool OnAssociated(IAsyncResult result)
             {
-                AssociateKeysAsyncResult thisPtr = (AssociateKeysAsyncResult)result.AsyncState;
+                var thisPtr = (AssociateKeysAsyncResult)result.AsyncState;
                 thisPtr._executor._host.OnEndAssociateKeys(result);
                 return true;
             }

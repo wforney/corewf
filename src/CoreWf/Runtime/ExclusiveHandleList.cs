@@ -22,7 +22,7 @@ namespace System.Activities.Runtime
             }
             else if (this.MultipleItems != null)
             {
-                for (int i = 0; i < this.MultipleItems.Count; i++)
+                for (var i = 0; i < this.MultipleItems.Count; i++)
                 {
                     if (handle.Equals(this.MultipleItems[i]))
                     {

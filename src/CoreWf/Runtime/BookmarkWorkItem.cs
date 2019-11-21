@@ -79,7 +79,7 @@ namespace System.Activities.Runtime
 
         public override bool Execute(ActivityExecutor executor, BookmarkManager bookmarkManager)
         {
-            NativeActivityContext nativeContext = executor.NativeActivityContextPool.Acquire();
+            var nativeContext = executor.NativeActivityContextPool.Acquire();
 
             try
             {

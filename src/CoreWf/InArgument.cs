@@ -224,7 +224,7 @@ namespace System.Activities
         {
             Fx.Assert(this.Expression != null, "This should only be called for non-empty bindings");
 
-            Location<T> location = Argument.CreateLocation<T>();
+            var location = Argument.CreateLocation<T>();
             targetEnvironment.Declare(this.RuntimeArgument, location, activityInstance);
 
             if (this.Expression.UseOldFastPath)

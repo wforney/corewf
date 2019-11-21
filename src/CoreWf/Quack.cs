@@ -51,7 +51,7 @@ namespace System.Activities
             {
                 Fx.Assert(index < this.count, "Index out of range.");
 
-                int realIndex = (this.head + index) % this.items.Length;
+                var realIndex = (this.head + index) % this.items.Length;
 
                 return this.items[realIndex];
             }
@@ -61,9 +61,9 @@ namespace System.Activities
         {
             Fx.Assert(this.count > 0, "We should only call this when we have items.");
 
-            T[] compressedItems = new T[this.count];
+            var compressedItems = new T[this.count];
 
-            for (int i = 0; i < this.count; i++)
+            for (var i = 0; i < this.count; i++)
             {
                 compressedItems[i] = this.items[(this.head + i) % this.items.Length];
             }
@@ -107,7 +107,7 @@ namespace System.Activities
         {
             Fx.Assert(this.count > 0, "Quack is empty");
 
-            T removed = this.items[this.head];
+            var removed = this.items[this.head];
             this.items[this.head] = default(T);
             if (++this.head == this.items.Length)
             {
@@ -121,11 +121,11 @@ namespace System.Activities
 
         public bool Remove(T item)
         {
-            int found = -1;
+            var found = -1;
 
-            for (int i = 0; i < this.count; i++)
+            for (var i = 0; i < this.count; i++)
             {
-                int realIndex = (this.head + i) % this.items.Length;
+                var realIndex = (this.head + i) % this.items.Length;
                 if (object.Equals(this.items[realIndex], item))
                 {
                     found = i;
@@ -148,10 +148,10 @@ namespace System.Activities
         {
             Fx.Assert(index < this.count, "Index out of range");
 
-            for (int i = index - 1; i >= 0; i--)
+            for (var i = index - 1; i >= 0; i--)
             {
-                int sourceIndex = (this.head + i) % this.items.Length;
-                int targetIndex = sourceIndex + 1;
+                var sourceIndex = (this.head + i) % this.items.Length;
+                var targetIndex = sourceIndex + 1;
 
                 if (targetIndex == this.items.Length)
                 {
@@ -174,7 +174,7 @@ namespace System.Activities
         {
             Fx.Assert(this.items.Length > 0, "Quack is empty");
 
-            int capacity = this.items.Length * 2;
+            var capacity = this.items.Length * 2;
             this.SetCapacity(capacity);
         }
 
@@ -182,7 +182,7 @@ namespace System.Activities
         {
             Fx.Assert(capacity >= this.count, "Capacity is set to a smaller value");
 
-            T[] newArray = new T[capacity];
+            var newArray = new T[capacity];
             if (this.count > 0)
             {
                 if (this.head < this.tail)

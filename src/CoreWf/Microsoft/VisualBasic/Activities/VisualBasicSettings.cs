@@ -19,8 +19,7 @@ namespace Microsoft.VisualBasic.Activities
     [TypeConverter(typeof(VisualBasicSettingsConverter))]
     public class VisualBasicSettings
     {
-        
-        static readonly HashSet<VisualBasicImportReference> defaultImportReferences = new HashSet<VisualBasicImportReference>()
+        private static readonly HashSet<VisualBasicImportReference> defaultImportReferences = new HashSet<VisualBasicImportReference>()
         {
             //"mscorlib"
             new VisualBasicImportReference { Import = "System", Assembly = "mscorlib" },
@@ -34,15 +33,14 @@ namespace Microsoft.VisualBasic.Activities
             new VisualBasicImportReference { Import = "System.Activities.Statements", Assembly = "System.Activities" },
             new VisualBasicImportReference { Import = "System.Activities.Expressions", Assembly = "System.Activities" },
         };
-
-        static VisualBasicSettings defaultSettings = new VisualBasicSettings(defaultImportReferences);
+        private static VisualBasicSettings defaultSettings = new VisualBasicSettings(defaultImportReferences);
 
         public VisualBasicSettings()
         {
             this.ImportReferences = new HashSet<VisualBasicImportReference>();
         }
 
-        VisualBasicSettings(HashSet<VisualBasicImportReference> importReferences)
+        private VisualBasicSettings(HashSet<VisualBasicImportReference> importReferences)
         {
             Fx.Assert(importReferences != null, "caller must verify");
             this.ImportReferences = new HashSet<VisualBasicImportReference>(importReferences);
@@ -73,8 +71,8 @@ namespace Microsoft.VisualBasic.Activities
         internal void GenerateXamlReferences(IValueSerializerContext context)
         {
             // promote settings to xmlns declarations
-            INamespacePrefixLookup namespaceLookup = GetService<INamespacePrefixLookup>(context);
-            foreach (VisualBasicImportReference importReference in this.ImportReferences)
+            var namespaceLookup = GetService<INamespacePrefixLookup>(context);
+            foreach (var importReference in this.ImportReferences)
             {
                 importReference.GenerateXamlNamespace(namespaceLookup);
             }
@@ -82,7 +80,7 @@ namespace Microsoft.VisualBasic.Activities
 
         internal static T GetService<T>(ITypeDescriptorContext context) where T : class
         {
-            T service = (T)context.GetService(typeof(T));
+            var service = (T)context.GetService(typeof(T));
             if (service == null)
             {
                 throw FxTrace.Exception.AsError(new InvalidOperationException(SR.InvalidTypeConverterUsage));

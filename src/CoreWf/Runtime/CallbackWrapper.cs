@@ -92,7 +92,7 @@ namespace System.Activities.Runtime
         {
             Fx.Assert(callback != null, "This should only be called with non-null callbacks");
 
-            object target = callback.Target;
+            var target = callback.Target;
 
             // if the target is null, it is static 
             if (target == null)
@@ -151,27 +151,27 @@ namespace System.Activities.Runtime
 
         private MethodInfo FindMatchingGenericMethod(Type declaringType, Type[] parameterTypes, Type genericParameter)
         {
-            MethodInfo[] potentialMatches = declaringType.GetMethods(bindingFlags);
-            for (int i = 0; i < potentialMatches.Length; i++)
+            var potentialMatches = declaringType.GetMethods(bindingFlags);
+            for (var i = 0; i < potentialMatches.Length; i++)
             {
-                MethodInfo potentialMatch = potentialMatches[i];
+                var potentialMatch = potentialMatches[i];
 
                 if (potentialMatch.IsGenericMethod && potentialMatch.Name == this.callbackName)
                 {
                     Fx.Assert(potentialMatch.IsGenericMethodDefinition, "We should be getting the generic method definition here.");
 
-                    Type[] genericArguments = potentialMatch.GetGenericArguments();
+                    var genericArguments = potentialMatch.GetGenericArguments();
 
                     if (genericArguments.Length == 1)
                     {
                         potentialMatch = potentialMatch.MakeGenericMethod(genericParameter);
 
-                        ParameterInfo[] parameters = potentialMatch.GetParameters();
+                        var parameters = potentialMatch.GetParameters();
 
-                        bool match = true;
-                        for (int parameterIndex = 0; parameterIndex < parameters.Length; parameterIndex++)
+                        var match = true;
+                        for (var parameterIndex = 0; parameterIndex < parameters.Length; parameterIndex++)
                         {
-                            ParameterInfo parameter = parameters[parameterIndex];
+                            var parameter = parameters[parameterIndex];
 
                             if (parameter.IsOut || parameter.IsOptional || parameter.ParameterType != parameterTypes[parameterIndex])
                             {
@@ -194,7 +194,7 @@ namespace System.Activities.Runtime
         [SecurityCritical]
         private Delegate GenerateCallback(Type delegateType, Type[] parameterTypes, Type genericParameter)
         {
-            MethodInfo methodInfo = GetMatchingMethod(parameterTypes, out Type declaringType);
+            var methodInfo = GetMatchingMethod(parameterTypes, out var declaringType);
 
             if (methodInfo == null)
             {
@@ -217,7 +217,7 @@ namespace System.Activities.Runtime
             // We were unloaded and have some work to do to rebuild the callback
             if (this.callback == null)
             {
-                MethodInfo methodInfo = GetMatchingMethod(parameters, out Type unusedDeclaringType);
+                var methodInfo = GetMatchingMethod(parameters, out var unusedDeclaringType);
 
                 Fx.Assert(methodInfo != null, "We must have a method info by now");
 
@@ -304,10 +304,10 @@ namespace System.Activities.Runtime
         {
             if (this.callbackName == null && !this.IsCallbackNull)
             {
-                MethodInfo method = this.callback.Method;
+                var method = this.callback.Method;
                 this.callbackName = method.Name;
-                Type declaringType = method.DeclaringType;
-                Type activityType = this.ActivityInstance.Activity.GetType();
+                var declaringType = method.DeclaringType;
+                var activityType = this.ActivityInstance.Activity.GetType();
 
                 if (declaringType != activityType)
                 {

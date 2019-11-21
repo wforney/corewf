@@ -91,7 +91,7 @@ namespace System.Activities.DynamicUpdate
         public object FindExecutionProperty(string name)
         {
             ThrowIfDisposed();
-            ExecutionProperties exeProperties = new ExecutionProperties(this.innerContext, this.currentInstance, this.currentInstance.PropertyManager);
+            var exeProperties = new ExecutionProperties(this.innerContext, this.currentInstance, this.currentInstance.PropertyManager);
             return exeProperties.Find(name);
         }
 
@@ -106,7 +106,7 @@ namespace System.Activities.DynamicUpdate
         {
             ThrowIfDisposed();
             bool isReferencedChild;
-            NativeActivityUpdateMapMetadata.ValidateOriginalValueAccess(this.CurrentActivity, childActivity, "childActivity", out isReferencedChild);
+            NativeActivityUpdateMapMetadata.ValidateOriginalValueAccess(this.CurrentActivity, childActivity, nameof(childActivity), out isReferencedChild);
             if (!isReferencedChild && !this.updateMap.IsNoChanges)
             {
                 // 
@@ -126,14 +126,14 @@ namespace System.Activities.DynamicUpdate
         {
             ThrowIfDisposed();
             bool isReferencedChild;
-            NativeActivityUpdateMapMetadata.ValidateOriginalValueAccess(this.CurrentActivity, childActivity, "childActivity", out isReferencedChild);
+            NativeActivityUpdateMapMetadata.ValidateOriginalValueAccess(this.CurrentActivity, childActivity, nameof(childActivity), out isReferencedChild);
             DynamicUpdateMap mapContainingChild;
             DynamicUpdateMapEntry entry;
             if (isReferencedChild)
             {
                 mapContainingChild = this.rootMap;
-                int[] idArray = childActivity.QualifiedId.AsIDArray();
-                for (int i = 0; i < idArray.Length - 1; i++)
+                var idArray = childActivity.QualifiedId.AsIDArray();
+                for (var i = 0; i < idArray.Length - 1; i++)
                 {
                     mapContainingChild.TryGetUpdateEntryByNewId(idArray[i], out entry);
                     Fx.Assert(entry != null, "entry must not be null here.");
@@ -168,7 +168,7 @@ namespace System.Activities.DynamicUpdate
             ThrowIfDisposed();
             if (propertyName == null)
             {
-                throw FxTrace.Exception.ArgumentNull("propertyName");
+                throw FxTrace.Exception.ArgumentNull(nameof(propertyName));
             }
 
             object result = null;

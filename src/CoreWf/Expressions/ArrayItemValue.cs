@@ -33,10 +33,10 @@ namespace System.Activities.Expressions
 
         protected override void CacheMetadata(CodeActivityMetadata metadata)
         {
-            RuntimeArgument arrayArgument = new RuntimeArgument("Array", typeof(TItem[]), ArgumentDirection.In, true);
+            var arrayArgument = new RuntimeArgument("Array", typeof(TItem[]), ArgumentDirection.In, true);
             metadata.Bind(this.Array, arrayArgument);
 
-            RuntimeArgument indexArgument = new RuntimeArgument("Index", typeof(int), ArgumentDirection.In, true);
+            var indexArgument = new RuntimeArgument("Index", typeof(int), ArgumentDirection.In, true);
             metadata.Bind(this.Index, indexArgument);
 
             metadata.SetArgumentsCollection(
@@ -49,13 +49,13 @@ namespace System.Activities.Expressions
 
         protected override TItem Execute(CodeActivityContext context)
         {
-            TItem[] items = this.Array.Get(context);
+            var items = this.Array.Get(context);
             if (items == null)
             {
                 throw FxTrace.Exception.AsError(new InvalidOperationException(SR.MemberCannotBeNull("Array", this.GetType().Name, this.DisplayName)));
             }
 
-            int itemIndex = this.Index.Get(context);
+            var itemIndex = this.Index.Get(context);
             return items[itemIndex];
         }
     }

@@ -25,8 +25,8 @@ namespace System.Activities.Statements
         {
             Fx.Assert(!string.IsNullOrEmpty(descendantId), "descendantId should not be null or empty.");
             Fx.Assert(!string.IsNullOrEmpty(stateId), "stateId should not be null or empty.");
-            string[] child = descendantId.Split(StateIdSeparator);
-            string[] parent = stateId.Split(StateIdSeparator);
+            var child = descendantId.Split(StateIdSeparator);
+            var parent = stateId.Split(StateIdSeparator);
             Fx.Assert(parent.Length < child.Length, "stateId should not be null or empty.");
             return int.Parse(child[parent.Length], CultureInfo.InvariantCulture);
         }

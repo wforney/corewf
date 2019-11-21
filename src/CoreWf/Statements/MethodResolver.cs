@@ -56,7 +56,7 @@ namespace System.Activities.Statements
         {
             if (parameters.Length > 0)
             {
-                ParameterInfo last = parameters[parameters.Length - 1];
+                var last = parameters[parameters.Length - 1];
                 return last.GetCustomAttributes(typeof(ParamArrayAttribute), true).Length > 0;
             }
             else
@@ -68,14 +68,14 @@ namespace System.Activities.Statements
         // The Arguments added by the activity are named according to the method resolved by the MethodResolver.
         public void RegisterParameters(IList<RuntimeArgument> arguments)
         {
-            bool useAsyncPattern = this.RunAsynchronously && this.beginMethod != null && this.endMethod != null;
+            var useAsyncPattern = this.RunAsynchronously && this.beginMethod != null && this.endMethod != null;
 
             if (this.syncMethod != null || useAsyncPattern)
             {
                 ParameterInfo[] formalParameters;
                 int formalParamCount;
-                string paramArrayBaseName = "";
-                bool haveParameterArray = false;
+                var paramArrayBaseName = "";
+                var haveParameterArray = false;
 
                 if (useAsyncPattern)
                 {
@@ -98,16 +98,16 @@ namespace System.Activities.Statements
                     }
                 }
 
-                for (int i = 0; i < formalParamCount; i++)
+                for (var i = 0; i < formalParamCount; i++)
                 {
-                    string name = formalParameters[i].Name;
+                    var name = formalParameters[i].Name;
                     //for some methods like int[,].Get(int,int), formal parameters have no names in reflection info
                     if (string.IsNullOrEmpty(name))
                     {
                         name = "Parameter" + i;
                     }
 
-                    RuntimeArgument argument = new RuntimeArgument(name, Parameters[i].ArgumentType, Parameters[i].Direction, true);
+                    var argument = new RuntimeArgument(name, Parameters[i].ArgumentType, Parameters[i].Direction, true);
                     Argument.Bind(Parameters[i], argument);
                     arguments.Add(argument);
 
@@ -116,7 +116,7 @@ namespace System.Activities.Statements
                         // Attempt to uniquify parameter names
                         if (name.StartsWith(paramArrayBaseName, false, null))
                         {
-                            if (int.TryParse(name.Substring(paramArrayBaseName.Length), NumberStyles.Integer, NumberFormatInfo.CurrentInfo, out int n))
+                            if (int.TryParse(name.Substring(paramArrayBaseName.Length), NumberStyles.Integer, NumberFormatInfo.CurrentInfo, out var n))
                             {
                                 paramArrayBaseName += "_";
                             }
@@ -128,13 +128,13 @@ namespace System.Activities.Statements
                 {
                     // RuntimeArgument bindings need names. In the case of params arrays, synthesize names based on the name of the formal params parameter
                     // plus a counter.
-                    int paramArrayCount = Parameters.Count - formalParamCount;
+                    var paramArrayCount = Parameters.Count - formalParamCount;
 
-                    for (int i = 0; i < paramArrayCount; i++)
+                    for (var i = 0; i < paramArrayCount; i++)
                     {
-                        string name = paramArrayBaseName + i;
-                        int index = formalParamCount + i;
-                        RuntimeArgument argument = new RuntimeArgument(name, Parameters[index].ArgumentType, Parameters[index].Direction, true);
+                        var name = paramArrayBaseName + i;
+                        var index = formalParamCount + i;
+                        var argument = new RuntimeArgument(name, Parameters[index].ArgumentType, Parameters[index].Direction, true);
                         Argument.Bind(Parameters[index], argument);
                         arguments.Add(argument);
                     }
@@ -143,10 +143,10 @@ namespace System.Activities.Statements
             else
             {
                 // We're still at design-time: make up "fake" arguments based on the parameters
-                for (int i = 0; i < Parameters.Count; i++)
+                for (var i = 0; i < Parameters.Count; i++)
                 {
-                    string name = "argument" + i;
-                    RuntimeArgument argument = new RuntimeArgument(name, Parameters[i].ArgumentType, Parameters[i].Direction, true);
+                    var name = "argument" + i;
+                    var argument = new RuntimeArgument(name, Parameters[i].ArgumentType, Parameters[i].Direction, true);
                     Argument.Bind(Parameters[i], argument);
                     arguments.Add(argument);
                 }
@@ -155,7 +155,7 @@ namespace System.Activities.Statements
 
         public void Trace()
         {
-            bool useAsyncPattern = this.RunAsynchronously && this.beginMethod != null && this.endMethod != null;
+            var useAsyncPattern = this.RunAsynchronously && this.beginMethod != null && this.endMethod != null;
 
             if (useAsyncPattern)
             {
@@ -180,9 +180,9 @@ namespace System.Activities.Statements
         public void DetermineMethodInfo(CodeActivityMetadata metadata, MruCache<MethodInfo, Func<object, object[], object>> funcCache, ReaderWriterLockSlim locker, 
             ref MethodExecutor methodExecutor)
         {
-            bool returnEarly = false;
+            var returnEarly = false;
 
-            MethodExecutor oldMethodExecutor = methodExecutor;
+            var oldMethodExecutor = methodExecutor;
             methodExecutor = null;
             if (string.IsNullOrEmpty(this.MethodName))
             {
@@ -190,7 +190,7 @@ namespace System.Activities.Statements
                 returnEarly = true;
             }
 
-            Type targetType = this.TargetType;
+            var targetType = this.TargetType;
 
             // If TargetType and the type of TargetObject are both set, it's an error.
             if (targetType != null && this.TargetObject != null && !this.TargetObject.IsEmpty)
@@ -200,8 +200,8 @@ namespace System.Activities.Statements
             }
 
             // If TargetType was set, look for a static method. If TargetObject was set, look for an instance method. They can't both be set.
-            BindingFlags bindingFlags = this.TargetType != null ? staticBindingFlags : instanceBindingFlags;
-            string bindingType = bindingFlags == staticBindingFlags ? staticString : instanceString;
+            var bindingFlags = this.TargetType != null ? staticBindingFlags : instanceBindingFlags;
+            var bindingType = bindingFlags == staticBindingFlags ? staticString : instanceString;
 
             if (targetType == null)
             {
@@ -223,23 +223,23 @@ namespace System.Activities.Statements
             }
 
             // Convert OutArgs and InOutArgs to out/ref types before resolution
-            Type[] parameterTypes =
+            var parameterTypes =
                 Parameters.Select(argument => argument.Direction == ArgumentDirection.In ? argument.ArgumentType : argument.ArgumentType.MakeByRefType())
                     .ToArray();
 
-            Type[] genericTypeArguments = this.GenericTypeArguments.ToArray();
+            var genericTypeArguments = this.GenericTypeArguments.ToArray();
 
-            InheritanceAndParamArrayAwareBinder methodBinder = new InheritanceAndParamArrayAwareBinder(targetType, genericTypeArguments, this.Parent);
+            var methodBinder = new InheritanceAndParamArrayAwareBinder(targetType, genericTypeArguments, this.Parent);
 
             // It may be possible to know (and check) the resultType even if the result won't be assigned anywhere.     
             // Used 1.) for detecting async pattern, and 2.) to make sure we selected the correct MethodInfo.
-            Type resultType = this.ResultType;
+            var resultType = this.ResultType;
 
             if (this.RunAsynchronously)
             {
-                int formalParamCount = parameterTypes.Length;
-                Type[] beginMethodParameterTypes = new Type[formalParamCount + 2];
-                for (int i = 0; i < formalParamCount; i++)
+                var formalParamCount = parameterTypes.Length;
+                var beginMethodParameterTypes = new Type[formalParamCount + 2];
+                for (var i = 0; i < formalParamCount; i++)
                 {
                     beginMethodParameterTypes[i] = parameterTypes[i];
                 }
@@ -449,11 +449,11 @@ namespace System.Activities.Statements
                 if (this.genericTypeArguments.Length > 0)
                 {
                     // Accept only generic methods which can be successfully instantiated w/ these parameters
-                    Collection<MethodBase> methods = new Collection<MethodBase>();
-                    foreach (MethodBase method in match)
+                    var methods = new Collection<MethodBase>();
+                    foreach (var method in match)
                     {
                         // Must be a MethodInfo because we've already filtered out constructors                            
-                        MethodInfo instantiatedMethod = Instantiate((MethodInfo)method, this.genericTypeArguments);
+                        var instantiatedMethod = Instantiate((MethodInfo)method, this.genericTypeArguments);
                         if (instantiatedMethod != null)
                         {
                             methods.Add(instantiatedMethod);
@@ -473,11 +473,11 @@ namespace System.Activities.Statements
                 }
 
                 // Methods declared on this.declaringType class get top priority as matches
-                Type declaringType = this.declaringType;
+                var declaringType = this.declaringType;
                 MethodBase result = null;
                 do
                 {
-                    MethodBase[] methodsDeclaredHere = methodCandidates.Where(mb => mb.DeclaringType == declaringType).ToArray();
+                    var methodsDeclaredHere = methodCandidates.Where(mb => mb.DeclaringType == declaringType).ToArray();
                     if (methodsDeclaredHere.Length > 0)
                     {
                         // Try to find a match
@@ -494,23 +494,23 @@ namespace System.Activities.Statements
             {
                 // Try the default binder first. Never gives false positive, but will fail to detect methods w/ parameter array because
                 // it will not expand the formal parameter list when checking against actual parameters.
-                MethodBase result = Type.DefaultBinder.SelectMethod(bindingAttr, methodCandidates, types, modifiers);
+                var result = Type.DefaultBinder.SelectMethod(bindingAttr, methodCandidates, types, modifiers);
 
                 // Could be false negative, check for parameter array and if so condense it back to an array before re-checking.
                 if (result == null)
                 {
-                    foreach (MethodBase method in methodCandidates)
+                    foreach (var method in methodCandidates)
                     {
-                        MethodInfo methodInfo = method as MethodInfo;
-                        ParameterInfo[] formalParams = methodInfo.GetParameters();
+                        var methodInfo = method as MethodInfo;
+                        var formalParams = methodInfo.GetParameters();
                         if (MethodResolver.HaveParameterArray(formalParams)) // Check if the last parameter of method is marked w/ "params" attribute
                         {
-                            Type elementType = formalParams[formalParams.Length - 1].ParameterType.GetElementType();
+                            var elementType = formalParams[formalParams.Length - 1].ParameterType.GetElementType();
 
-                            bool allCompatible = true;
+                            var allCompatible = true;
                             // There could be more actual parameters than formal parameters, because the formal parameter is a params T'[] for some T'.
                             // So, check that each actual parameter starting at position [formalParams.Length - 1] is compatible with T'.
-                            for (int i = formalParams.Length - 1; i < types.Length - 1; i++)
+                            for (var i = formalParams.Length - 1; i < types.Length - 1; i++)
                             {
                                 if (!TypeHelper.AreTypesCompatible(types[i], elementType))
                                 {
@@ -525,20 +525,20 @@ namespace System.Activities.Statements
                             }
 
                             // Condense the actual parameter back to an array.
-                            Type[] typeArray = new Type[formalParams.Length];
-                            for (int i = 0; i < typeArray.Length - 1; i++)
+                            var typeArray = new Type[formalParams.Length];
+                            for (var i = 0; i < typeArray.Length - 1; i++)
                             {
                                 typeArray[i] = types[i];
                             }
                             typeArray[typeArray.Length - 1] = elementType.MakeArrayType();
 
                             // Recheck the condensed array
-                            MethodBase newFound = Type.DefaultBinder.SelectMethod(bindingAttr, new MethodBase[] { methodInfo }, typeArray, modifiers);
+                            var newFound = Type.DefaultBinder.SelectMethod(bindingAttr, new MethodBase[] { methodInfo }, typeArray, modifiers);
                             if (result != null && newFound != null)
                             {
-                                string type = newFound.ReflectedType.Name;
-                                string name = newFound.Name;
-                                string bindingType = bindingAttr == staticBindingFlags ? staticString : instanceString;
+                                var type = newFound.ReflectedType.Name;
+                                var name = newFound.Name;
+                                var bindingType = bindingAttr == staticBindingFlags ? staticString : instanceString;
                                 throw FxTrace.Exception.AsError(new AmbiguousMatchException(SR.DuplicateMethodFound(type, bindingType, name, this.parentActivity.DisplayName)));
                             }
                             else
@@ -592,9 +592,9 @@ namespace System.Activities.Statements
 
             protected override IAsyncResult BeginMakeMethodCall(AsyncCodeActivityContext context, object target, AsyncCallback callback, object state)
             {
-                object[] actualParameters = EvaluateAndPackParameters(context, this.syncMethod, false);
+                var actualParameters = EvaluateAndPackParameters(context, this.syncMethod, false);
 
-                object result = this.InvokeAndUnwrapExceptions(this.func, target, actualParameters);
+                var result = this.InvokeAndUnwrapExceptions(this.func, target, actualParameters);
 
                 SetOutArgumentAndReturnValue(context, result, actualParameters);
 
@@ -649,13 +649,13 @@ namespace System.Activities.Statements
 
             protected override IAsyncResult BeginMakeMethodCall(AsyncCodeActivityContext context, object target, AsyncCallback callback, object state)
             {
-                InvokeMethodInstanceData instance = new InvokeMethodInstanceData
+                var instance = new InvokeMethodInstanceData
                 {
                     TargetObject = target,
                     ActualParameters = EvaluateAndPackParameters(context, this.beginMethod, true),
                 };
 
-                int count = instance.ActualParameters.Length;
+                var count = instance.ActualParameters.Length;
 
                 instance.ActualParameters[count - 2] = callback;
                 instance.ActualParameters[count - 1] = state;
@@ -666,7 +666,7 @@ namespace System.Activities.Statements
 
             protected override void EndMakeMethodCall(AsyncCodeActivityContext context, IAsyncResult result)
             {
-                InvokeMethodInstanceData instance = (InvokeMethodInstanceData)context.UserState;
+                var instance = (InvokeMethodInstanceData)context.UserState;
                 instance.ReturnValue = InvokeAndUnwrapExceptions(this.endFunc, instance.TargetObject, new object[] { result });
                 this.SetOutArgumentAndReturnValue(context, instance.ReturnValue, instance.ActualParameters);
             }
@@ -708,7 +708,7 @@ namespace System.Activities.Statements
 
             protected override IAsyncResult BeginMakeMethodCall(AsyncCodeActivityContext context, object target, AsyncCallback callback, object state)
             {
-                InvokeMethodInstanceData instance = new InvokeMethodInstanceData
+                var instance = new InvokeMethodInstanceData
                 {
                     TargetObject = target,
                     ActualParameters = EvaluateAndPackParameters(context, this.asyncMethod, false),
@@ -718,7 +718,7 @@ namespace System.Activities.Statements
 
             protected override void EndMakeMethodCall(AsyncCodeActivityContext context, IAsyncResult result)
             {
-                InvokeMethodInstanceData instance = ExecuteAsyncResult.End(result);
+                var instance = ExecuteAsyncResult.End(result);
                 if (instance.ExceptionWasThrown)
                 {
                     throw FxTrace.Exception.AsError(instance.Exception);
@@ -745,13 +745,13 @@ namespace System.Activities.Statements
 
                 public static InvokeMethodInstanceData End(IAsyncResult result)
                 {
-                    ExecuteAsyncResult thisPtr = AsyncResult.End<ExecuteAsyncResult>(result);
+                    var thisPtr = AsyncResult.End<ExecuteAsyncResult>(result);
                     return thisPtr.instance;
                 }
 
                 private static void AsyncExecute(object state)
                 {
-                    ExecuteAsyncResult thisPtr = (ExecuteAsyncResult)state;
+                    var thisPtr = (ExecuteAsyncResult)state;
                     thisPtr.AsyncExecuteCore();
                 }
 

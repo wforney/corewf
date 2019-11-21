@@ -14,14 +14,14 @@ namespace System.Activities.Expressions
     {
         public static void AddOperandArgument<TOperand>(CodeActivityMetadata metadata, InArgument<TOperand> operand, bool isRequired)
         {
-            RuntimeArgument operandArgument = new RuntimeArgument("Operand", typeof(TOperand), ArgumentDirection.In, isRequired);
+            var operandArgument = new RuntimeArgument("Operand", typeof(TOperand), ArgumentDirection.In, isRequired);
             metadata.Bind(operand, operandArgument);
             metadata.AddArgument(operandArgument);
         }
 
         public static void AddOperandLocationArgument<TOperand>(CodeActivityMetadata metadata, InOutArgument<TOperand> operandLocation, bool isRequired)
         {
-            RuntimeArgument operandLocationArgument = new RuntimeArgument("OperandLocation", typeof(TOperand), ArgumentDirection.InOut, isRequired);
+            var operandLocationArgument = new RuntimeArgument("OperandLocation", typeof(TOperand), ArgumentDirection.InOut, isRequired);
             metadata.Bind(operandLocation, operandLocationArgument);
             metadata.AddArgument(operandLocationArgument);
         }
@@ -33,7 +33,7 @@ namespace System.Activities.Expressions
 
             try
             {
-                ParameterExpression operandParameter = Expression.Parameter(typeof(TOperand), "operand");
+                var operandParameter = Expression.Parameter(typeof(TOperand), "operand");
                 MemberExpression memberExpression = null;
                 if (isStatic)
                 {
@@ -43,7 +43,7 @@ namespace System.Activities.Expressions
                 {
                     memberExpression = Expression.MakeMemberAccess(operandParameter, GetMemberInfo<TOperand>(memberName, isField));
                 }
-                Expression<Func<TOperand, TResult>> lambdaExpression = Expression.Lambda<Func<TOperand, TResult>>(memberExpression, operandParameter);
+                var lambdaExpression = Expression.Lambda<Func<TOperand, TResult>>(memberExpression, operandParameter);
                 operation = lambdaExpression.Compile();
                 return true;
             }
@@ -62,7 +62,7 @@ namespace System.Activities.Expressions
         private static MemberInfo GetMemberInfo<TOperand>(string memberName, bool isField)
         {
             MemberInfo result = null;
-            Type declaringType = typeof(TOperand);
+            var declaringType = typeof(TOperand);
 
             if (!isField)
             {

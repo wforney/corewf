@@ -34,17 +34,17 @@ namespace System.Activities.Validation
 
         protected override void CacheMetadata(NativeActivityMetadata metadata)
         {
-            Collection<RuntimeArgument> arguments = new Collection<RuntimeArgument>();
+            var arguments = new Collection<RuntimeArgument>();
 
-            RuntimeArgument messageArgument = new RuntimeArgument("Message", typeof(string), ArgumentDirection.In);
+            var messageArgument = new RuntimeArgument("Message", typeof(string), ArgumentDirection.In);
             metadata.Bind(this.Message, messageArgument);
             arguments.Add(messageArgument);
 
-            RuntimeArgument isWarningArgument = new RuntimeArgument("IsWarning", typeof(bool), ArgumentDirection.In, false);
+            var isWarningArgument = new RuntimeArgument("IsWarning", typeof(bool), ArgumentDirection.In, false);
             metadata.Bind(this.IsWarning, isWarningArgument);
             arguments.Add(isWarningArgument);
             
-            RuntimeArgument propertyNameArgument = new RuntimeArgument("PropertyName", typeof(string), ArgumentDirection.In, false);
+            var propertyNameArgument = new RuntimeArgument("PropertyName", typeof(string), ArgumentDirection.In, false);
             metadata.Bind(this.PropertyName, propertyNameArgument);
             arguments.Add(propertyNameArgument);
 
@@ -53,9 +53,9 @@ namespace System.Activities.Validation
 
         protected override void Execute(NativeActivityContext context)
         {
-            bool isWarning = false;
-            string propertyName = string.Empty;
-            string errorCode = string.Empty;
+            var isWarning = false;
+            var propertyName = string.Empty;
+            var errorCode = string.Empty;
             
             if (this.IsWarning != null)
             {

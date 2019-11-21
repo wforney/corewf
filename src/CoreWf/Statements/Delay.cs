@@ -41,7 +41,7 @@ namespace System.Activities.Statements
 
         protected override void CacheMetadata(NativeActivityMetadata metadata)
         {
-            RuntimeArgument durationArgument = new RuntimeArgument("Duration", typeof(TimeSpan), ArgumentDirection.In, true);
+            var durationArgument = new RuntimeArgument("Duration", typeof(TimeSpan), ArgumentDirection.In, true);
             metadata.Bind(this.Duration, durationArgument);
             metadata.SetArgumentsCollection(new Collection<RuntimeArgument> { durationArgument });
             metadata.AddImplementationVariable(this.timerBookmark);
@@ -55,7 +55,7 @@ namespace System.Activities.Statements
 
         protected override void Execute(NativeActivityContext context)
         {
-            TimeSpan duration = this.Duration.Get(context);
+            var duration = this.Duration.Get(context);
             if (duration < TimeSpan.Zero)
             {
                 throw FxTrace.Exception.ArgumentOutOfRange("Duration", duration, SR.DurationIsNegative(this.DisplayName));
@@ -66,16 +66,16 @@ namespace System.Activities.Statements
                 return; 
             }
                         
-            TimerExtension timerExtension = GetTimerExtension(context);
-            Bookmark bookmark = context.CreateBookmark();
+            var timerExtension = GetTimerExtension(context);
+            var bookmark = context.CreateBookmark();
             timerExtension.RegisterTimer(duration, bookmark);
             this.timerBookmark.Set(context, bookmark);
         }
 
         protected override void Cancel(NativeActivityContext context)
         {
-            Bookmark timerBookmark = this.timerBookmark.Get(context);
-            TimerExtension timerExtension = GetTimerExtension(context);
+            var timerBookmark = this.timerBookmark.Get(context);
+            var timerExtension = GetTimerExtension(context);
             timerExtension.CancelTimer(timerBookmark);
             context.RemoveBookmark(timerBookmark);
             context.MarkCanceled();
@@ -83,11 +83,11 @@ namespace System.Activities.Statements
 
         protected override void Abort(NativeActivityAbortContext context)
         {
-            Bookmark timerBookmark = this.timerBookmark.Get(context);
+            var timerBookmark = this.timerBookmark.Get(context);
             // The bookmark could be null in abort when user passed in a negative delay as a duration
             if (timerBookmark != null)
             {
-                TimerExtension timerExtension = GetTimerExtension(context);
+                var timerExtension = GetTimerExtension(context);
                 timerExtension.CancelTimer(timerBookmark);
             }
             base.Abort(context);
@@ -95,7 +95,7 @@ namespace System.Activities.Statements
 
         private TimerExtension GetTimerExtension(ActivityContext context)
         {
-            TimerExtension timerExtension = context.GetExtension<TimerExtension>();
+            var timerExtension = context.GetExtension<TimerExtension>();
             Fx.Assert(timerExtension != null, "TimerExtension must exist.");
             return timerExtension;
         }

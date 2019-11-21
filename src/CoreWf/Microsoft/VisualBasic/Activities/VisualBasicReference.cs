@@ -20,9 +20,9 @@ namespace Microsoft.VisualBasic.Activities
     [DebuggerStepThrough]
     public sealed class VisualBasicReference<TResult> : CodeActivity<Location<TResult>>, IValueSerializableExpression, IExpressionContainer, ITextExpression
     {
-        Expression<Func<ActivityContext, TResult>> expressionTree;
-        LocationFactory<TResult> locationFactory;
-        CompiledExpressionInvoker invoker;
+        private Expression<Func<ActivityContext, TResult>> expressionTree;
+        private LocationFactory<TResult> locationFactory;
+        private CompiledExpressionInvoker invoker;
 
         public VisualBasicReference() 
             : base()
@@ -95,7 +95,7 @@ namespace Microsoft.VisualBasic.Activities
             string validationError;
 
             // If ICER is not implemented that means we haven't been compiled
-            CodeActivityPublicEnvironmentAccessor publicAccessor = CodeActivityPublicEnvironmentAccessor.Create(metadata);
+            var publicAccessor = CodeActivityPublicEnvironmentAccessor.Create(metadata);
             this.expressionTree = this.CompileLocationExpression(publicAccessor, out validationError);
 
             if (validationError != null)
@@ -126,8 +126,8 @@ namespace Microsoft.VisualBasic.Activities
 
                     // it's safe to create this CodeActivityMetadata here,
                     // because we know we are using it only as lookup purpose.
-                    CodeActivityMetadata metadata = new CodeActivityMetadata(this, this.GetParentEnvironment(), false);
-                    CodeActivityPublicEnvironmentAccessor publicAccessor = CodeActivityPublicEnvironmentAccessor.CreateWithoutArgument(metadata);
+                    var metadata = new CodeActivityMetadata(this, this.GetParentEnvironment(), false);
+                    var publicAccessor = CodeActivityPublicEnvironmentAccessor.CreateWithoutArgument(metadata);
                     try
                     {
                         this.expressionTree = this.CompileLocationExpression(publicAccessor, out validationError);
@@ -163,7 +163,7 @@ namespace Microsoft.VisualBasic.Activities
                 string extraErrorMessage = null;
                 if (!publicAccessor.ActivityMetadata.HasViolations && (expressionTreeToReturn == null || !ExpressionUtilities.IsLocation(expressionTreeToReturn, typeof(TResult), out extraErrorMessage)))
                 {
-                    string errorMessage = SR.InvalidLValueExpression;
+                    var errorMessage = SR.InvalidLValueExpression;
 
                     if (extraErrorMessage != null)
                     {

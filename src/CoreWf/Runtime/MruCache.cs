@@ -61,19 +61,19 @@ namespace System.Activities.Runtime
 
             // if anything goes wrong (duplicate entry, etc) we should 
             // clear our caches so that we don't get out of sync
-            bool success = false;
+            var success = false;
             try
             {
                 if (_items.Count == _highWatermark)
                 {
                     // If the cache is full, purge enough LRU items to shrink the 
                     // cache down to the low watermark
-                    int countToPurge = _highWatermark - _lowWatermark;
-                    for (int i = 0; i < countToPurge; i++)
+                    var countToPurge = _highWatermark - _lowWatermark;
+                    for (var i = 0; i < countToPurge; i++)
                     {
-                        TKey keyRemove = _mruList.Last.Value;
+                        var keyRemove = _mruList.Last.Value;
                         _mruList.RemoveLast();
-                        TValue item = _items[keyRemove].value;
+                        var item = _items[keyRemove].value;
                         _items.Remove(keyRemove);
                         OnSingleItemRemoved(item);
                         OnItemAgedOutOfCache(item);
@@ -108,7 +108,7 @@ namespace System.Activities.Runtime
         {
             Fx.Assert(null != key, "");
 
-            if (_items.TryGetValue(key, out CacheEntry entry))
+            if (_items.TryGetValue(key, out var entry))
             {
                 _items.Remove(key);
                 OnSingleItemRemoved(entry.value);
@@ -145,7 +145,7 @@ namespace System.Activities.Runtime
             }
 
 
-            bool found = _items.TryGetValue(key, out CacheEntry entry);
+            var found = _items.TryGetValue(key, out var entry);
             value = entry.value;
 
             // Move the node to the head of the MRU list if it's not already there

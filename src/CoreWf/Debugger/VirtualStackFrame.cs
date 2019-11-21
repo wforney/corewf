@@ -17,8 +17,8 @@ namespace System.Activities.Debugger
     [Fx.Tag.XamlVisible(false)]
     public class VirtualStackFrame
     {
-        State state;
-        IDictionary<string, object> locals;
+        private State state;
+        private IDictionary<string, object> locals;
 
         public VirtualStackFrame(State state, IDictionary<string, object> locals)
         {

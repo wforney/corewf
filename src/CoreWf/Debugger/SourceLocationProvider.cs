@@ -50,11 +50,11 @@ namespace System.Activities.Debugger
         {
             isTemporaryFile = false;
             checksum = null;
-            string symbolString = DebugSymbol.GetSymbol(rootActivity) as String;
+            var symbolString = DebugSymbol.GetSymbol(rootActivity) as String;
             if (string.IsNullOrEmpty(symbolString) && rootActivity.Children != null && rootActivity.Children.Count > 0)
             { // In case of actual root is wrapped either in x:Class activity or CorrelationScope
-                Activity body = rootActivity.Children[0];
-                string bodySymbolString = DebugSymbol.GetSymbol(body) as String;
+                var body = rootActivity.Children[0];
+                var bodySymbolString = DebugSymbol.GetSymbol(body) as String;
                 if (!string.IsNullOrEmpty(bodySymbolString))
                 {
                     rootActivity = body;
@@ -66,7 +66,7 @@ namespace System.Activities.Debugger
             {
                 try
                 {
-                    WorkflowSymbol wfSymbol = WorkflowSymbol.Decode(symbolString);
+                    var wfSymbol = WorkflowSymbol.Decode(symbolString);
                     if (wfSymbol != null)
                     {
                         sourcePath = wfSymbol.FileName;
@@ -91,7 +91,7 @@ namespace System.Activities.Debugger
             sourcePath = XamlDebuggerXmlReader.GetFileName(rootActivity) as string;
             Dictionary<object, SourceLocation> mapping;
             Assembly localAssembly;
-            bool permissionRevertNeeded = false;
+            var permissionRevertNeeded = false;
 
             // This may not be the local assembly since it may not be the real root for x:Class 
             localAssembly = rootActivity.GetType().Assembly;
@@ -103,8 +103,8 @@ namespace System.Activities.Debugger
 
             if (rootActivity.Children != null && rootActivity.Children.Count > 0)
             { // In case of actual root is wrapped either in x:Class activity or CorrelationScope
-                Activity body = rootActivity.Children[0];
-                string bodySourcePath = XamlDebuggerXmlReader.GetFileName(body) as string;
+                var body = rootActivity.Children[0];
+                var bodySourcePath = XamlDebuggerXmlReader.GetFileName(body) as string;
                 if (!string.IsNullOrEmpty(bodySourcePath))
                 {
                     rootActivity = body;
@@ -143,10 +143,10 @@ namespace System.Activities.Debugger
 
                     try
                     {
-                        FileInfo fi = new FileInfo(sourcePath);
+                        var fi = new FileInfo(sourcePath);
                         buffer = new byte[fi.Length];
 
-                        using (FileStream fs = new FileStream(sourcePath, FileMode.Open, FileAccess.Read))
+                        using (var fs = new FileStream(sourcePath, FileMode.Open, FileAccess.Read))
                         {
                             fs.Read(buffer, 0, buffer.Length);
                         }
@@ -163,8 +163,8 @@ namespace System.Activities.Debugger
 #endif
                     }
 
-                    object deserializedObject = Deserialize(buffer, localAssembly);
-                    IDebuggableWorkflowTree debuggableWorkflowTree = deserializedObject as IDebuggableWorkflowTree;
+                    var deserializedObject = Deserialize(buffer, localAssembly);
+                    var debuggableWorkflowTree = deserializedObject as IDebuggableWorkflowTree;
                     if (debuggableWorkflowTree != null)
                     { // Declarative Service and x:Class case
                         tempRootActivity = debuggableWorkflowTree.GetWorkflowRoot();
@@ -210,28 +210,28 @@ namespace System.Activities.Debugger
         // Therefore, in debugger scenario, translateInternalActivityToOrigin will be set to false.
         internal static Dictionary<object, SourceLocation> GetSourceLocations(Activity rootActivity, WorkflowSymbol symbol, bool translateInternalActivityToOrigin)
         {
-            Activity workflowRoot = rootActivity.RootActivity ?? rootActivity;
+            var workflowRoot = rootActivity.RootActivity ?? rootActivity;
             if (!workflowRoot.IsMetadataFullyCached)
             {
                 IList<ValidationError> validationErrors = null;
                 ActivityUtilities.CacheRootMetadata(workflowRoot, new ActivityLocationReferenceEnvironment(), ProcessActivityTreeOptions.ValidationOptions, null, ref validationErrors);
             }
 
-            Dictionary<object, SourceLocation> newMapping = new Dictionary<object, SourceLocation>();
+            var newMapping = new Dictionary<object, SourceLocation>();
 
             // Make sure the qid we are using to TryGetElementFromRoot
             // are shifted appropriately such that the first digit that QID is
             // the same as the last digit of the rootActivity.QualifiedId.
 
-            int[] rootIdArray = rootActivity.QualifiedId.AsIDArray();
-            int idOffset = rootIdArray[rootIdArray.Length - 1] - 1;
+            var rootIdArray = rootActivity.QualifiedId.AsIDArray();
+            var idOffset = rootIdArray[rootIdArray.Length - 1] - 1;
 
-            foreach (ActivitySymbol actSym in symbol.Symbols)
+            foreach (var actSym in symbol.Symbols)
             {
-                QualifiedId qid = new QualifiedId(actSym.QualifiedId);
+                var qid = new QualifiedId(actSym.QualifiedId);
                 if (idOffset != 0)
                 {
-                    int[] idArray = qid.AsIDArray();
+                    var idArray = qid.AsIDArray();
                     idArray[0] += idOffset;
                     qid = new QualifiedId(idArray);
                 }
@@ -254,15 +254,15 @@ namespace System.Activities.Debugger
         [Fx.Tag.SecurityNote(Miscellaneous = "RequiresReview - We are deserializing XAML from a file. The file may have been read under and Assert for FileIOPermission. The data hould be validated and not cached.")]
         internal static object Deserialize(byte[] buffer, Assembly localAssembly)
         {
-            using (MemoryStream memoryStream = new MemoryStream(buffer))
+            using (var memoryStream = new MemoryStream(buffer))
             {
                 using (TextReader streamReader = new StreamReader(memoryStream))
                 {
-                    using (XamlDebuggerXmlReader xamlDebuggerReader = new XamlDebuggerXmlReader(streamReader, new XamlSchemaContext(), localAssembly))
+                    using (var xamlDebuggerReader = new XamlDebuggerXmlReader(streamReader, new XamlSchemaContext(), localAssembly))
                     {
                         xamlDebuggerReader.SourceLocationFound += XamlDebuggerXmlReader.SetSourceLocation;
 
-                        using (XamlReader activityBuilderReader = ActivityXamlServices.CreateBuilderReader(xamlDebuggerReader))
+                        using (var activityBuilderReader = ActivityXamlServices.CreateBuilderReader(xamlDebuggerReader))
                         {
                             return XamlServices.Load(activityBuilderReader);
                         }
@@ -279,10 +279,10 @@ namespace System.Activities.Debugger
         // Collect mapping for activity1 and its descendants to their corresponding source location.
         // activity2 is the shadow of activity1 but with SourceLocation information.
         [Fx.Tag.SecurityNote(Miscellaneous = "RequiresReview - We are dealing with activity and SourceLocation information that came from the user, possibly under an Assert for FileIOPermission. The data hould be validated and not cached.")]
-        static void CollectMapping(Activity rootActivity1, Activity rootActivity2, Dictionary<object, SourceLocation> mapping, string path, byte[] checksum, bool requirePrepareForRuntime)
+        private static void CollectMapping(Activity rootActivity1, Activity rootActivity2, Dictionary<object, SourceLocation> mapping, string path, byte[] checksum, bool requirePrepareForRuntime)
         {
             // For x:Class, the rootActivity here may not be the real root, but it's the first child of the x:Class activity.
-            Activity realRoot1 = (rootActivity1.RootActivity != null) ? rootActivity1.RootActivity : rootActivity1;
+            var realRoot1 = (rootActivity1.RootActivity != null) ? rootActivity1.RootActivity : rootActivity1;
             if ((requirePrepareForRuntime && !realRoot1.IsRuntimeReady) || (!requirePrepareForRuntime && !realRoot1.IsMetadataFullyCached))
             {
                 IList<ValidationError> validationErrors = null;
@@ -290,24 +290,24 @@ namespace System.Activities.Debugger
             }
 
             // Similarly for rootActivity2.
-            Activity realRoot2 = (rootActivity2.RootActivity != null) ? rootActivity2.RootActivity : rootActivity2;
+            var realRoot2 = (rootActivity2.RootActivity != null) ? rootActivity2.RootActivity : rootActivity2;
             if (rootActivity1 != rootActivity2 && (requirePrepareForRuntime && !realRoot2.IsRuntimeReady) || (!requirePrepareForRuntime && !realRoot2.IsMetadataFullyCached))
             {
                 IList<ValidationError> validationErrors = null;
                 ActivityUtilities.CacheRootMetadata(realRoot2, new ActivityLocationReferenceEnvironment(), ProcessActivityTreeOptions.ValidationOptions, null, ref validationErrors);
             }
 
-            Queue<KeyValuePair<Activity, Activity>> pairsRemaining = new Queue<KeyValuePair<Activity, Activity>>();
+            var pairsRemaining = new Queue<KeyValuePair<Activity, Activity>>();
 
             pairsRemaining.Enqueue(new KeyValuePair<Activity, Activity>(rootActivity1, rootActivity2));
             KeyValuePair<Activity, Activity> currentPair;
-            HashSet<Activity> visited = new HashSet<Activity>();
+            var visited = new HashSet<Activity>();
 
             while (pairsRemaining.Count > 0)
             {
                 currentPair = pairsRemaining.Dequeue();
-                Activity activity1 = currentPair.Key;
-                Activity activity2 = currentPair.Value;
+                var activity1 = currentPair.Key;
+                var activity2 = currentPair.Value;
 
                 visited.Add(activity1);
 
@@ -326,10 +326,10 @@ namespace System.Activities.Debugger
                 if (!((activity1 is IExpressionContainer) || (activity2 is IExpressionContainer) ||
                       (activity1 is IValueSerializableExpression) || (activity2 is IValueSerializableExpression)))
                 {
-                    IEnumerator<Activity> enumerator1 = WorkflowInspectionServices.GetActivities(activity1).GetEnumerator();
-                    IEnumerator<Activity> enumerator2 = WorkflowInspectionServices.GetActivities(activity2).GetEnumerator();
-                    bool hasNextItem1 = enumerator1.MoveNext();
-                    bool hasNextItem2 = enumerator2.MoveNext();
+                    var enumerator1 = WorkflowInspectionServices.GetActivities(activity1).GetEnumerator();
+                    var enumerator2 = WorkflowInspectionServices.GetActivities(activity2).GetEnumerator();
+                    var hasNextItem1 = enumerator1.MoveNext();
+                    var hasNextItem2 = enumerator2.MoveNext();
                     while (hasNextItem1 && hasNextItem2)
                     {
                         if (!visited.Contains(enumerator1.Current))  // avoid adding the same activity (e.g. some default implementation).
@@ -357,12 +357,13 @@ namespace System.Activities.Debugger
             }
         }
 
-        static void CollectMapping(Activity rootActivity1, Activity rootActivity2, Dictionary<object, SourceLocation> mapping, string path, byte[] checksum)
+        private static void CollectMapping(Activity rootActivity1, Activity rootActivity2, Dictionary<object, SourceLocation> mapping, string path, byte[] checksum)
         {
             CollectMapping(rootActivity1, rootActivity2, mapping, path, checksum, requirePrepareForRuntime: true);
         }
+
         // Get SourceLocation for object deserialized with XamlDebuggerXmlReader in deserializer stack.
-        static bool TryGetSourceLocation(object obj, string path, byte[] checksum, out SourceLocation sourceLocation)
+        private static bool TryGetSourceLocation(object obj, string path, byte[] checksum, out SourceLocation sourceLocation)
         {
             sourceLocation = null;
             int startLine, startColumn, endLine, endColumn;
@@ -381,21 +382,21 @@ namespace System.Activities.Debugger
 
         public static ICollection<ActivitySymbol> GetSymbols(Activity rootActivity, Dictionary<object, SourceLocation> sourceLocations)
         {
-            List<ActivitySymbol> symbols = new List<ActivitySymbol>();
-            Activity realRoot = (rootActivity.RootActivity != null) ? rootActivity.RootActivity : rootActivity;
+            var symbols = new List<ActivitySymbol>();
+            var realRoot = (rootActivity.RootActivity != null) ? rootActivity.RootActivity : rootActivity;
             if (!realRoot.IsMetadataFullyCached)
             {
                 IList<ValidationError> validationErrors = null;
                 ActivityUtilities.CacheRootMetadata(realRoot, new ActivityLocationReferenceEnvironment(), ProcessActivityTreeOptions.ValidationOptions, null, ref validationErrors);
             }
-            Queue<Activity> activitiesRemaining = new Queue<Activity>();
+            var activitiesRemaining = new Queue<Activity>();
             activitiesRemaining.Enqueue(realRoot);
-            HashSet<Activity> visited = new HashSet<Activity>();
+            var visited = new HashSet<Activity>();
             while (activitiesRemaining.Count > 0)
             {
-                Activity currentActivity = activitiesRemaining.Dequeue();
+                var currentActivity = activitiesRemaining.Dequeue();
                 SourceLocation sourceLocation;
-                object origin = currentActivity.Origin == null ? currentActivity : currentActivity.Origin;
+                var origin = currentActivity.Origin == null ? currentActivity : currentActivity.Origin;
                 if (!visited.Contains(currentActivity) && sourceLocations.TryGetValue(origin, out sourceLocation))
                 {
                     symbols.Add(new ActivitySymbol
@@ -408,7 +409,7 @@ namespace System.Activities.Debugger
                     });
                 }
                 visited.Add(currentActivity);
-                foreach (Activity childActivity in WorkflowInspectionServices.GetActivities(currentActivity))
+                foreach (var childActivity in WorkflowInspectionServices.GetActivities(currentActivity))
                 {
                     activitiesRemaining.Enqueue(childActivity);
                 }

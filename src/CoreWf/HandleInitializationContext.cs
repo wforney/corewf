@@ -39,7 +39,7 @@ namespace System.Activities
         public THandle CreateAndInitializeHandle<THandle>() where THandle : Handle
         {
             ThrowIfDisposed();
-            THandle value = Activator.CreateInstance<THandle>();
+            var value = Activator.CreateInstance<THandle>();
 
             value.Initialize(this);
 
@@ -72,7 +72,7 @@ namespace System.Activities
         {
             Fx.Assert(ActivityUtilities.IsHandle(handleType), "This should only be called with Handle subtypes.");
 
-            object value = Activator.CreateInstance(handleType);
+            var value = Activator.CreateInstance(handleType);
 
             ((Handle)value).Initialize(this);
 

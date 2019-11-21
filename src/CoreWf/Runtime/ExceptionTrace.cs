@@ -81,7 +81,7 @@ namespace System.Activities.Runtime
             }
 
             // A non-null inner exception could require further unwrapping in AsError.
-            Exception innerException = targetInvocationException.InnerException;
+            var innerException = targetInvocationException.InnerException;
             if (innerException != null)
             {
                 return AsError(innerException, eventSource);
@@ -126,7 +126,7 @@ namespace System.Activities.Runtime
 
             // Collapse possibly nested graph into a flat list.
             // Empty inner exception list is unlikely but possible via public api.
-            ReadOnlyCollection<Exception> innerExceptions = aggregateException.Flatten().InnerExceptions;
+            var innerExceptions = aggregateException.Flatten().InnerExceptions;
             if (innerExceptions.Count == 0)
             {
                 return TraceException(aggregateException, eventSource);
@@ -134,11 +134,11 @@ namespace System.Activities.Runtime
 
             // Find the first inner exception, giving precedence to TPreferredException
             Exception favoredException = null;
-            foreach (Exception nextInnerException in innerExceptions)
+            foreach (var nextInnerException in innerExceptions)
             {
                 // AggregateException may wrap TargetInvocationException, so unwrap those as well
 
-                Exception innerException = (nextInnerException is TargetInvocationException targetInvocationException && targetInvocationException.InnerException != null)
+                var innerException = (nextInnerException is TargetInvocationException targetInvocationException && targetInvocationException.InnerException != null)
                                                 ? targetInvocationException.InnerException
                                                 : nextInnerException;
 

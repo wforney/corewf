@@ -110,7 +110,7 @@ namespace System.Activities
 
         public override int GetHashCode()
         {
-            int result = this.name.GetHashCode();
+            var result = this.name.GetHashCode();
             if (this.version != null)
             {
                 result ^= this.version.GetHashCode();
@@ -124,7 +124,7 @@ namespace System.Activities
 
         public override string ToString()
         {
-            StringBuilder result = new StringBuilder(this.name);
+            var result = new StringBuilder(this.name);
             if (this.version != null)
             {
                 result.Append(versionString);
@@ -235,7 +235,7 @@ namespace System.Activities
 
         private static bool HasControlCharacter(string value)
         {
-            for (int i = 0; i < value.Length; i++)
+            for (var i = 0; i < value.Length; i++)
             {
                 if (char.IsControl(value, i))
                 {
@@ -255,8 +255,8 @@ namespace System.Activities
         {
             try
             {
-                string result = value.Normalize(NormalizationForm.FormC);
-                for (int i = result.Length - 1; i >= 0; i--)
+                var result = value.Normalize(NormalizationForm.FormC);
+                for (var i = result.Length - 1; i >= 0; i--)
                 {
                     if (char.GetUnicodeCategory(result, i) == UnicodeCategory.Format)
                     {
@@ -298,7 +298,7 @@ namespace System.Activities
                     return null;
                 }
 
-                IdentityParser parser = new IdentityParser
+                var parser = new IdentityParser
                 {
                     throwOnError = throwOnError,
                     match = identityString.Match(identity.Trim())
@@ -337,7 +337,7 @@ namespace System.Activities
                 Fx.Assert(!HasLeadingOrTrailingWhitespace(this.name), "Whitespace should have been stripped");
                 Fx.Assert(this.package == null || !HasLeadingOrTrailingWhitespace(this.package), "Whitespace should have been stripped");
 
-                WorkflowIdentity result = new WorkflowIdentity
+                var result = new WorkflowIdentity
                 {
                     name = this.name,
                     version = this.version,
@@ -348,7 +348,7 @@ namespace System.Activities
 
             private bool ExtractName()
             {
-                Group nameMatch = this.match.Groups["name"];
+                var nameMatch = this.match.Groups["name"];
                 Fx.Assert(nameMatch.Success, "RegEx requires name, even if it's empty");
                 this.name = Normalize(nameMatch.Value.TrimEnd(), paramName, this.throwOnError);
                 return this.name != null;
@@ -356,10 +356,10 @@ namespace System.Activities
 
             private bool ExtractVersion()
             {
-                Group versionMatch = this.match.Groups["version"];
+                var versionMatch = this.match.Groups["version"];
                 if (versionMatch.Success)
                 {
-                    string versionString = versionMatch.Value;
+                    var versionString = versionMatch.Value;
                     if (throwOnError)
                     {
                         this.version = Version.Parse(versionString);
@@ -374,7 +374,7 @@ namespace System.Activities
 
             private bool ExtractPackage()
             {
-                Group packageMatch = match.Groups["package"];
+                var packageMatch = match.Groups["package"];
                 if (packageMatch.Success)
                 {
                     this.package = Normalize(packageMatch.Value, paramName, this.throwOnError);

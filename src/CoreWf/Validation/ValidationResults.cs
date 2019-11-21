@@ -65,9 +65,9 @@ namespace System.Activities.Validation
                 IList<ValidationError> warningsList = null;
                 IList<ValidationError> errorsList = null;
 
-                for (int i = 0; i < this.allValidationErrors.Count; i++)
+                for (var i = 0; i < this.allValidationErrors.Count; i++)
                 {
-                    ValidationError violation = this.allValidationErrors[i];
+                    var violation = this.allValidationErrors[i];
 
                     if (violation.IsWarning)
                     {

@@ -85,7 +85,7 @@ using System.Activities.DynamicUpdate;
 
         sealed internal override void OnInternalCacheMetadata(bool createEmptyBindings)
         {
-            NativeActivityMetadata metadata = new NativeActivityMetadata(this, GetParentEnvironment(), createEmptyBindings);
+            var metadata = new NativeActivityMetadata(this, GetParentEnvironment(), createEmptyBindings);
             CacheMetadata(metadata);
             metadata.Dispose();
         }
@@ -97,7 +97,7 @@ using System.Activities.DynamicUpdate;
 
         protected virtual void CacheMetadata(NativeActivityMetadata metadata)
         {
-            ReflectedInformation information = new ReflectedInformation(this);
+            var information = new ReflectedInformation(this);
 
             // We bypass the metadata structure to avoid the checks for null entries
             SetArgumentsCollection(information.GetArguments(), metadata.CreateEmptyBindings);
@@ -159,7 +159,7 @@ using System.Activities.DynamicUpdate;
 
         internal override void InternalExecute(ActivityInstance instance, ActivityExecutor executor, BookmarkManager bookmarkManager)
         {
-            NativeActivityContext context = executor.NativeActivityContextPool.Acquire();
+            var context = executor.NativeActivityContextPool.Acquire();
             try
             {
                 context.Initialize(instance, executor, bookmarkManager);
@@ -174,7 +174,7 @@ using System.Activities.DynamicUpdate;
 
         internal override void InternalAbort(ActivityInstance instance, ActivityExecutor executor, Exception terminationReason)
         {
-            NativeActivityAbortContext context = new NativeActivityAbortContext(instance, executor, terminationReason);
+            var context = new NativeActivityAbortContext(instance, executor, terminationReason);
             try
             {
                 Abort(context);
@@ -187,7 +187,7 @@ using System.Activities.DynamicUpdate;
 
         internal override void InternalCancel(ActivityInstance instance, ActivityExecutor executor, BookmarkManager bookmarkManager)
         {
-            NativeActivityContext context = executor.NativeActivityContextPool.Acquire();
+            var context = executor.NativeActivityContextPool.Acquire();
             try
             {
                 context.Initialize(instance, executor, bookmarkManager);
@@ -277,7 +277,7 @@ using System.Activities.DynamicUpdate;
 
         sealed internal override void OnInternalCacheMetadataExceptResult(bool createEmptyBindings)
         {
-            NativeActivityMetadata metadata = new NativeActivityMetadata(this, GetParentEnvironment(), createEmptyBindings);
+            var metadata = new NativeActivityMetadata(this, GetParentEnvironment(), createEmptyBindings);
             CacheMetadata(metadata);
             metadata.Dispose();
         }
@@ -289,7 +289,7 @@ using System.Activities.DynamicUpdate;
 
         protected virtual void CacheMetadata(NativeActivityMetadata metadata)
         {
-            ReflectedInformation information = new ReflectedInformation(this);
+            var information = new ReflectedInformation(this);
 
             // We bypass the metadata structure to avoid the checks for null entries
             SetArgumentsCollection(information.GetArguments(), metadata.CreateEmptyBindings);
@@ -343,7 +343,7 @@ using System.Activities.DynamicUpdate;
 
         internal override void InternalExecute(ActivityInstance instance, ActivityExecutor executor, BookmarkManager bookmarkManager)
         {
-            NativeActivityContext context = executor.NativeActivityContextPool.Acquire();
+            var context = executor.NativeActivityContextPool.Acquire();
             try
             {
                 context.Initialize(instance, executor, bookmarkManager);
@@ -358,7 +358,7 @@ using System.Activities.DynamicUpdate;
 
         internal override void InternalAbort(ActivityInstance instance, ActivityExecutor executor, Exception terminationReason)
         {
-            NativeActivityAbortContext context = new NativeActivityAbortContext(instance, executor, terminationReason);
+            var context = new NativeActivityAbortContext(instance, executor, terminationReason);
             try
             {
                 Abort(context);
@@ -371,7 +371,7 @@ using System.Activities.DynamicUpdate;
 
         internal override void InternalCancel(ActivityInstance instance, ActivityExecutor executor, BookmarkManager bookmarkManager)
         {
-            NativeActivityContext context = executor.NativeActivityContextPool.Acquire();
+            var context = executor.NativeActivityContextPool.Acquire();
             try
             {
                 context.Initialize(instance, executor, bookmarkManager);

@@ -1539,7 +1539,7 @@ namespace System.Activities
         {
             if (IsEnd2EndActivityTracingEnabled())
             {
-                Guid activityId = WfEventSource.CurrentThreadActivityId;
+                var activityId = WfEventSource.CurrentThreadActivityId;
                 if (newId != activityId)
                 {
                     if (WfEventSource.Instance.TransferEmittedIsEnabled())

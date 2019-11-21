@@ -61,9 +61,9 @@ namespace System.Activities.Expressions
 
         public static IList<string> GetNamespacesInScope(Activity activity)
         {
-            Activity root = GetRoot(activity, out bool isImplementation);
+            var root = GetRoot(activity, out var isImplementation);
 
-            IList<string> result = isImplementation ? GetNamespacesForImplementation(root) : GetNamespaces(root);
+            var result = isImplementation ? GetNamespacesForImplementation(root) : GetNamespaces(root);
             if (result.Count == 0 && !isImplementation && GetReferences(root).Count == 0)
             {
                 // If this is a public child, but there are no public setings, this activity was
@@ -119,9 +119,9 @@ namespace System.Activities.Expressions
 
         public static IList<AssemblyReference> GetReferencesInScope(Activity activity)
         {
-            Activity root = GetRoot(activity, out bool isImplementation);
+            var root = GetRoot(activity, out var isImplementation);
 
-            IList<AssemblyReference> result = isImplementation ? GetReferencesForImplementation(root) : GetReferences(root);
+            var result = isImplementation ? GetReferencesForImplementation(root) : GetReferences(root);
             if (result.Count == 0 && !isImplementation && GetNamespaces(root).Count == 0)
             {
                 // If this is a public child, but there are no public setings, this activity was
@@ -192,7 +192,7 @@ namespace System.Activities.Expressions
                     throw FxTrace.Exception.Argument(nameof(activity), SR.ActivityIsUncached);
                 }
 
-                LocationReferenceEnvironment environment = activity.GetParentEnvironment();
+                var environment = activity.GetParentEnvironment();
                 isImplementation = activity.MemberOf != activity.RootActivity.MemberOf;
                 root = environment.Root;
             }

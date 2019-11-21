@@ -174,11 +174,11 @@ using System.Activities.DynamicUpdate;
                 metadata.AddImportedChild(this.CancellationHandler);
             }
 
-            Collection<Activity> implementationChildren = new Collection<Activity>();
+            var implementationChildren = new Collection<Activity>();
 
             if (!this.IsSingletonActivityDeclared(CompensationActivityStrings.WorkflowImplicitCompensationBehavior))
             {
-                WorkflowCompensationBehavior workflowCompensationBehavior = new WorkflowCompensationBehavior();
+                var workflowCompensationBehavior = new WorkflowCompensationBehavior();
                 this.DeclareSingletonActivity(CompensationActivityStrings.WorkflowImplicitCompensationBehavior, workflowCompensationBehavior);
                 implementationChildren.Add(workflowCompensationBehavior);
 
@@ -204,11 +204,11 @@ using System.Activities.DynamicUpdate;
 
         private static Constraint NoCompensableActivityInSecondaryRoot()
         {
-            DelegateInArgument<ValidationContext> validationContext = new DelegateInArgument<ValidationContext> { Name = "validationContext" };
-            DelegateInArgument<CompensableActivity> element = new DelegateInArgument<CompensableActivity> { Name = "element" };
-            Variable<bool> assertFlag = new Variable<bool> { Name = "assertFlag", Default = true };
-            Variable<IEnumerable<Activity>> elements = new Variable<IEnumerable<Activity>>() { Name = "elements" };
-            Variable<int> index = new Variable<int>() { Name = "index" };
+            var validationContext = new DelegateInArgument<ValidationContext> { Name = "validationContext" };
+            var element = new DelegateInArgument<CompensableActivity> { Name = "element" };
+            var assertFlag = new Variable<bool> { Name = "assertFlag", Default = true };
+            var elements = new Variable<IEnumerable<Activity>>() { Name = "elements" };
+            var index = new Variable<int>() { Name = "index" };
 
             return new Constraint<CompensableActivity>
             {
@@ -301,7 +301,7 @@ using System.Activities.DynamicUpdate;
 
         protected override void Execute(NativeActivityContext context)
         {
-            CompensationExtension compensationExtension = context.GetExtension<CompensationExtension>();
+            var compensationExtension = context.GetExtension<CompensationExtension>();
             Fx.Assert(compensationExtension != null, "CompensationExtension must be valid");
 
             if (compensationExtension.IsWorkflowCompensationBehaviorScheduled)
@@ -321,7 +321,7 @@ using System.Activities.DynamicUpdate;
 
         private void OnWorkflowCompensationBehaviorScheduled(NativeActivityContext context, Bookmark bookmark, object value)
         {
-            CompensationExtension compensationExtension = context.GetExtension<CompensationExtension>();
+            var compensationExtension = context.GetExtension<CompensationExtension>();
             Fx.Assert(compensationExtension != null, "CompensationExtension must be valid");
 
             ScheduleBody(context, compensationExtension);
@@ -332,7 +332,7 @@ using System.Activities.DynamicUpdate;
             Fx.Assert(compensationExtension != null, "CompensationExtension must be valid");
 
             CompensationToken parentToken = null;
-            long parentCompensationId = CompensationToken.RootCompensationId;
+            var parentCompensationId = CompensationToken.RootCompensationId;
 
             parentToken = (CompensationToken)context.Properties.Find(CompensationToken.PropertyName);
 
@@ -346,12 +346,12 @@ using System.Activities.DynamicUpdate;
                 parentCompensationId = parentToken.CompensationId;
             }
 
-            CompensationTokenData tokenData = new CompensationTokenData(compensationExtension.GetNextId(), parentCompensationId)
+            var tokenData = new CompensationTokenData(compensationExtension.GetNextId(), parentCompensationId)
                 {
                     CompensationState = CompensationState.Active,
                     DisplayName = this.DisplayName,
                 };
-            CompensationToken token = new CompensationToken(tokenData);
+            var token = new CompensationToken(tokenData);
 
             context.Properties.Add(CompensationToken.PropertyName, token);
 
@@ -384,10 +384,10 @@ using System.Activities.DynamicUpdate;
 
         private void OnBodyExecutionComplete(NativeActivityContext context, ActivityInstance completedInstance)
         {
-            CompensationExtension compensationExtension = context.GetExtension<CompensationExtension>();
+            var compensationExtension = context.GetExtension<CompensationExtension>();
             Fx.Assert(compensationExtension != null, "CompensationExtension must be valid");
 
-            CompensationTokenData token = compensationExtension.Get(this.currentCompensationId.Get(context));
+            var token = compensationExtension.Get(this.currentCompensationId.Get(context));
             Fx.Assert(token != null, "CompensationTokenData must be valid");
 
             if (completedInstance.State == ActivityInstanceState.Closed)
@@ -420,14 +420,14 @@ using System.Activities.DynamicUpdate;
         {
             if (token.ParentCompensationId != CompensationToken.RootCompensationId)
             {
-                CompensationTokenData parentToken = compensationExtension.Get(token.ParentCompensationId);
+                var parentToken = compensationExtension.Get(token.ParentCompensationId);
                 Fx.Assert(parentToken != null, "parentToken must be valid");
 
                 parentToken.ExecutionTracker.Add(token);
             }
             else
             {
-                CompensationTokenData parentToken = compensationExtension.Get(CompensationToken.RootCompensationId);
+                var parentToken = compensationExtension.Get(CompensationToken.RootCompensationId);
                 Fx.Assert(parentToken != null, "parentToken must be valid");
 
                 parentToken.ExecutionTracker.Add(token);
@@ -449,12 +449,12 @@ using System.Activities.DynamicUpdate;
 
         private void OnSecondaryRootScheduled(NativeActivityContext context, Bookmark bookmark, object value)
         {
-            CompensationExtension compensationExtension = context.GetExtension<CompensationExtension>();
+            var compensationExtension = context.GetExtension<CompensationExtension>();
             Fx.Assert(compensationExtension != null, "CompensationExtension must be valid");
 
-            long compensationId = (long)value;
+            var compensationId = (long)value;
 
-            CompensationTokenData compensationToken = compensationExtension.Get(compensationId);
+            var compensationToken = compensationExtension.Get(compensationId);
             Fx.Assert(compensationToken != null, "CompensationTokenData must be valid");
 
             if (compensationToken.CompensationState == CompensationState.Canceling)
@@ -475,12 +475,12 @@ using System.Activities.DynamicUpdate;
 
         private void OnCanceledOrCompensated(NativeActivityContext context, Bookmark bookmark, object value)
         {
-            CompensationExtension compensationExtension = context.GetExtension<CompensationExtension>();
+            var compensationExtension = context.GetExtension<CompensationExtension>();
             Fx.Assert(compensationExtension != null, "CompensationExtension must be valid");
 
-            long compensationId = (long)value;
+            var compensationId = (long)value;
 
-            CompensationTokenData compensationToken = compensationExtension.Get(compensationId);
+            var compensationToken = compensationExtension.Get(compensationId);
             Fx.Assert(compensationToken != null, "CompensationTokenData must be valid");
 
             switch (compensationToken.CompensationState)
@@ -513,7 +513,7 @@ using System.Activities.DynamicUpdate;
             // Remove the token from the parent! 
             if (compensationToken.ParentCompensationId != CompensationToken.RootCompensationId)
             {
-                CompensationTokenData parentToken = compensationExtension.Get(compensationToken.ParentCompensationId);
+                var parentToken = compensationExtension.Get(compensationToken.ParentCompensationId);
                 Fx.Assert(parentToken != null, "parentToken must be valid");
 
                 parentToken.ExecutionTracker.Remove(compensationToken);
@@ -521,7 +521,7 @@ using System.Activities.DynamicUpdate;
             else
             {
                 // remove from workflow root...
-                CompensationTokenData parentToken = compensationExtension.Get(CompensationToken.RootCompensationId);
+                var parentToken = compensationExtension.Get(CompensationToken.RootCompensationId);
                 Fx.Assert(parentToken != null, "parentToken must be valid");
 
                 parentToken.ExecutionTracker.Remove(compensationToken);
@@ -560,28 +560,28 @@ using System.Activities.DynamicUpdate;
 
         protected override void CacheMetadata(CodeActivityMetadata metadata)
         {
-            RuntimeArgument assertFlagArgument = new RuntimeArgument("AssertFlag", typeof(bool), ArgumentDirection.In);
+            var assertFlagArgument = new RuntimeArgument("AssertFlag", typeof(bool), ArgumentDirection.In);
             if (this.AssertFlag == null)
             {
                 this.AssertFlag = new InArgument<bool>();
             }
             metadata.Bind(this.AssertFlag, assertFlagArgument);
 
-            RuntimeArgument indexArgument = new RuntimeArgument("Index", typeof(int), ArgumentDirection.In);
+            var indexArgument = new RuntimeArgument("Index", typeof(int), ArgumentDirection.In);
             if (this.Index == null)
             {
                 this.Index = new InArgument<int>();
             }
             metadata.Bind(this.Index, indexArgument);
 
-            RuntimeArgument elementsArgument = new RuntimeArgument("Elements", typeof(IEnumerable<Activity>), ArgumentDirection.In);
+            var elementsArgument = new RuntimeArgument("Elements", typeof(IEnumerable<Activity>), ArgumentDirection.In);
             if (this.Elements == null)
             {
                 this.Elements = new InArgument<IEnumerable<Activity>>();
             }
             metadata.Bind(this.Elements, elementsArgument);
 
-            RuntimeArgument resultArgument = new RuntimeArgument("Result", typeof(bool), ArgumentDirection.Out);
+            var resultArgument = new RuntimeArgument("Result", typeof(bool), ArgumentDirection.Out);
             if (this.Result == null)
             {
                 this.Result = new OutArgument<bool>();
@@ -623,21 +623,21 @@ using System.Activities.DynamicUpdate;
 
         protected override void CacheMetadata(CodeActivityMetadata metadata)
         {
-            RuntimeArgument elementsArgument = new RuntimeArgument("Elements", typeof(IEnumerable<Activity>), ArgumentDirection.In);
+            var elementsArgument = new RuntimeArgument("Elements", typeof(IEnumerable<Activity>), ArgumentDirection.In);
             if (this.Elements == null)
             {
                 this.Elements = new InArgument<IEnumerable<Activity>>();
             }
             metadata.Bind(this.Elements, elementsArgument);
 
-            RuntimeArgument indexArgument = new RuntimeArgument("Index", typeof(int), ArgumentDirection.In);
+            var indexArgument = new RuntimeArgument("Index", typeof(int), ArgumentDirection.In);
             if (this.Index == null)
             {
                 this.Index = new InArgument<int>();
             }
             metadata.Bind(this.Index, indexArgument);
 
-            RuntimeArgument resultArgument = new RuntimeArgument("Result", typeof(bool), ArgumentDirection.Out);
+            var resultArgument = new RuntimeArgument("Result", typeof(bool), ArgumentDirection.Out);
             if (this.Result == null)
             {
                 this.Result = new OutArgument<bool>();

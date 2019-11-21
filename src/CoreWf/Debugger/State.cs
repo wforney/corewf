@@ -23,24 +23,24 @@ namespace System.Activities.Debugger
     {
         [Fx.Tag.SecurityNote(Critical = "This value is used in IL generation performed under an assert. It gets validated before setting in partial trust.")]
         [SecurityCritical]
-        SourceLocation location;
+        private SourceLocation location;
         [Fx.Tag.SecurityNote(Critical = "This value is used in IL generation performed under an assert. It gets validated before setting in partial trust.")]
         [SecurityCritical]
-        string name;
-        IEnumerable<LocalsItemDescription> earlyLocals;
-        int numberOfEarlyLocals;
+        private string name;
+        private IEnumerable<LocalsItemDescription> earlyLocals;
+        private int numberOfEarlyLocals;
 
         // Calling Type.GetMethod() is slow (10,000 calls can take ~1 minute).
         // So we stash extra fields to be able to make the call lazily (as we Enter the state).
         // this.type.GetMethod
-        Type type;
+        private Type type;
         [Fx.Tag.SecurityNote(Critical = "This value is used in IL generation performed under an assert. It gets validated before setting in partial trust.")]
         [SecurityCritical]
-        string methodName;
+        private string methodName;
 
         [Fx.Tag.SecurityNote(Critical = "This value is used in IL generation performed under an assert. Used to determine if we should invoke the generated code for this state.")]
         [SecurityCritical]
-        bool debuggingEnabled = true;
+        private bool debuggingEnabled = true;
 
         [Fx.Tag.SecurityNote(Critical = "Sets SecurityCritical name member.",
             Safe = "We validate the SourceLocation and name before storing it in the member when running in Partial Trust.")]
@@ -132,14 +132,14 @@ namespace System.Activities.Debugger
         [SecurityCritical]
         internal MethodInfo GetMethodInfo(bool withPriming)
         {
-            MethodInfo methodInfo = this.type.GetMethod(withPriming ? StateManager.MethodWithPrimingPrefix + this.methodName : this.methodName);
+            var methodInfo = this.type.GetMethod(withPriming ? StateManager.MethodWithPrimingPrefix + this.methodName : this.methodName);
             return methodInfo;
         }
 
         // internal because it is used from StateManager, too for the assembly name, type name, and type name prefix.
         internal static string ValidateIdentifierString(string input)
         {
-            string result = input.Normalize(NormalizationForm.FormC);
+            var result = input.Normalize(NormalizationForm.FormC);
 
             if (result.Length > 255)
             {
@@ -147,10 +147,10 @@ namespace System.Activities.Debugger
             }
 
             // Make the identifier conform to Unicode programming language identifer specification.
-            char[] chars = result.ToCharArray();
-            for (int i = 0; i < chars.Length; i++)
+            var chars = result.ToCharArray();
+            for (var i = 0; i < chars.Length; i++)
             {
-                UnicodeCategory category = char.GetUnicodeCategory(chars[i]);
+                var category = char.GetUnicodeCategory(chars[i]);
                 // Check for identifier_start
                 if ((category == UnicodeCategory.UppercaseLetter) ||
                     (category == UnicodeCategory.LowercaseLetter) ||
@@ -183,10 +183,10 @@ namespace System.Activities.Debugger
 
         [Fx.Tag.SecurityNote(Critical = "Calls SecurityCritical method StateManager.DisableCodeGeneration.")]
         [SecurityCritical]
-        SourceLocation ValidateSourceLocation(SourceLocation input)
+        private SourceLocation ValidateSourceLocation(SourceLocation input)
         {
-            bool returnNewLocation = false;
-            string newFileName = input.FileName;
+            var returnNewLocation = false;
+            var newFileName = input.FileName;
 
             if (string.IsNullOrWhiteSpace(newFileName))
             {
@@ -223,11 +223,11 @@ namespace System.Activities.Debugger
                 returnNewLocation = true;
             }
 
-            string fileNameOnly = Path.GetFileName(newFileName);
+            var fileNameOnly = Path.GetFileName(newFileName);
             if (ReplaceInvalidCharactersWithUnderscore(ref fileNameOnly, Path.GetInvalidFileNameChars()))
             {
                 // The filename portion has been munged. We need to make a new full name.
-                string path = Path.GetDirectoryName(newFileName);
+                var path = Path.GetDirectoryName(newFileName);
                 newFileName = path + "\\" + fileNameOnly;
                 returnNewLocation = true;
             }
@@ -240,13 +240,13 @@ namespace System.Activities.Debugger
             return input;
         }
 
-        static bool ReplaceInvalidCharactersWithUnderscore(ref string input, char[] invalidChars)
+        private static bool ReplaceInvalidCharactersWithUnderscore(ref string input, char[] invalidChars)
         {
-            bool modified = false;
-            int invalidIndex = 0;
+            var modified = false;
+            var invalidIndex = 0;
             while ((invalidIndex = input.IndexOfAny(invalidChars)) != -1)
             {
-                char[] charArray = input.ToCharArray();
+                var charArray = input.ToCharArray();
                 charArray[invalidIndex] = '_';
                 input = new string(charArray);
                 modified = true;

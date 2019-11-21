@@ -49,14 +49,14 @@ namespace System.Activities.Expressions
                 return;
             }
 
-            bool foundError = false;
+            var foundError = false;
 
             // Loop through each argument, validate it, and if validation
             // passed expose it to the metadata
-            Type[] types = new Type[this.Bounds.Count];
-            for (int i = 0; i < this.Bounds.Count; i++)
+            var types = new Type[this.Bounds.Count];
+            for (var i = 0; i < this.Bounds.Count; i++)
             {
-                Argument argument = this.Bounds[i];
+                var argument = this.Bounds[i];
                 if (argument == null || argument.IsEmpty)
                 {
                     metadata.AddValidationError(SR.ArgumentRequired("Bounds", typeof(NewArray<TResult>)));
@@ -71,7 +71,7 @@ namespace System.Activities.Expressions
                     }
                     else
                     {
-                        RuntimeArgument runtimeArgument = new RuntimeArgument("Argument" + i, this.Bounds[i].ArgumentType, this.bounds[i].Direction, true);
+                        var runtimeArgument = new RuntimeArgument("Argument" + i, this.Bounds[i].ArgumentType, this.bounds[i].Direction, true);
                         metadata.Bind(this.Bounds[i], runtimeArgument);
                         metadata.AddArgument(runtimeArgument);
 
@@ -94,14 +94,14 @@ namespace System.Activities.Expressions
 
         protected override TResult Execute(CodeActivityContext context)
         {
-            object[] objects = new object[this.Bounds.Count];
-            int i = 0;
-            foreach (Argument argument in this.Bounds)
+            var objects = new object[this.Bounds.Count];
+            var i = 0;
+            foreach (var argument in this.Bounds)
             {
                 objects[i] = argument.Get(context);
                 i++;
             }
-            TResult result = (TResult)this.constructorInfo.Invoke(objects);
+            var result = (TResult)this.constructorInfo.Invoke(objects);
             return result;
         }
 

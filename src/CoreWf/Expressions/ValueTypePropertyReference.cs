@@ -38,8 +38,8 @@ namespace System.Activities.Expressions
 
         protected override void CacheMetadata(CodeActivityMetadata metadata)
         {
-            MethodInfo oldGetMethod = this.getMethod;
-            MethodInfo oldSetMethod = this.setMethod;
+            var oldGetMethod = this.getMethod;
+            var oldSetMethod = this.setMethod;
 
             if (!typeof(TOperand).IsValueType)
             {
@@ -63,7 +63,7 @@ namespace System.Activities.Expressions
                 }
             }
 
-            bool isRequired = false;
+            var isRequired = false;
             if (this.propertyInfo != null)
             {
                 this.setMethod = this.propertyInfo.GetSetMethod();
@@ -95,7 +95,7 @@ namespace System.Activities.Expressions
 
         protected override Location<TResult> Execute(CodeActivityContext context)
         {
-            Location<TOperand> operandLocationValue = this.OperandLocation.GetLocation(context);
+            var operandLocationValue = this.OperandLocation.GetLocation(context);
             Fx.Assert(operandLocationValue != null, "OperandLocation must not be null");
             Fx.Assert(this.propertyInfo != null, "propertyInfo must not be null");
             return new PropertyLocation(this.propertyInfo, this.getFunc, this.setFunc, operandLocationValue);
@@ -130,7 +130,7 @@ namespace System.Activities.Expressions
                     // at an implementation level it is.
                     if (this.getFunc != null)
                     {
-                        return (TResult)this.getFunc(this.ownerLocation.Value, new object[0]);
+                        return (TResult)this.getFunc(this.ownerLocation.Value, Array.Empty<object>());
                     }
                     if (this.propertyInfo.GetGetMethod() == null && TypeHelper.AreTypesCompatible(this.propertyInfo.DeclaringType, typeof(Location)) == false)
                     {

@@ -13,7 +13,7 @@ namespace System.Activities.Validation
 
     public static class ActivityValidationServices
     {
-        internal static readonly ReadOnlyCollection<Activity> EmptyChildren = new ReadOnlyCollection<Activity>(new Activity[0]);
+        internal static readonly ReadOnlyCollection<Activity> EmptyChildren = new ReadOnlyCollection<Activity>(Array.Empty<Activity>());
         private static readonly ValidationSettings defaultSettings = new ValidationSettings();
         internal static ReadOnlyCollection<ValidationError> EmptyValidationErrors = new ReadOnlyCollection<ValidationError>(new List<ValidationError>(0));
 
@@ -44,7 +44,7 @@ namespace System.Activities.Validation
                 throw FxTrace.Exception.Argument(nameof(settings), SR.InvalidPrepareForRuntimeValidationSettings);
             }
 
-            InternalActivityValidationServices validator = new InternalActivityValidationServices(settings, toValidate);
+            var validator = new InternalActivityValidationServices(settings, toValidate);
             return validator.InternalValidate();
         }
 
@@ -55,7 +55,7 @@ namespace System.Activities.Validation
 
         internal static void ThrowIfViolationsExist(IList<ValidationError> validationErrors, ExceptionReason reason = ExceptionReason.InvalidTree)
         {
-            Exception exception = CreateExceptionFromValidationErrors(validationErrors, reason);
+            var exception = CreateExceptionFromValidationErrors(validationErrors, reason);
 
             if (exception != null)
             {
@@ -67,7 +67,7 @@ namespace System.Activities.Validation
         {
             if (validationErrors != null && validationErrors.Count > 0)
             {
-                string exceptionString = GenerateExceptionString(validationErrors, reason);
+                var exceptionString = GenerateExceptionString(validationErrors, reason);
 
                 if (exceptionString != null)
                 {
@@ -88,18 +88,18 @@ namespace System.Activities.Validation
         {
             ActivityUtilities.FinishCachingSubtree(root, parentChain, options);
 
-            List<Activity> listOfChildren = new List<Activity>();
+            var listOfChildren = new List<Activity>();
 
-            foreach (Activity activity in WorkflowInspectionServices.GetActivities(root.Activity))
+            foreach (var activity in WorkflowInspectionServices.GetActivities(root.Activity))
             {
                 listOfChildren.Add(activity);
             }
 
-            int toProcessIndex = 0;
+            var toProcessIndex = 0;
 
             while (toProcessIndex < listOfChildren.Count)
             {
-                foreach (Activity activity in WorkflowInspectionServices.GetActivities(listOfChildren[toProcessIndex]))
+                foreach (var activity in WorkflowInspectionServices.GetActivities(listOfChildren[toProcessIndex]))
                 {
                     listOfChildren.Add(activity);
                 }
@@ -119,19 +119,19 @@ namespace System.Activities.Validation
             if (inputs != null)
             {
                 List<string> unusedArguments = null;
-                IEnumerable<RuntimeArgument> arguments = rootActivity.RuntimeArguments.Where((a) => ArgumentDirectionHelper.IsIn(a.Direction));
+                var arguments = rootActivity.RuntimeArguments.Where((a) => ArgumentDirectionHelper.IsIn(a.Direction));
 
-                foreach (string key in inputs.Keys)
+                foreach (var key in inputs.Keys)
                 {
-                    bool found = false;
-                    foreach (RuntimeArgument argument in arguments)
+                    var found = false;
+                    foreach (var argument in arguments)
                     {
                         if (argument.Name == key)
                         {
                             found = true;
 
                             // Validate if the input argument type matches the expected argument type.
-                            if (inputs.TryGetValue(key, out object inputArgumentValue))
+                            if (inputs.TryGetValue(key, out var inputArgumentValue))
                             {
                                 if (!TypeHelper.AreTypesCompatible(inputArgumentValue, argument.Type))
                                 {
@@ -161,8 +161,8 @@ namespace System.Activities.Validation
 
             if (validationErrors != null && validationErrors.Count > 0)
             {
-                string parameterName = "rootArgumentValues";
-                ExceptionReason reason = ExceptionReason.InvalidNonNullInputs;
+                var parameterName = "rootArgumentValues";
+                var reason = ExceptionReason.InvalidNonNullInputs;
 
                 if (inputs == null)
                 {
@@ -170,7 +170,7 @@ namespace System.Activities.Validation
                     reason = ExceptionReason.InvalidNullInputs;
                 }
 
-                string exceptionString = GenerateExceptionString(validationErrors, reason);
+                var exceptionString = GenerateExceptionString(validationErrors, reason);
 
                 if (exceptionString != null)
                 {
@@ -182,7 +182,7 @@ namespace System.Activities.Validation
         internal static void ValidateArguments(Activity activity, bool isRoot, ref IList<ValidationError> validationErrors)
         {
             Fx.Assert(activity != null, "Activity to validate should not be null.");
-            if (ValidationHelper.GatherAndValidateOverloads(activity, out Dictionary<string, List<RuntimeArgument>> overloadGroups, out List<RuntimeArgument> requiredArgumentsNotInOverloadGroups, out ValidationHelper.OverloadGroupEquivalenceInfo equivalenceInfo, ref validationErrors))
+            if (ValidationHelper.GatherAndValidateOverloads(activity, out var overloadGroups, out var requiredArgumentsNotInOverloadGroups, out var equivalenceInfo, ref validationErrors))
             {
                 // If we're not the root and the overload groups are valid
                 // then we validate the arguments
@@ -209,9 +209,9 @@ namespace System.Activities.Validation
 
             StringBuilder exceptionMessageBuilder = null;
 
-            for (int i = 0; i < validationErrors.Count; i++)
+            for (var i = 0; i < validationErrors.Count; i++)
             {
-                ValidationError validationError = validationErrors[i];
+                var validationError = validationErrors[i];
 
                 if (!validationError.IsWarning)
                 {
@@ -263,7 +263,7 @@ namespace System.Activities.Validation
 
                 if (exceptionString.Length > maxExceptionStringSize)
                 {
-                    string snipNotification = SR.TooManyViolationsForExceptionMessage;
+                    var snipNotification = SR.TooManyViolationsForExceptionMessage;
 
                     exceptionString = exceptionString.Substring(0, maxExceptionStringSize - snipNotification.Length);
                     exceptionString += snipNotification;
@@ -275,8 +275,8 @@ namespace System.Activities.Validation
 
         static internal string GenerateValidationErrorPrefix(Activity toValidate, ActivityUtilities.ActivityCallStack parentChain, ProcessActivityTreeOptions options, out Activity source)
         {
-            bool parentVisible = true;
-            string prefix = "";
+            var parentVisible = true;
+            var prefix = "";
             source = toValidate;
 
             // Processing for implementation of activity  
@@ -312,7 +312,7 @@ namespace System.Activities.Validation
             }
            
             // Find out if any of the parents of the activity are not publicly visible
-            for (int i = 0; i < parentChain.Count; i++)
+            for (var i = 0; i < parentChain.Count; i++)
             {
                 if (parentChain[i].Activity.MemberOf.Parent != null)
                 {
@@ -354,15 +354,15 @@ namespace System.Activities.Validation
         {
             if (constraints != null)
             {
-                Activity toValidate = childActivity.Activity;
+                var toValidate = childActivity.Activity;
 
-                LocationReferenceEnvironment environment = toValidate.GetParentEnvironment();
+                var environment = toValidate.GetParentEnvironment();
 
-                Dictionary<string, object> inputDictionary = new Dictionary<string, object>(2);
+                var inputDictionary = new Dictionary<string, object>(2);
 
-                for (int constraintIndex = 0; constraintIndex < constraints.Count; constraintIndex++)
+                for (var constraintIndex = 0; constraintIndex < constraints.Count; constraintIndex++)
                 {
-                    Constraint constraint = constraints[constraintIndex];
+                    var constraint = constraints[constraintIndex];
 
                     // there may be null entries here
                     if (constraint == null)
@@ -371,7 +371,7 @@ namespace System.Activities.Validation
                     }
 
                     inputDictionary[Constraint.ToValidateArgumentName] = toValidate;
-                    ValidationContext validationContext = new ValidationContext(childActivity, parentChain, options, environment);
+                    var validationContext = new ValidationContext(childActivity, parentChain, options, environment);
                     inputDictionary[Constraint.ToValidateContextArgumentName] = validationContext;
                     IDictionary<string, object> results = null;
 
@@ -386,7 +386,7 @@ namespace System.Activities.Validation
                             throw;
                         }
 
-                        ValidationError constraintExceptionValidationError = new ValidationError(SR.InternalConstraintException(constraint.DisplayName, toValidate.GetType().FullName, toValidate.DisplayName, e.ToString()), false)
+                        var constraintExceptionValidationError = new ValidationError(SR.InternalConstraintException(constraint.DisplayName, toValidate.GetType().FullName, toValidate.DisplayName, e.ToString()), false)
                         {
                             Source = toValidate,
                             Id = toValidate.Id
@@ -397,9 +397,9 @@ namespace System.Activities.Validation
 
                     if (results != null)
                     {
-                        if (results.TryGetValue(Constraint.ValidationErrorListArgumentName, out object resultValidationErrors))
+                        if (results.TryGetValue(Constraint.ValidationErrorListArgumentName, out var resultValidationErrors))
                         {
-                            IList<ValidationError> validationErrorList = (IList<ValidationError>)resultValidationErrors;
+                            var validationErrorList = (IList<ValidationError>)resultValidationErrors;
 
                             if (validationErrorList.Count > 0)
                             {
@@ -408,11 +408,11 @@ namespace System.Activities.Validation
                                     validationErrors = new List<ValidationError>();
                                 }
 
-                                string prefix = ActivityValidationServices.GenerateValidationErrorPrefix(childActivity.Activity, parentChain, options, out Activity source);
+                                var prefix = ActivityValidationServices.GenerateValidationErrorPrefix(childActivity.Activity, parentChain, options, out var source);
 
-                                for (int validationErrorIndex = 0; validationErrorIndex < validationErrorList.Count; validationErrorIndex++)
+                                for (var validationErrorIndex = 0; validationErrorIndex < validationErrorList.Count; validationErrorIndex++)
                                 {
-                                    ValidationError validationError = validationErrorList[validationErrorIndex];
+                                    var validationError = validationErrorList[validationErrorIndex];
 
                                     validationError.Source = source;
                                     validationError.Id = source.Id;
@@ -438,7 +438,7 @@ namespace System.Activities.Validation
         {
             if (validationErrors != null && validationErrors.Count > 0)
             {
-                for (int i = 0; i < validationErrors.Count; i++)
+                for (var i = 0; i < validationErrors.Count; i++)
                 {
                     if (!validationErrors[i].IsWarning)
                     {
@@ -487,7 +487,7 @@ namespace System.Activities.Validation
 
             private void ValidateElement(ActivityUtilities.ChildActivity childActivity, ActivityUtilities.ActivityCallStack parentChain)
             {
-                Activity toValidate = childActivity.Activity;
+                var toValidate = childActivity.Activity;
 
                 if (!this.settings.SingleLevel || object.ReferenceEquals(toValidate, this.rootToValidate))
                 {
@@ -500,23 +500,23 @@ namespace System.Activities.Validation
                     // 3. Then do policy constraints
                     if (this.settings.HasAdditionalConstraints && childActivity.CanBeExecuted && parentChain.WillExecute)
                     {
-                        bool suppressGetChildrenViolations = this.settings.OnlyUseAdditionalConstraints || this.settings.SingleLevel;
+                        var suppressGetChildrenViolations = this.settings.OnlyUseAdditionalConstraints || this.settings.SingleLevel;
 
-                        Type currentType = toValidate.GetType();
+                        var currentType = toValidate.GetType();
 
                         while (currentType != null)
                         {
-                            if (this.settings.AdditionalConstraints.TryGetValue(currentType, out IList<Constraint> policyConstraints))
+                            if (this.settings.AdditionalConstraints.TryGetValue(currentType, out var policyConstraints))
                             {
                                 RunConstraints(childActivity, parentChain, policyConstraints, this.options, suppressGetChildrenViolations, ref this.errors);
                             }
 
                             if (currentType.IsGenericType)
                             {
-                                Type genericDefinitionType = currentType.GetGenericTypeDefinition();
+                                var genericDefinitionType = currentType.GetGenericTypeDefinition();
                                 if (genericDefinitionType != null)
                                 {
-                                    if (this.settings.AdditionalConstraints.TryGetValue(genericDefinitionType, out IList<Constraint> genericTypePolicyConstraints))
+                                    if (this.settings.AdditionalConstraints.TryGetValue(genericDefinitionType, out var genericTypePolicyConstraints))
                                     {
                                         RunConstraints(childActivity, parentChain, genericTypePolicyConstraints, this.options, suppressGetChildrenViolations, ref this.errors);
                                     }
@@ -534,15 +534,15 @@ namespace System.Activities.Validation
                             this.expressionRoot = childActivity.Activity;
                             // Back-compat: In Dev10 we always used ProcessActivityTreeOptions.FullCachingOptions here, and ignored this.options.
                             // So we need to continue to do that, unless the new Dev11 flag SkipRootConfigurationValidation is passed.
-                            ProcessActivityTreeOptions options = this.options.SkipRootConfigurationValidation ? this.options : ProcessActivityTreeOptions.FullCachingOptions;
+                            var options = this.options.SkipRootConfigurationValidation ? this.options : ProcessActivityTreeOptions.FullCachingOptions;
                             ActivityUtilities.FinishCachingSubtree(childActivity, parentChain, options, ValidateExpressionSubtree);
                             this.expressionRoot = null;
                         }
                         else if (childActivity.Activity.InternalCanInduceIdle)
                         {
-                            Activity activity = childActivity.Activity;
-                            RuntimeArgument runtimeArgument = GetBoundRuntimeArgument(activity);
-                            ValidationError error = new ValidationError(SR.CanInduceIdleActivityInArgumentExpression(runtimeArgument.Name, activity.Parent.DisplayName, activity.DisplayName), true, runtimeArgument.Name, activity.Parent);
+                            var activity = childActivity.Activity;
+                            var runtimeArgument = GetBoundRuntimeArgument(activity);
+                            var error = new ValidationError(SR.CanInduceIdleActivityInArgumentExpression(runtimeArgument.Name, activity.Parent.DisplayName, activity.DisplayName), true, runtimeArgument.Name, activity.Parent);
                             ActivityUtilities.Add(ref this.errors, error);
                         }
 
@@ -556,11 +556,11 @@ namespace System.Activities.Validation
 
                 if (childActivity.Activity.InternalCanInduceIdle)
                 {
-                    Activity activity = childActivity.Activity;
-                    Activity expressionRoot = this.expressionRoot;
+                    var activity = childActivity.Activity;
+                    var expressionRoot = this.expressionRoot;
 
-                    RuntimeArgument runtimeArgument = GetBoundRuntimeArgument(expressionRoot);
-                    ValidationError error = new ValidationError(SR.CanInduceIdleActivityInArgumentExpression(runtimeArgument.Name, expressionRoot.Parent.DisplayName, activity.DisplayName), true, runtimeArgument.Name, expressionRoot.Parent);
+                    var runtimeArgument = GetBoundRuntimeArgument(expressionRoot);
+                    var error = new ValidationError(SR.CanInduceIdleActivityInArgumentExpression(runtimeArgument.Name, expressionRoot.Parent.DisplayName, activity.DisplayName), true, runtimeArgument.Name, expressionRoot.Parent);
                     ActivityUtilities.Add(ref this.errors, error);
                 }
             }
@@ -570,11 +570,11 @@ namespace System.Activities.Validation
         // and find the one that binds to expressionActivity.
         private static RuntimeArgument GetBoundRuntimeArgument(Activity expressionActivity)
         {
-            Activity configuredActivity = expressionActivity.Parent;
+            var configuredActivity = expressionActivity.Parent;
             Fx.Assert(configuredActivity != null, "Configured activity should not be null.");
 
             RuntimeArgument boundRuntimeArgument = null;
-            for (int i = 0; i < configuredActivity.RuntimeArguments.Count; i++)
+            for (var i = 0; i < configuredActivity.RuntimeArguments.Count; i++)
             {
                 boundRuntimeArgument = configuredActivity.RuntimeArguments[i];
                 if (object.ReferenceEquals(boundRuntimeArgument.BoundArgument.Expression, expressionActivity))
@@ -590,10 +590,10 @@ namespace System.Activities.Validation
         // sorted in ascendng order of evaluation order values.
         internal static void ValidateEvaluationOrder(IList<RuntimeArgument> runtimeArguments, Activity referenceActivity, ref IList<ValidationError> validationErrors)
         {
-            for (int i = 0; i < runtimeArguments.Count - 1; i++)
+            for (var i = 0; i < runtimeArguments.Count - 1; i++)
             {
-                RuntimeArgument argument = runtimeArguments[i];
-                RuntimeArgument nextArgument = runtimeArguments[i + 1];
+                var argument = runtimeArguments[i];
+                var nextArgument = runtimeArguments[i + 1];
                 if (argument.IsEvaluationOrderSpecified && nextArgument.IsEvaluationOrderSpecified)
                 {
                     if (argument.BoundArgument.EvaluationOrder == nextArgument.BoundArgument.EvaluationOrder)

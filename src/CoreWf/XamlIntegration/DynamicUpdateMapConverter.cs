@@ -19,7 +19,7 @@ namespace System.Activities.XamlIntegration
 
         public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
         {
-            DynamicUpdateMap map = value as DynamicUpdateMap;
+            var map = value as DynamicUpdateMap;
             if (destinationType == typeof(MarkupExtension) && map != null)
             {
                 return new DynamicUpdateMapExtension(map);

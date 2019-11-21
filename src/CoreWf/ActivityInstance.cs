@@ -4,90 +4,104 @@
 namespace System.Activities
 {
     using System;
+    using System.Activities.Internals;
     using System.Activities.Runtime;
     using System.Activities.Tracking;
-    using System.Collections;
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
     using System.Globalization;
     using System.Runtime.Serialization;
-    using System.Activities.Internals;
 
-using System.Activities.DynamicUpdate;
-
+    /// <summary>
+    /// The ActivityInstance class. This class cannot be inherited.
+    /// Implements the <see cref="System.Activities.Runtime.ActivityInstanceMap.IActivityReference" />
+    /// </summary>
+    /// <seealso cref="System.Activities.Runtime.ActivityInstanceMap.IActivityReference" />
     [DataContract(Name = XD.ActivityInstance.Name, Namespace = XD.Runtime.Namespace)]
     [Fx.Tag.XamlVisible(false)]
-    public sealed class ActivityInstance
+    public sealed partial class ActivityInstance
 #if NET45
         : ActivityInstanceMap.IActivityReferenceWithEnvironment
-#else 
+#else
         : ActivityInstanceMap.IActivityReference
 #endif
     {
+        /// <summary>
+        /// The activity
+        /// </summary>
         private Activity activity;
+
+        /// <summary>
+        /// The child list
+        /// </summary>
         private ChildList childList;
+
+        /// <summary>
+        /// The child cache
+        /// </summary>
         private ReadOnlyCollection<ActivityInstance> childCache;
-        private CompletionBookmark completionBookmark;
-        private ActivityInstanceMap instanceMap;
-        private ActivityInstance parent;
+
+        /// <summary>
+        /// The owner name
+        /// </summary>
         private string ownerName;
-        private int busyCount;
-        private ExtendedData extendedData;
 
-        // most activities will have a symbol (either variable or argument, so optimize for that case)
-        private bool noSymbols;
-        private ActivityInstanceState state;
-        private bool isCancellationRequested;
-        private bool performingDefaultCancelation;
-        private Substate substate;
-        private long id;
-        private bool initializationIncomplete;
-
-        // This is serialized through the SerializedEnvironment property
+        /// <summary>
+        /// The environment
+        /// </summary>
         private LocationEnvironment environment;
-        private ExecutionPropertyManager propertyManager;
 
-        internal ActivityInstance() { }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ActivityInstance"/> class.
+        /// </summary>
+        internal ActivityInstance()
+        {
+        }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ActivityInstance"/> class.
+        /// </summary>
+        /// <param name="activity">The activity.</param>
         internal ActivityInstance(Activity activity)
         {
             this.activity = activity;
-            this.state = ActivityInstanceState.Executing;
-            this.substate = Substate.Created;
+            this.State = ActivityInstanceState.Executing;
+            this.SerializedSubstate = Substate.Created;
 
             this.ImplementationVersion = activity.ImplementationVersion;
         }
 
+        /// <summary>
+        /// Gets the activity.
+        /// </summary>
+        /// <value>The activity.</value>
         public Activity Activity
         {
-            get
-            {
-                return this.activity;
-            }
+            get => this.activity;
 
             internal set
             {
-                Fx.Assert(value != null || this.state == ActivityInstanceState.Closed, "");
+                Fx.Assert(value != null || this.State == ActivityInstanceState.Closed, string.Empty);
                 this.activity = value;
             }
         }
 
-        Activity ActivityInstanceMap.IActivityReference.Activity
-        {
-            get
-            {
-                return this.Activity;
-            }
-        }
+        /// <summary>
+        /// Gets the activity.
+        /// </summary>
+        /// <value>The activity.</value>
+        Activity ActivityInstanceMap.IActivityReference.Activity => this.Activity;
 
-        internal Substate SubState
-        {
-            get
-            {
-                return this.substate;
-            }
-        }
+        /// <summary>
+        /// Gets the state of the sub.
+        /// </summary>
+        /// <value>The state of the sub.</value>
+        internal Substate SubState => this.SerializedSubstate;
 
+        /// <summary>
+        /// Gets or sets the serialized environment.
+        /// </summary>
+        /// <value>The serialized environment.</value>
         [DataMember(EmitDefaultValue = false)]
         internal LocationEnvironment SerializedEnvironment
         {
@@ -110,69 +124,77 @@ using System.Activities.DynamicUpdate;
             }
         }
 
+        /// <summary>
+        /// Gets or sets the serialized busy count.
+        /// </summary>
+        /// <value>The serialized busy count.</value>
         [DataMember(EmitDefaultValue = false, Name = "busyCount")]
-        internal int SerializedBusyCount
-        {
-            get { return this.busyCount; }
-            set { this.busyCount = value; }
-        }
+        internal int SerializedBusyCount { get; set; }
 
+        /// <summary>
+        /// Gets or sets the serialized extended data.
+        /// </summary>
+        /// <value>The serialized extended data.</value>
         [DataMember(EmitDefaultValue = false, Name = "extendedData")]
-        internal ExtendedData SerializedExtendedData
-        {
-            get { return this.extendedData; }
-            set { this.extendedData = value; }
-        }
+        internal ExtendedData SerializedExtendedData { get; set; }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether [serialized no symbols].
+        /// </summary>
+        /// <value><c>true</c> if [serialized no symbols]; otherwise, <c>false</c>.</value>
         [DataMember(EmitDefaultValue = false, Name = "noSymbols")]
-        internal bool SerializedNoSymbols
-        {
-            get { return this.noSymbols; }
-            set { this.noSymbols = value; }
-        }
+        internal bool SerializedNoSymbols { get; set; }
 
+        /// <summary>
+        /// Gets or sets the state of the serialized.
+        /// </summary>
+        /// <value>The state of the serialized.</value>
         [DataMember(EmitDefaultValue = false, Name = "state")]
         internal ActivityInstanceState SerializedState
         {
-            get { return this.state; }
-            set { this.state = value; }
+            get => this.State;
+            set => this.State = value;
         }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether [serialized is cancellation requested].
+        /// </summary>
+        /// <value><c>true</c> if [serialized is cancellation requested]; otherwise, <c>false</c>.</value>
         [DataMember(EmitDefaultValue = false, Name = "isCancellationRequested")]
-        internal bool SerializedIsCancellationRequested
-        {
-            get { return this.isCancellationRequested; }
-            set { this.isCancellationRequested = value; }
-        }
+        internal bool SerializedIsCancellationRequested { get; set; }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether [serialized performing default cancelation].
+        /// </summary>
+        /// <value><c>true</c> if [serialized performing default cancelation]; otherwise, <c>false</c>.</value>
         [DataMember(EmitDefaultValue = false, Name = "performingDefaultCancelation")]
-        internal bool SerializedPerformingDefaultCancelation
-        {
-            get { return this.performingDefaultCancelation; }
-            set { this.performingDefaultCancelation = value; }
-        }
+        internal bool SerializedPerformingDefaultCancelation { get; set; }
 
+        /// <summary>
+        /// Gets or sets the serialized substate.
+        /// </summary>
+        /// <value>The serialized substate.</value>
         [DataMember(EmitDefaultValue = false, Name = "substate")]
-        internal Substate SerializedSubstate
-        {
-            get { return this.substate; }
-            set { this.substate = value; }
-        }
+        internal Substate SerializedSubstate { get; set; }
 
+        /// <summary>
+        /// Gets or sets the serialized identifier.
+        /// </summary>
+        /// <value>The serialized identifier.</value>
         [DataMember(EmitDefaultValue = false, Name = "id")]
-        internal long SerializedId
-        {
-            get { return this.id; }
-            set { this.id = value; }
-        }
+        internal long SerializedId { get; set; }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether [serialized initialization incomplete].
+        /// </summary>
+        /// <value><c>true</c> if [serialized initialization incomplete]; otherwise, <c>false</c>.</value>
         [DataMember(EmitDefaultValue = false, Name = "initializationIncomplete")]
-        internal bool SerializedInitializationIncomplete
-        {
-            get { return this.initializationIncomplete; }
-            set { this.initializationIncomplete = value; }
-        }
+        internal bool SerializedInitializationIncomplete { get; set; }
 
+        /// <summary>
+        /// Gets the environment.
+        /// </summary>
+        /// <value>The environment.</value>
         internal LocationEnvironment Environment
         {
             get
@@ -182,269 +204,208 @@ using System.Activities.DynamicUpdate;
             }
         }
 
-        internal ActivityInstanceMap InstanceMap
-        {
-            get
-            {
-                return this.instanceMap;
-            }
-        }
+        /// <summary>
+        /// Gets the instance map.
+        /// </summary>
+        /// <value>The instance map.</value>
+        internal ActivityInstanceMap InstanceMap { get; private set; }
 
-        public bool IsCompleted
-        {
-            get
-            {
-                return ActivityUtilities.IsCompletedState(this.State);
-            }
-        }
+        /// <summary>
+        /// Gets a value indicating whether this instance is completed.
+        /// </summary>
+        /// <value><c>true</c> if this instance is completed; otherwise, <c>false</c>.</value>
+        public bool IsCompleted => ActivityUtilities.IsCompletedState(this.State);
 
-        public ActivityInstanceState State
-        {
-            get
-            {
-                return this.state;
-            }
-        }
+        /// <summary>
+        /// Gets the state.
+        /// </summary>
+        /// <value>The state.</value>
+        public ActivityInstanceState State { get; private set; }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether this instance is cancellation requested.
+        /// </summary>
+        /// <value><c>true</c> if this instance is cancellation requested; otherwise, <c>false</c>.</value>
         internal bool IsCancellationRequested
         {
-            get
-            {
-                return this.isCancellationRequested;
-            }
+            get => this.SerializedIsCancellationRequested;
             set
             {
                 // This is set at the time of scheduling the cancelation work item
 
-                Fx.Assert(!this.isCancellationRequested, "We should not set this if we have already requested cancel.");
+                Fx.Assert(!this.SerializedIsCancellationRequested, "We should not set this if we have already requested cancel.");
                 Fx.Assert(value != false, "We should only set this to true.");
 
-                this.isCancellationRequested = value;
+                this.SerializedIsCancellationRequested = value;
             }
         }
 
-        internal bool IsPerformingDefaultCancelation
-        {
-            get
-            {
-                return this.performingDefaultCancelation;
-            }
-        }
+        /// <summary>
+        /// Gets a value indicating whether this instance is performing default cancelation.
+        /// </summary>
+        /// <value><c>true</c> if this instance is performing default cancelation; otherwise, <c>false</c>.</value>
+        internal bool IsPerformingDefaultCancelation => this.SerializedPerformingDefaultCancelation;
 
-        public string Id
-        {
-            get
-            {
-                return this.id.ToString(CultureInfo.InvariantCulture);
-            }
-        }
+        /// <summary>
+        /// Gets the identifier.
+        /// </summary>
+        /// <value>The identifier.</value>
+        public string Id => this.SerializedId.ToString(CultureInfo.InvariantCulture);
 
-        internal long InternalId
-        {
-            get
-            {
-                return this.id;
-            }
-        }
+        /// <summary>
+        /// Gets the internal identifier.
+        /// </summary>
+        /// <value>The internal identifier.</value>
+        internal long InternalId => this.SerializedId;
 
-        internal bool IsEnvironmentOwner
-        {
-            get
-            {
-                return !this.noSymbols;
-            }
-        }
+        /// <summary>
+        /// Gets a value indicating whether this instance is environment owner.
+        /// </summary>
+        /// <value><c>true</c> if this instance is environment owner; otherwise, <c>false</c>.</value>
+        internal bool IsEnvironmentOwner => !this.SerializedNoSymbols;
 
-        internal bool IsResolvingArguments
-        {
-            get
-            {
-                return this.substate == Substate.ResolvingArguments;
-            }
-        }
+        /// <summary>
+        /// Gets a value indicating whether this instance is resolving arguments.
+        /// </summary>
+        /// <value><c>true</c> if this instance is resolving arguments; otherwise, <c>false</c>.</value>
+        internal bool IsResolvingArguments => this.SerializedSubstate == Substate.ResolvingArguments;
 
-        internal bool HasNotExecuted
-        {
-            get
-            {
-                return (this.substate & Substate.PreExecuting) != 0;
-            }
-        }
+        /// <summary>
+        /// Gets a value indicating whether this instance has not executed.
+        /// </summary>
+        /// <value><c>true</c> if this instance has not executed; otherwise, <c>false</c>.</value>
+        internal bool HasNotExecuted => (this.SerializedSubstate & Substate.PreExecuting) != 0;
 
-        internal bool HasPendingWork
-        {
-            get
-            {
-                if (this.HasChildren)
-                {
-                    return true;
-                }
-
+        /// <summary>
+        /// Gets a value indicating whether this instance has pending work.
+        /// </summary>
+        /// <value><c>true</c> if this instance has pending work; otherwise, <c>false</c>.</value>
+        internal bool HasPendingWork =>
                 // check if we have pending bookmarks or outstanding OperationControlContexts/WorkItems
-                if (this.busyCount > 0)
-                {
-                    return true;
-                }
+                this.HasChildren || this.SerializedBusyCount > 0;
 
-                return false;
-            }
-        }
-
-        internal bool OnlyHasOutstandingBookmarks
-        {
-            get
-            {
+        /// <summary>
+        /// Gets a value indicating whether [only has outstanding bookmarks].
+        /// </summary>
+        /// <value><c>true</c> if [only has outstanding bookmarks]; otherwise, <c>false</c>.</value>
+        internal bool OnlyHasOutstandingBookmarks =>
                 // If our whole busy count is because of blocking bookmarks then
                 // we should return true
-                return !this.HasChildren && this.extendedData != null && (this.extendedData.BlockingBookmarkCount == this.busyCount);
-            }
-        }
+                !this.HasChildren && this.SerializedExtendedData != null && (this.SerializedExtendedData.BlockingBookmarkCount == this.SerializedBusyCount);
 
-        internal ActivityInstance Parent
-        {
-            get
-            {
-                return this.parent;
-            }
-        }
+        /// <summary>
+        /// Gets the parent.
+        /// </summary>
+        /// <value>The parent.</value>
+        internal ActivityInstance Parent { get; private set; }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether [waiting for transaction context].
+        /// </summary>
+        /// <value><c>true</c> if [waiting for transaction context]; otherwise, <c>false</c>.</value>
         internal bool WaitingForTransactionContext
         {
-            get
-            {
-                if (this.extendedData == null)
-                {
-                    return false;
-                }
-                else
-                {
-                    return this.extendedData.WaitingForTransactionContext;
-                }
-            }
+            get => this.SerializedExtendedData == null ? false : this.SerializedExtendedData.WaitingForTransactionContext;
             set
             {
-                EnsureExtendedData();
+                this.EnsureExtendedData();
 
-                this.extendedData.WaitingForTransactionContext = value;
+                this.SerializedExtendedData.WaitingForTransactionContext = value;
             }
         }
 
+        /// <summary>
+        /// Gets or sets the completion bookmark.
+        /// </summary>
+        /// <value>The completion bookmark.</value>
         [DataMember(EmitDefaultValue = false)]
-        internal CompletionBookmark CompletionBookmark
-        {
-            get
-            {
-                return this.completionBookmark;
-            }
+        internal CompletionBookmark CompletionBookmark { get; set; }
 
-            set
-            {
-                this.completionBookmark = value;
-            }
-        }
-
+        /// <summary>
+        /// Gets or sets the fault bookmark.
+        /// </summary>
+        /// <value>The fault bookmark.</value>
         internal FaultBookmark FaultBookmark
         {
-            get
-            {
-                if (this.extendedData == null)
-                {
-                    return null;
-                }
-
-                return this.extendedData.FaultBookmark;
-            }
+            get => this.SerializedExtendedData?.FaultBookmark;
 
             set
             {
-                Fx.Assert(value != null || (this.extendedData == null || this.extendedData.FaultBookmark == null), "cannot go from non-null to null");
+                Fx.Assert(
+                    value != null || (this.SerializedExtendedData == null || this.SerializedExtendedData.FaultBookmark == null),
+                    "cannot go from non-null to null");
                 if (value != null)
                 {
-                    EnsureExtendedData();
-                    this.extendedData.FaultBookmark = value;
+                    this.EnsureExtendedData();
+                    this.SerializedExtendedData.FaultBookmark = value;
                 }
             }
         }
 
-        internal bool HasChildren
-        {
-            get
-            {
-                return (this.childList != null && this.childList.Count > 0);
-            }
-        }
+        /// <summary>
+        /// Gets a value indicating whether this instance has children.
+        /// </summary>
+        /// <value><c>true</c> if this instance has children; otherwise, <c>false</c>.</value>
+        internal bool HasChildren => (this.childList != null && this.childList.Count > 0);
 
-        internal ExecutionPropertyManager PropertyManager
-        {
-            get
-            {
-                return this.propertyManager;
-            }
-            set
-            {
-                this.propertyManager = value;
-            }
-        }
+        /// <summary>
+        /// Gets or sets the property manager.
+        /// </summary>
+        /// <value>The property manager.</value>
+        internal ExecutionPropertyManager PropertyManager { get; set; }
 
+        /// <summary>
+        /// Gets or sets the data context.
+        /// </summary>
+        /// <value>The data context.</value>
         internal WorkflowDataContext DataContext
         {
-            get
-            {
-                if (this.extendedData != null)
-                {
-                    return this.extendedData.DataContext;
-                }
-                return null;
-            }
+            get => this.SerializedExtendedData?.DataContext;
             set
             {
-                EnsureExtendedData();
-                this.extendedData.DataContext = value;
+                this.EnsureExtendedData();
+                this.SerializedExtendedData.DataContext = value;
             }
         }
 
-        internal object CompiledDataContexts
-        {
-            get;
-            set;
-        }
+        /// <summary>
+        /// Gets or sets the compiled data contexts.
+        /// </summary>
+        /// <value>The compiled data contexts.</value>
+        internal object CompiledDataContexts { get; set; }
 
-        internal object CompiledDataContextsForImplementation
-        {
-            get;
-            set;
-        }
+        /// <summary>
+        /// Gets or sets the compiled data contexts for implementation.
+        /// </summary>
+        /// <value>The compiled data contexts for implementation.</value>
+        internal object CompiledDataContextsForImplementation { get; set; }
 
-        internal bool HasActivityReferences
-        {
-            get
-            {
-                return this.extendedData != null && this.extendedData.HasActivityReferences;
-            }
-        }
+        /// <summary>
+        /// Gets a value indicating whether this instance has activity references.
+        /// </summary>
+        /// <value><c>true</c> if this instance has activity references; otherwise, <c>false</c>.</value>
+        internal bool HasActivityReferences => this.SerializedExtendedData != null && this.SerializedExtendedData.HasActivityReferences;
 
+        /// <summary>
+        /// Gets or sets the serialized property manager.
+        /// </summary>
+        /// <value>The serialized property manager.</value>
         [DataMember(Name = XD.ActivityInstance.PropertyManager, EmitDefaultValue = false)]
         //[SuppressMessage(FxCop.Category.Performance, FxCop.Rule.AvoidUncalledPrivateCode, Justification = "Called from Serialization")]
         internal ExecutionPropertyManager SerializedPropertyManager
         {
-            get
-            {
-                if (this.propertyManager == null || !this.propertyManager.ShouldSerialize(this))
-                {
-                    return null;
-                }
-                else
-                {
-                    return this.propertyManager;
-                }
-            }
+            get => this.PropertyManager == null || !this.PropertyManager.ShouldSerialize(this) ? null : this.PropertyManager;
             set
             {
                 Fx.Assert(value != null, "We don't emit the default value so this should never be null.");
-                this.propertyManager = value;
+                this.PropertyManager = value;
             }
         }
 
+        /// <summary>
+        /// Gets or sets the serialized children.
+        /// </summary>
+        /// <value>The serialized children.</value>
         [DataMember(Name = XD.ActivityInstance.Children, EmitDefaultValue = false)]
         internal ChildList SerializedChildren
         {
@@ -466,6 +427,10 @@ using System.Activities.DynamicUpdate;
             }
         }
 
+        /// <summary>
+        /// Gets or sets the name of the owner.
+        /// </summary>
+        /// <value>The name of the owner.</value>
         [DataMember(Name = XD.ActivityInstance.Owner, EmitDefaultValue = false)]
         internal string OwnerName
         {
@@ -475,6 +440,7 @@ using System.Activities.DynamicUpdate;
                 {
                     this.ownerName = this.Activity.GetType().Name;
                 }
+
                 return this.ownerName;
             }
             set
@@ -484,33 +450,47 @@ using System.Activities.DynamicUpdate;
             }
         }
 
+        /// <summary>
+        /// Gets the implementation version.
+        /// </summary>
+        /// <value>The implementation version.</value>
         [DataMember(EmitDefaultValue = false)]
-        public Version ImplementationVersion
-        {
-            get;
-            internal set;
-        }
+        public Version ImplementationVersion { get; internal set; }
 
+        /// <summary>
+        /// Creates the completed instance.
+        /// </summary>
+        /// <param name="activity">The activity.</param>
+        /// <returns>ActivityInstance.</returns>
         internal static ActivityInstance CreateCompletedInstance(Activity activity)
         {
-            ActivityInstance instance = new ActivityInstance(activity)
+            var instance = new ActivityInstance(activity)
             {
-                state = ActivityInstanceState.Closed
+                State = ActivityInstanceState.Closed
             };
 
             return instance;
         }
 
+        /// <summary>
+        /// Creates the canceled instance.
+        /// </summary>
+        /// <param name="activity">The activity.</param>
+        /// <returns>ActivityInstance.</returns>
         internal static ActivityInstance CreateCanceledInstance(Activity activity)
         {
-            ActivityInstance instance = new ActivityInstance(activity)
+            var instance = new ActivityInstance(activity)
             {
-                state = ActivityInstanceState.Canceled
+                State = ActivityInstanceState.Canceled
             };
 
             return instance;
         }
 
+        /// <summary>
+        /// Gets the children.
+        /// </summary>
+        /// <returns>ReadOnlyCollection&lt;ActivityInstance&gt;.</returns>
         internal ReadOnlyCollection<ActivityInstance> GetChildren()
         {
             if (!this.HasChildren)
@@ -522,19 +502,24 @@ using System.Activities.DynamicUpdate;
             {
                 this.childCache = this.childList.AsReadOnly();
             }
+
             return this.childCache;
         }
 
-        internal HybridCollection<ActivityInstance> GetRawChildren()
-        {
-            return this.childList;
-        }
+        /// <summary>
+        /// Gets the raw children.
+        /// </summary>
+        /// <returns>HybridCollection&lt;ActivityInstance&gt;.</returns>
+        internal HybridCollection<ActivityInstance> GetRawChildren() => this.childList;
 
+        /// <summary>
+        /// Ensures the extended data.
+        /// </summary>
         private void EnsureExtendedData()
         {
-            if (this.extendedData == null)
+            if (this.SerializedExtendedData == null)
             {
-                this.extendedData = new ExtendedData();
+                this.SerializedExtendedData = new ExtendedData();
             }
         }
 
@@ -542,100 +527,134 @@ using System.Activities.DynamicUpdate;
         //   1. Active OperationControlContexts.
         //   2. Active work items.
         //   3. Blocking bookmarks.
-        internal void IncrementBusyCount()
-        {
-            this.busyCount++;
-        }
+        /// <summary>
+        /// Increments the busy count.
+        /// </summary>
+        internal void IncrementBusyCount() => this.SerializedBusyCount++;
 
+        /// <summary>
+        /// Decrements the busy count.
+        /// </summary>
         internal void DecrementBusyCount()
         {
-            Fx.Assert(this.busyCount > 0, "something went wrong with our bookkeeping");
-            this.busyCount--;
+            Fx.Assert(this.SerializedBusyCount > 0, "something went wrong with our bookkeeping");
+            this.SerializedBusyCount--;
         }
 
+        /// <summary>
+        /// Decrements the busy count.
+        /// </summary>
+        /// <param name="amount">The amount.</param>
         internal void DecrementBusyCount(int amount)
         {
-            Fx.Assert(this.busyCount >= amount, "something went wrong with our bookkeeping");
-            this.busyCount -= amount;
+            Fx.Assert(this.SerializedBusyCount >= amount, "something went wrong with our bookkeeping");
+            this.SerializedBusyCount -= amount;
         }
 
+        /// <summary>
+        /// Adds the activity reference.
+        /// </summary>
+        /// <param name="reference">The reference.</param>
         internal void AddActivityReference(ActivityInstanceReference reference)
         {
-            EnsureExtendedData();
-            this.extendedData.AddActivityReference(reference);
+            this.EnsureExtendedData();
+            this.SerializedExtendedData.AddActivityReference(reference);
         }
 
+        /// <summary>
+        /// Adds the bookmark.
+        /// </summary>
+        /// <param name="bookmark">The bookmark.</param>
+        /// <param name="options">The options.</param>
         internal void AddBookmark(Bookmark bookmark, BookmarkOptions options)
         {
-            bool affectsBusyCount = false;
+            var affectsBusyCount = false;
 
             if (!BookmarkOptionsHelper.IsNonBlocking(options))
             {
-                IncrementBusyCount();
+                this.IncrementBusyCount();
                 affectsBusyCount = true;
             }
 
-            EnsureExtendedData();
-            this.extendedData.AddBookmark(bookmark, affectsBusyCount);
+            this.EnsureExtendedData();
+            this.SerializedExtendedData.AddBookmark(bookmark, affectsBusyCount);
         }
 
+        /// <summary>
+        /// Removes the bookmark.
+        /// </summary>
+        /// <param name="bookmark">The bookmark.</param>
+        /// <param name="options">The options.</param>
         internal void RemoveBookmark(Bookmark bookmark, BookmarkOptions options)
         {
-            bool affectsBusyCount = false;
+            var affectsBusyCount = false;
 
             if (!BookmarkOptionsHelper.IsNonBlocking(options))
             {
-                DecrementBusyCount();
+                this.DecrementBusyCount();
                 affectsBusyCount = true;
             }
 
-            Fx.Assert(this.extendedData != null, "something went wrong with our bookkeeping");
-            this.extendedData.RemoveBookmark(bookmark, affectsBusyCount);
+            Fx.Assert(this.SerializedExtendedData != null, "something went wrong with our bookkeeping");
+            this.SerializedExtendedData.RemoveBookmark(bookmark, affectsBusyCount);
         }
 
+        /// <summary>
+        /// Removes all bookmarks.
+        /// </summary>
+        /// <param name="bookmarkScopeManager">The bookmark scope manager.</param>
+        /// <param name="bookmarkManager">The bookmark manager.</param>
         internal void RemoveAllBookmarks(BookmarkScopeManager bookmarkScopeManager, BookmarkManager bookmarkManager)
         {
-            if (this.extendedData != null)
+            if (this.SerializedExtendedData != null)
             {
-                this.extendedData.PurgeBookmarks(bookmarkScopeManager, bookmarkManager, this);
+                this.SerializedExtendedData.PurgeBookmarks(bookmarkScopeManager, bookmarkManager, this);
             }
         }
 
-        internal void SetInitializationIncomplete()
-        {
-            this.initializationIncomplete = true;
-        }
+        /// <summary>
+        /// Sets the initialization incomplete.
+        /// </summary>
+        internal void SetInitializationIncomplete() => this.SerializedInitializationIncomplete = true;
 
+        /// <summary>
+        /// Marks the canceled.
+        /// </summary>
         internal void MarkCanceled()
         {
-            Fx.Assert(this.substate == Substate.Executing || this.substate == Substate.Canceling, "called from an unexpected state");
-            this.substate = Substate.Canceling;
+            Fx.Assert(this.SerializedSubstate == Substate.Executing || this.SerializedSubstate == Substate.Canceling, "called from an unexpected state");
+            this.SerializedSubstate = Substate.Canceling;
         }
 
-        private void MarkExecuted()
-        {
-            this.substate = Substate.Executing;
-        }
+        /// <summary>
+        /// Marks the executed.
+        /// </summary>
+        private void MarkExecuted() => this.SerializedSubstate = Substate.Executing;
 
+        /// <summary>
+        /// Marks as complete.
+        /// </summary>
+        /// <param name="bookmarkScopeManager">The bookmark scope manager.</param>
+        /// <param name="bookmarkManager">The bookmark manager.</param>
         internal void MarkAsComplete(BookmarkScopeManager bookmarkScopeManager, BookmarkManager bookmarkManager)
         {
-            if (this.extendedData != null)
+            if (this.SerializedExtendedData != null)
             {
-                this.extendedData.PurgeBookmarks(bookmarkScopeManager, bookmarkManager, this);
+                this.SerializedExtendedData.PurgeBookmarks(bookmarkScopeManager, bookmarkManager, this);
 
-                if (this.extendedData.DataContext != null)
+                if (this.SerializedExtendedData.DataContext != null)
                 {
-                    this.extendedData.DataContext.Dispose();
+                    this.SerializedExtendedData.DataContext.Dispose();
                 }
             }
 
-            if (this.instanceMap != null)
+            if (this.InstanceMap != null)
             {
-                this.instanceMap.RemoveEntry(this);
+                this.InstanceMap.RemoveEntry(this);
 
                 if (this.HasActivityReferences)
                 {
-                    this.extendedData.PurgeActivityReferences(this.instanceMap);
+                    this.SerializedExtendedData.PurgeActivityReferences(this.InstanceMap);
                 }
             }
 
@@ -645,15 +664,21 @@ using System.Activities.DynamicUpdate;
             }
         }
 
+        /// <summary>
+        /// Aborts the specified executor.
+        /// </summary>
+        /// <param name="executor">The executor.</param>
+        /// <param name="bookmarkManager">The bookmark manager.</param>
+        /// <param name="terminationReason">The termination reason.</param>
+        /// <param name="isTerminate">if set to <c>true</c> [is terminate].</param>
         internal void Abort(ActivityExecutor executor, BookmarkManager bookmarkManager, Exception terminationReason, bool isTerminate)
         {
             // This is a gentle abort where we try to keep the runtime in a
             // usable state.
-            AbortEnumerator abortEnumerator = new AbortEnumerator(this);
-
+            using var abortEnumerator = new AbortEnumerator(this);
             while (abortEnumerator.MoveNext())
             {
-                ActivityInstance currentInstance = abortEnumerator.Current;
+                var currentInstance = abortEnumerator.Current;
 
                 if (!currentInstance.HasNotExecuted)
                 {
@@ -677,12 +702,16 @@ using System.Activities.DynamicUpdate;
 
                 currentInstance.MarkAsComplete(executor.RawBookmarkScopeManager, bookmarkManager);
 
-                currentInstance.state = ActivityInstanceState.Faulted;
+                currentInstance.State = ActivityInstanceState.Faulted;
 
                 currentInstance.FinalizeState(executor, false, !isTerminate);
             }
         }
 
+        /// <summary>
+        /// Bases the cancel.
+        /// </summary>
+        /// <param name="context">The context.</param>
         internal void BaseCancel(NativeActivityContext context)
         {
             // Default cancelation logic starts here, but is also performed in
@@ -690,38 +719,55 @@ using System.Activities.DynamicUpdate;
 
             Fx.Assert(this.IsCancellationRequested, "This should be marked to true at this point.");
 
-            this.performingDefaultCancelation = true;
+            this.SerializedPerformingDefaultCancelation = true;
 
-            CancelChildren(context);
+            this.CancelChildren(context);
         }
 
+        /// <summary>
+        /// Cancels the children.
+        /// </summary>
+        /// <param name="context">The context.</param>
         internal void CancelChildren(NativeActivityContext context)
         {
             if (this.HasChildren)
             {
-                foreach (ActivityInstance child in this.GetChildren())
+                foreach (var child in this.GetChildren())
                 {
                     context.CancelChild(child);
                 }
             }
         }
 
-        internal void Cancel(ActivityExecutor executor, BookmarkManager bookmarkManager)
-        {
+        /// <summary>
+        /// Cancels the specified executor.
+        /// </summary>
+        /// <param name="executor">The executor.</param>
+        /// <param name="bookmarkManager">The bookmark manager.</param>
+        internal void Cancel(ActivityExecutor executor, BookmarkManager bookmarkManager) =>
             this.Activity.InternalCancel(this, executor, bookmarkManager);
-        }
 
+        /// <summary>
+        /// Executes the specified executor.
+        /// </summary>
+        /// <param name="executor">The executor.</param>
+        /// <param name="bookmarkManager">The bookmark manager.</param>
+        /// <exception cref="InvalidOperationException"></exception>
         internal void Execute(ActivityExecutor executor, BookmarkManager bookmarkManager)
         {
-            if (this.initializationIncomplete)
+            if (this.SerializedInitializationIncomplete)
             {
                 throw FxTrace.Exception.AsError(new InvalidOperationException(SR.InitializationIncomplete));
             }
 
-            MarkExecuted();
+            this.MarkExecuted();
             this.Activity.InternalExecute(this, executor, bookmarkManager);
         }
 
+        /// <summary>
+        /// Adds the child.
+        /// </summary>
+        /// <param name="item">The item.</param>
         internal void AddChild(ActivityInstance item)
         {
             if (this.childList == null)
@@ -733,6 +779,10 @@ using System.Activities.DynamicUpdate;
             this.childCache = null;
         }
 
+        /// <summary>
+        /// Removes the child.
+        /// </summary>
+        /// <param name="item">The item.</param>
         internal void RemoveChild(ActivityInstance item)
         {
             Fx.Assert(this.childList != null, "");
@@ -740,14 +790,26 @@ using System.Activities.DynamicUpdate;
             this.childCache = null;
         }
 
-        // called by ActivityUtilities tree-walk
+        /// <summary>
+        /// Appends the children.
+        /// </summary>
+        /// <param name="nextInstanceList">The next instance list.</param>
+        /// <param name="instancesRemaining">The instances remaining.</param>
+        /// <remarks>called by ActivityUtilities tree-walk</remarks>
         internal void AppendChildren(ActivityUtilities.TreeProcessingList nextInstanceList, ref Queue<IList<ActivityInstance>> instancesRemaining)
         {
             Fx.Assert(this.HasChildren, "AppendChildren is tuned to only be called when HasChildren is true");
             this.childList.AppendChildren(nextInstanceList, ref instancesRemaining);
         }
 
-        // called after deserialization of the workflow instance
+        /// <summary>
+        /// Fixups the instance.
+        /// </summary>
+        /// <param name="parent">The parent.</param>
+        /// <param name="instanceMap">The instance map.</param>
+        /// <param name="executor">The executor.</param>
+        /// <exception cref="InvalidOperationException"></exception>
+        /// <remarks>called after deserialization of the workflow instance</remarks>
         internal void FixupInstance(ActivityInstance parent, ActivityInstanceMap instanceMap, ActivityExecutor executor)
         {
             if (this.IsCompleted)
@@ -764,29 +826,35 @@ using System.Activities.DynamicUpdate;
                 throw FxTrace.Exception.AsError(new InvalidOperationException(SR.ActivityInstanceFixupFailed));
             }
 
-            this.parent = parent;
-            this.instanceMap = instanceMap;
+            this.Parent = parent;
+            this.InstanceMap = instanceMap;
 
             if (this.PropertyManager != null)
             {
                 this.PropertyManager.OnDeserialized(this, parent, this.Activity.MemberOf, executor);
             }
-            else if (this.parent != null)
+            else if (this.Parent != null)
             {
                 // The current property manager is null here
-                this.PropertyManager = this.parent.PropertyManager;
+                this.PropertyManager = this.Parent.PropertyManager;
             }
             else
             {
                 this.PropertyManager = executor.RootPropertyManager;
             }
 
-            if (!this.noSymbols)
+            if (!this.SerializedNoSymbols)
             {
                 this.environment.OnDeserialized(executor, this);
             }
         }
 
+        /// <summary>
+        /// Tries the fixup children.
+        /// </summary>
+        /// <param name="instanceMap">The instance map.</param>
+        /// <param name="executor">The executor.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         internal bool TryFixupChildren(ActivityInstanceMap instanceMap, ActivityExecutor executor)
         {
             if (!this.HasChildren)
@@ -798,6 +866,10 @@ using System.Activities.DynamicUpdate;
             return true;
         }
 
+        /// <summary>
+        /// Fills the instance map.
+        /// </summary>
+        /// <param name="instanceMap">The instance map.</param>
         internal void FillInstanceMap(ActivityInstanceMap instanceMap)
         {
             if (this.IsCompleted)
@@ -806,57 +878,91 @@ using System.Activities.DynamicUpdate;
                 return;
             }
 
-            Fx.Assert(this.instanceMap == null, "We should never call this unless the current map is null.");
+            Fx.Assert(this.InstanceMap == null, "We should never call this unless the current map is null.");
             Fx.Assert(this.Parent == null, "Can only generate a map from a root instance.");
 
-            this.instanceMap = instanceMap;
-            ActivityUtilities.ProcessActivityInstanceTree(this, null, new Func<ActivityInstance, ActivityExecutor, bool>(GenerateInstanceMapCallback));
+            this.InstanceMap = instanceMap;
+            ActivityUtilities.ProcessActivityInstanceTree(this, null, new Func<ActivityInstance, ActivityExecutor, bool>(this.GenerateInstanceMapCallback));
         }
 
+        /// <summary>
+        /// Generates the instance map callback.
+        /// </summary>
+        /// <param name="instance">The instance.</param>
+        /// <param name="executor">The executor.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         private bool GenerateInstanceMapCallback(ActivityInstance instance, ActivityExecutor executor)
         {
-            this.instanceMap.AddEntry(instance);
-            instance.instanceMap = this.instanceMap;
+            this.InstanceMap.AddEntry(instance);
+            instance.InstanceMap = this.InstanceMap;
 
             if (instance.HasActivityReferences)
             {
-                instance.extendedData.FillInstanceMap(instance.instanceMap);
+                instance.SerializedExtendedData.FillInstanceMap(instance.InstanceMap);
             }
-         
+
             return true;
         }
 
-        internal bool Initialize(ActivityInstance parent, ActivityInstanceMap instanceMap, LocationEnvironment parentEnvironment, long instanceId, ActivityExecutor executor)
-        {
-            return this.Initialize(parent, instanceMap, parentEnvironment, instanceId, executor, 0);
-        }
+        /// <summary>
+        /// Initializes the specified parent.
+        /// </summary>
+        /// <param name="parent">The parent.</param>
+        /// <param name="instanceMap">The instance map.</param>
+        /// <param name="parentEnvironment">The parent environment.</param>
+        /// <param name="instanceId">The instance identifier.</param>
+        /// <param name="executor">The executor.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        internal bool Initialize(
+            ActivityInstance parent,
+            ActivityInstanceMap instanceMap,
+            LocationEnvironment parentEnvironment,
+            long instanceId,
+            ActivityExecutor executor) =>
+            this.Initialize(parent, instanceMap, parentEnvironment, instanceId, executor, 0);
 
-        internal bool Initialize(ActivityInstance parent, ActivityInstanceMap instanceMap, LocationEnvironment parentEnvironment, long instanceId, ActivityExecutor executor, int delegateParameterCount)
+        /// <summary>
+        /// Initializes the specified parent.
+        /// </summary>
+        /// <param name="parent">The parent.</param>
+        /// <param name="instanceMap">The instance map.</param>
+        /// <param name="parentEnvironment">The parent environment.</param>
+        /// <param name="instanceId">The instance identifier.</param>
+        /// <param name="executor">The executor.</param>
+        /// <param name="delegateParameterCount">The delegate parameter count.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        internal bool Initialize(
+            ActivityInstance parent,
+            ActivityInstanceMap instanceMap,
+            LocationEnvironment parentEnvironment,
+            long instanceId,
+            ActivityExecutor executor,
+            int delegateParameterCount)
         {
-            this.parent = parent;
-            this.instanceMap = instanceMap;
-            this.id = instanceId;
+            this.Parent = parent;
+            this.InstanceMap = instanceMap;
+            this.SerializedId = instanceId;
 
-            if (this.instanceMap != null)
+            if (this.InstanceMap != null)
             {
-                this.instanceMap.AddEntry(this);
+                this.InstanceMap.AddEntry(this);
             }
 
             // propagate necessary information from our parent
-            if (this.parent != null)
+            if (this.Parent != null)
             {
-                if (this.parent.PropertyManager != null)
+                if (this.Parent.PropertyManager != null)
                 {
-                    this.PropertyManager = this.parent.PropertyManager;
+                    this.PropertyManager = this.Parent.PropertyManager;
                 }
 
                 if (parentEnvironment == null)
                 {
-                    parentEnvironment = this.parent.Environment;
+                    parentEnvironment = this.Parent.Environment;
                 }
             }
 
-            int symbolCount = this.Activity.SymbolCount + delegateParameterCount;
+            var symbolCount = this.Activity.SymbolCount + delegateParameterCount;
 
             if (symbolCount == 0)
             {
@@ -868,7 +974,7 @@ using System.Activities.DynamicUpdate;
                 }
                 else
                 {
-                    this.noSymbols = true;
+                    this.SerializedNoSymbols = true;
                     this.environment = parentEnvironment;
                 }
 
@@ -878,33 +984,54 @@ using System.Activities.DynamicUpdate;
             else
             {
                 this.environment = new LocationEnvironment(executor, this.Activity, parentEnvironment, symbolCount);
-                this.substate = Substate.ResolvingArguments;
+                this.SerializedSubstate = Substate.ResolvingArguments;
                 return true;
             }
         }
 
+        /// <summary>
+        /// Resolves the new arguments during dynamic update.
+        /// </summary>
+        /// <param name="executor">The executor.</param>
+        /// <param name="dynamicUpdateArgumentIndexes">The dynamic update argument indexes.</param>
         internal void ResolveNewArgumentsDuringDynamicUpdate(ActivityExecutor executor, IList<int> dynamicUpdateArgumentIndexes)
         {
-            Fx.Assert(!this.noSymbols, "Can only resolve arguments if we created an environment");
-            Fx.Assert(this.substate == Substate.Executing, "Dynamically added arguments are to be resolved only in Substate.Executing.");
+            Fx.Assert(!this.SerializedNoSymbols, "Can only resolve arguments if we created an environment");
+            Fx.Assert(this.SerializedSubstate == Substate.Executing, "Dynamically added arguments are to be resolved only in Substate.Executing.");
 
             if (this.Activity.SkipArgumentResolution)
             {
                 return;
             }
 
-            IList<RuntimeArgument> runtimeArguments = this.Activity.RuntimeArguments;
+            var runtimeArguments = this.Activity.RuntimeArguments;
 
-            for (int i = 0; i < dynamicUpdateArgumentIndexes.Count; i++)
+            for (var i = 0; i < dynamicUpdateArgumentIndexes.Count; i++)
             {
-                RuntimeArgument argument = runtimeArguments[dynamicUpdateArgumentIndexes[i]];
+                var argument = runtimeArguments[dynamicUpdateArgumentIndexes[i]];
                 Fx.Assert(this.Environment.GetSpecificLocation(argument.Id) == null, "This is a newly added argument so the location should be null");
 
                 this.InternalTryPopulateArgumentValueOrScheduleExpression(argument, -1, executor, null, null, true);
             }
         }
 
-        private bool InternalTryPopulateArgumentValueOrScheduleExpression(RuntimeArgument argument, int nextArgumentIndex, ActivityExecutor executor, IDictionary<string, object> argumentValueOverrides, Location resultLocation, bool isDynamicUpdate)
+        /// <summary>
+        /// Internals the try populate argument value or schedule expression.
+        /// </summary>
+        /// <param name="argument">The argument.</param>
+        /// <param name="nextArgumentIndex">Index of the next argument.</param>
+        /// <param name="executor">The executor.</param>
+        /// <param name="argumentValueOverrides">The argument value overrides.</param>
+        /// <param name="resultLocation">The result location.</param>
+        /// <param name="isDynamicUpdate">if set to <c>true</c> [is dynamic update].</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        private bool InternalTryPopulateArgumentValueOrScheduleExpression(
+            RuntimeArgument argument,
+            int nextArgumentIndex,
+            ActivityExecutor executor,
+            IDictionary<string, object> argumentValueOverrides,
+            Location resultLocation,
+            bool isDynamicUpdate)
         {
             object overrideValue = null;
             if (argumentValueOverrides != null)
@@ -918,7 +1045,7 @@ using System.Activities.DynamicUpdate;
             }
 
             ResolveNextArgumentWorkItem workItem = null;
-            Location location = this.environment.GetSpecificLocation(argument.Id);
+            var location = this.environment.GetSpecificLocation(argument.Id);
 
             if (isDynamicUpdate)
             {
@@ -932,11 +1059,11 @@ using System.Activities.DynamicUpdate;
             else
             {
                 //1. Check if there are more arguments to process
-                nextArgumentIndex = nextArgumentIndex + 1;
+                nextArgumentIndex += 1;
 
                 // 2. Add a workitem to resume argument resolution when
-                // work related to 3 below either completes or it hits an async point.           
-                int totalArgumentCount = this.Activity.RuntimeArguments.Count;
+                // work related to 3 below either completes or it hits an async point.
+                var totalArgumentCount = this.Activity.RuntimeArguments.Count;
 
                 if (nextArgumentIndex < totalArgumentCount)
                 {
@@ -951,13 +1078,20 @@ using System.Activities.DynamicUpdate;
             return false;
         }
 
-        // return true if arguments were resolved synchronously
+        /// <summary>
+        /// Resolves the arguments.
+        /// </summary>
+        /// <param name="executor">The executor.</param>
+        /// <param name="argumentValueOverrides">The argument value overrides.</param>
+        /// <param name="resultLocation">The result location.</param>
+        /// <param name="startIndex">The start index.</param>
+        /// <returns><c>true</c> if arguments were resolved synchronously, <c>false</c> otherwise.</returns>
         internal bool ResolveArguments(ActivityExecutor executor, IDictionary<string, object> argumentValueOverrides, Location resultLocation, int startIndex = 0)
         {
-            Fx.Assert(!this.noSymbols, "Can only resolve arguments if we created an environment");
-            Fx.Assert(this.substate == Substate.ResolvingArguments, "Invalid sub-state machine");
+            Fx.Assert(!this.SerializedNoSymbols, "Can only resolve arguments if we created an environment");
+            Fx.Assert(this.SerializedSubstate == Substate.ResolvingArguments, "Invalid sub-state machine");
 
-            bool completedSynchronously = true;
+            var completedSynchronously = true;
 
             if (this.Activity.IsFastPath)
             {
@@ -965,27 +1099,27 @@ using System.Activities.DynamicUpdate;
                 Fx.Assert(argumentValueOverrides == null, "We shouldn't have any overrides.");
                 Fx.Assert(((ActivityWithResult)this.Activity).ResultRuntimeArgument != null, "We should have a result argument");
 
-                RuntimeArgument argument = ((ActivityWithResult)this.Activity).ResultRuntimeArgument;
+                var argument = ((ActivityWithResult)this.Activity).ResultRuntimeArgument;
 
                 if (!argument.TryPopulateValue(this.environment, this, executor, null, resultLocation, false))
                 {
                     completedSynchronously = false;
 
-                    Location location = this.environment.GetSpecificLocation(argument.Id);
+                    var location = this.environment.GetSpecificLocation(argument.Id);
                     executor.ScheduleExpression(argument.BoundArgument.Expression, this, this.Environment, location, null);
                 }
             }
             else if (!this.Activity.SkipArgumentResolution)
             {
-                IList<RuntimeArgument> runtimeArguments = this.Activity.RuntimeArguments;
+                var runtimeArguments = this.Activity.RuntimeArguments;
 
-                int argumentCount = runtimeArguments.Count;
+                var argumentCount = runtimeArguments.Count;
 
                 if (argumentCount > 0)
                 {
-                    for (int i = startIndex; i < argumentCount; i++)
+                    for (var i = startIndex; i < argumentCount; i++)
                     {
-                        RuntimeArgument argument = runtimeArguments[i];
+                        var argument = runtimeArguments[i];
 
                         if (!this.InternalTryPopulateArgumentValueOrScheduleExpression(argument, i, executor, argumentValueOverrides, resultLocation, false))
                         {
@@ -1003,84 +1137,91 @@ using System.Activities.DynamicUpdate;
                 // == 0).  Otherwise, a call to UpdateState will
                 // cause the substate switch (as well as a call to
                 // CollapseTemporaryResolutionLocations).
-                this.substate = Substate.ResolvingVariables;
+                this.SerializedSubstate = Substate.ResolvingVariables;
             }
 
             return completedSynchronously;
         }
 
+        /// <summary>
+        /// Resolves the new variable defaults during dynamic update.
+        /// </summary>
+        /// <param name="executor">The executor.</param>
+        /// <param name="dynamicUpdateVariableIndexes">The dynamic update variable indexes.</param>
+        /// <param name="forImplementation">if set to <c>true</c> [for implementation].</param>
         internal void ResolveNewVariableDefaultsDuringDynamicUpdate(ActivityExecutor executor, IList<int> dynamicUpdateVariableIndexes, bool forImplementation)
         {
-            Fx.Assert(!this.noSymbols, "Can only resolve variable default if we created an environment");
-            Fx.Assert(this.substate == Substate.Executing, "Dynamically added variable default expressions are to be resolved only in Substate.Executing.");
+            Fx.Assert(!this.SerializedNoSymbols, "Can only resolve variable default if we created an environment");
+            Fx.Assert(this.SerializedSubstate == Substate.Executing, "Dynamically added variable default expressions are to be resolved only in Substate.Executing.");
 
-            IList<Variable> runtimeVariables;
-            if (forImplementation)
+            var runtimeVariables = forImplementation ? this.Activity.ImplementationVariables : this.Activity.RuntimeVariables;
+            for (var i = 0; i < dynamicUpdateVariableIndexes.Count; i++)
             {
-                runtimeVariables = this.Activity.ImplementationVariables;
-            }
-            else
-            {
-                runtimeVariables = this.Activity.RuntimeVariables;
-            }
-
-            for (int i = 0; i < dynamicUpdateVariableIndexes.Count; i++)
-            {
-                Variable newVariable = runtimeVariables[dynamicUpdateVariableIndexes[i]];
+                var newVariable = runtimeVariables[dynamicUpdateVariableIndexes[i]];
                 if (newVariable.Default != null)
                 {
-                    EnqueueVariableDefault(executor, newVariable, null);
+                    this.EnqueueVariableDefault(executor, newVariable, null);
                 }
             }
         }
 
+        /// <summary>
+        /// Resolves the variables.
+        /// </summary>
+        /// <param name="executor">The executor.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         internal bool ResolveVariables(ActivityExecutor executor)
         {
-            Fx.Assert(!this.noSymbols, "can only resolve variables if we created an environment");
-            Fx.Assert(this.substate == Substate.ResolvingVariables, "invalid sub-state machine");
+            Fx.Assert(!this.SerializedNoSymbols, "can only resolve variables if we created an environment");
+            Fx.Assert(this.SerializedSubstate == Substate.ResolvingVariables, "invalid sub-state machine");
 
-            this.substate = Substate.ResolvingVariables;
-            bool completedSynchronously = true;
+            this.SerializedSubstate = Substate.ResolvingVariables;
+            var completedSynchronously = true;
 
-            IList<Variable> implementationVariables = this.Activity.ImplementationVariables;
-            IList<Variable> runtimeVariables = this.Activity.RuntimeVariables;
+            var implementationVariables = this.Activity.ImplementationVariables;
+            var runtimeVariables = this.Activity.RuntimeVariables;
 
-            int implementationVariableCount = implementationVariables.Count;
-            int runtimeVariableCount = runtimeVariables.Count;
+            var implementationVariableCount = implementationVariables.Count;
+            var runtimeVariableCount = runtimeVariables.Count;
 
             if (implementationVariableCount > 0 || runtimeVariableCount > 0)
             {
-                for (int i = 0; i < implementationVariableCount; i++)
+                for (var i = 0; i < implementationVariableCount; i++)
                 {
                     implementationVariables[i].DeclareLocation(executor, this);
                 }
 
-                for (int i = 0; i < runtimeVariableCount; i++)
+                for (var i = 0; i < runtimeVariableCount; i++)
                 {
                     runtimeVariables[i].DeclareLocation(executor, this);
                 }
 
-                for (int i = 0; i < implementationVariableCount; i++)
+                for (var i = 0; i < implementationVariableCount; i++)
                 {
-                    completedSynchronously &= ResolveVariable(implementationVariables[i], executor);
+                    completedSynchronously &= this.ResolveVariable(implementationVariables[i], executor);
                 }
 
-                for (int i = 0; i < runtimeVariableCount; i++)
+                for (var i = 0; i < runtimeVariableCount; i++)
                 {
-                    completedSynchronously &= ResolveVariable(runtimeVariables[i], executor);
+                    completedSynchronously &= this.ResolveVariable(runtimeVariables[i], executor);
                 }
             }
 
             return completedSynchronously;
         }
 
-        // returns true if completed synchronously
+        /// <summary>
+        /// Resolves the variable.
+        /// </summary>
+        /// <param name="variable">The variable.</param>
+        /// <param name="executor">The executor.</param>
+        /// <returns><c>true</c> if completed synchronously, <c>false</c> otherwise.</returns>
         private bool ResolveVariable(Variable variable, ActivityExecutor executor)
         {
-            bool completedSynchronously = true;
+            var completedSynchronously = true;
             if (variable.Default != null)
             {
-                Location variableLocation = this.Environment.GetSpecificLocation(variable.Id);
+                var variableLocation = this.Environment.GetSpecificLocation(variable.Id);
 
                 if (variable.Default.UseOldFastPath)
                 {
@@ -1088,7 +1229,7 @@ using System.Activities.DynamicUpdate;
                 }
                 else
                 {
-                    EnqueueVariableDefault(executor, variable, variableLocation);
+                    this.EnqueueVariableDefault(executor, variable, variableLocation);
                     completedSynchronously = false;
                 }
             }
@@ -1096,6 +1237,12 @@ using System.Activities.DynamicUpdate;
             return completedSynchronously;
         }
 
+        /// <summary>
+        /// Enqueues the variable default.
+        /// </summary>
+        /// <param name="executor">The executor.</param>
+        /// <param name="variable">The variable.</param>
+        /// <param name="variableLocation">The variable location.</param>
         private void EnqueueVariableDefault(ActivityExecutor executor, Variable variable, Location variableLocation)
         {
             // Incomplete initialization detection logic relies on the fact that we
@@ -1106,10 +1253,18 @@ using System.Activities.DynamicUpdate;
             {
                 variableLocation = this.environment.GetSpecificLocation(variable.Id);
             }
+
             variable.SetIsWaitingOnDefaultValue(variableLocation);
             executor.ScheduleExpression(variable.Default, this, this.environment, variableLocation, null);
         }
 
+        /// <summary>
+        /// Loads the specified activity.
+        /// </summary>
+        /// <param name="activity">The activity.</param>
+        /// <param name="instanceMap">The instance map.</param>
+        /// <exception cref="ValidationException"></exception>
+        /// <exception cref="VersionMismatchException"></exception>
         void ActivityInstanceMap.IActivityReference.Load(Activity activity, ActivityInstanceMap instanceMap)
         {
             if (activity.GetType().Name != this.OwnerName)
@@ -1126,10 +1281,14 @@ using System.Activities.DynamicUpdate;
             this.Activity = activity;
         }
 
-        // Returns true if the activity completed
+        /// <summary>
+        /// Updates the state.
+        /// </summary>
+        /// <param name="executor">The executor.</param>
+        /// <returns><c>true</c> if the activity completed, <c>false</c> otherwise.</returns>
         internal bool UpdateState(ActivityExecutor executor)
         {
-            bool activityCompleted = false;
+            var activityCompleted = false;
 
             if (this.HasNotExecuted)
             {
@@ -1137,7 +1296,7 @@ using System.Activities.DynamicUpdate;
                 {
                     if (this.HasChildren)
                     {
-                        foreach (ActivityInstance child in this.GetChildren())
+                        foreach (var child in this.GetChildren())
                         {
                             Fx.Assert(child.State == ActivityInstanceState.Executing, "should only have children if they're still executing");
                             executor.CancelActivity(child);
@@ -1145,23 +1304,23 @@ using System.Activities.DynamicUpdate;
                     }
                     else
                     {
-                        SetCanceled();
+                        this.SetCanceled();
                         activityCompleted = true;
                     }
                 }
                 else if (!this.HasPendingWork)
                 {
-                    bool scheduleBody = false;
+                    var scheduleBody = false;
 
-                    if (this.substate == Substate.ResolvingArguments)
+                    if (this.SerializedSubstate == Substate.ResolvingArguments)
                     {
                         // if we've had asynchronous resolution of Locations (Out/InOut Arguments), resolve them now
                         this.Environment.CollapseTemporaryResolutionLocations();
 
-                        this.substate = Substate.ResolvingVariables;
-                        scheduleBody = ResolveVariables(executor);
+                        this.SerializedSubstate = Substate.ResolvingVariables;
+                        scheduleBody = this.ResolveVariables(executor);
                     }
-                    else if (this.substate == Substate.ResolvingVariables)
+                    else if (this.SerializedSubstate == Substate.ResolvingVariables)
                     {
                         scheduleBody = true;
                     }
@@ -1179,26 +1338,26 @@ using System.Activities.DynamicUpdate;
                 if (!executor.IsCompletingTransaction(this))
                 {
                     activityCompleted = true;
-                    if (this.substate == Substate.Canceling)
+                    if (this.SerializedSubstate == Substate.Canceling)
                     {
-                        SetCanceled();
+                        this.SetCanceled();
                     }
                     else
                     {
-                        SetClosed();
+                        this.SetClosed();
                     }
-                } 
+                }
             }
-            else if (this.performingDefaultCancelation)
+            else if (this.SerializedPerformingDefaultCancelation)
             {
                 if (this.OnlyHasOutstandingBookmarks)
                 {
-                    RemoveAllBookmarks(executor.RawBookmarkScopeManager, executor.RawBookmarkManager);
-                    MarkCanceled();
+                    this.RemoveAllBookmarks(executor.RawBookmarkScopeManager, executor.RawBookmarkManager);
+                    this.MarkCanceled();
 
                     Fx.Assert(!this.HasPendingWork, "Shouldn't have pending work here.");
 
-                    SetCanceled();
+                    this.SetCanceled();
                     activityCompleted = true;
                 }
             }
@@ -1206,50 +1365,47 @@ using System.Activities.DynamicUpdate;
             return activityCompleted;
         }
 
+        /// <summary>
+        /// Tries the cancel parent.
+        /// </summary>
         private void TryCancelParent()
         {
-            if (this.parent != null && this.parent.IsPerformingDefaultCancelation)
+            if (this.Parent != null && this.Parent.IsPerformingDefaultCancelation)
             {
-                this.parent.MarkCanceled();
+                this.Parent.MarkCanceled();
             }
         }
 
+        /// <summary>
+        /// Sets the initialized substate.
+        /// </summary>
+        /// <param name="executor">The executor.</param>
         internal void SetInitializedSubstate(ActivityExecutor executor)
         {
-            Fx.Assert(this.substate != Substate.Initialized, "SetInitializedSubstate called when substate is already Initialized.");
-            this.substate = Substate.Initialized;
+            Fx.Assert(this.SerializedSubstate != Substate.Initialized, "SetInitializedSubstate called when substate is already Initialized.");
+            this.SerializedSubstate = Substate.Initialized;
             if (executor.ShouldTrackActivityStateRecordsExecutingState)
             {
                 if (executor.ShouldTrackActivity(this.Activity.DisplayName))
                 {
-                    executor.AddTrackingRecord(new ActivityStateRecord(executor.WorkflowInstanceId, this, this.state));
+                    executor.AddTrackingRecord(new ActivityStateRecord(executor.WorkflowInstanceId, this, this.State));
                 }
             }
 
             if (TD.InArgumentBoundIsEnabled())
             {
-                int runtimeArgumentsCount = this.Activity.RuntimeArguments.Count;
+                var runtimeArgumentsCount = this.Activity.RuntimeArguments.Count;
                 if (runtimeArgumentsCount > 0)
                 {
-                    for (int i = 0; i < runtimeArgumentsCount; i++)
+                    for (var i = 0; i < runtimeArgumentsCount; i++)
                     {
-                        RuntimeArgument argument = this.Activity.RuntimeArguments[i];
+                        var argument = this.Activity.RuntimeArguments[i];
 
                         if (ArgumentDirectionHelper.IsIn(argument.Direction))
                         {
-                            if (this.environment.TryGetLocation(argument.Id, this.Activity, out Location location))
+                            if (this.environment.TryGetLocation(argument.Id, this.Activity, out var location))
                             {
-                                string argumentValue = null;
-
-                                if (location.Value == null)
-                                {
-                                    argumentValue = "<Null>";
-                                }
-                                else
-                                {
-                                    argumentValue = "'" + location.Value.ToString() + "'";
-                                }
-
+                                var argumentValue = location.Value == null ? "<Null>" : $"'{location.Value.ToString()}'";
                                 TD.InArgumentBound(argument.Name, this.Activity.GetType().ToString(), this.Activity.DisplayName, this.Id, argumentValue);
                             }
                         }
@@ -1258,30 +1414,38 @@ using System.Activities.DynamicUpdate;
             }
         }
 
-        internal void FinalizeState(ActivityExecutor executor, bool faultActivity)
-        {
-            FinalizeState(executor, faultActivity, false);
-        }
+        /// <summary>
+        /// Finalizes the state.
+        /// </summary>
+        /// <param name="executor">The executor.</param>
+        /// <param name="faultActivity">if set to <c>true</c> [fault activity].</param>
+        internal void FinalizeState(ActivityExecutor executor, bool faultActivity) => this.FinalizeState(executor, faultActivity, false);
 
+        /// <summary>
+        /// Finalizes the state.
+        /// </summary>
+        /// <param name="executor">The executor.</param>
+        /// <param name="faultActivity">if set to <c>true</c> [fault activity].</param>
+        /// <param name="skipTracking">if set to <c>true</c> [skip tracking].</param>
         internal void FinalizeState(ActivityExecutor executor, bool faultActivity, bool skipTracking)
         {
             if (faultActivity)
             {
-                TryCancelParent();
+                this.TryCancelParent();
 
                 // We can override previous completion states with this
-                this.state = ActivityInstanceState.Faulted;
+                this.State = ActivityInstanceState.Faulted;
             }
 
-            Fx.Assert(this.state != ActivityInstanceState.Executing, "We must be in a completed state at this point.");
+            Fx.Assert(this.State != ActivityInstanceState.Executing, "We must be in a completed state at this point.");
 
-            if (this.state == ActivityInstanceState.Closed)
+            if (this.State == ActivityInstanceState.Closed)
             {
                 if (executor.ShouldTrackActivityStateRecordsClosedState && !skipTracking)
                 {
                     if (executor.ShouldTrackActivity(this.Activity.DisplayName))
                     {
-                        executor.AddTrackingRecord(new ActivityStateRecord(executor.WorkflowInstanceId, this, this.state));
+                        executor.AddTrackingRecord(new ActivityStateRecord(executor.WorkflowInstanceId, this, this.State));
                     }
                 }
             }
@@ -1289,7 +1453,7 @@ using System.Activities.DynamicUpdate;
             {
                 if (executor.ShouldTrackActivityStateRecords && !skipTracking)
                 {
-                    executor.AddTrackingRecord(new ActivityStateRecord(executor.WorkflowInstanceId, this, this.state));
+                    executor.AddTrackingRecord(new ActivityStateRecord(executor.WorkflowInstanceId, this, this.State));
                 }
             }
 
@@ -1297,28 +1461,42 @@ using System.Activities.DynamicUpdate;
             {
                 TD.ActivityCompleted(this.Activity.GetType().ToString(), this.Activity.DisplayName, this.Id, this.State.GetStateName());
             }
-
         }
 
+        /// <summary>
+        /// Sets the canceled.
+        /// </summary>
         private void SetCanceled()
         {
             Fx.Assert(!this.IsCompleted, "Should not be completed if we are changing the state.");
 
-            TryCancelParent();
+            this.TryCancelParent();
 
-            this.state = ActivityInstanceState.Canceled;
+            this.State = ActivityInstanceState.Canceled;
         }
 
+        /// <summary>
+        /// Sets the closed.
+        /// </summary>
         private void SetClosed()
         {
             Fx.Assert(!this.IsCompleted, "Should not be completed if we are changing the state.");
 
-            this.state = ActivityInstanceState.Closed;
+            this.State = ActivityInstanceState.Closed;
         }
 
-        private static void UpdateLocationEnvironmentHierarchy(LocationEnvironment oldParentEnvironment, LocationEnvironment newEnvironment, ActivityInstance currentInstance)
+        /// <summary>
+        /// Updates the location environment hierarchy.
+        /// </summary>
+        /// <param name="oldParentEnvironment">The old parent environment.</param>
+        /// <param name="newEnvironment">The new environment.</param>
+        /// <param name="currentInstance">The current instance.</param>
+        private static void UpdateLocationEnvironmentHierarchy(
+            LocationEnvironment oldParentEnvironment,
+            LocationEnvironment newEnvironment,
+            ActivityInstance currentInstance)
         {
-            Func<ActivityInstance, ActivityExecutor, bool> processInstanceCallback = delegate(ActivityInstance instance, ActivityExecutor executor)
+            bool processInstanceCallback(ActivityInstance instance, ActivityExecutor executor)
             {
                 if (instance == currentInstance)
                 {
@@ -1344,422 +1522,9 @@ using System.Activities.DynamicUpdate;
                 }
 
                 return true;
-            };
+            }
 
             ActivityUtilities.ProcessActivityInstanceTree(currentInstance, null, processInstanceCallback);
         }
-
-#if NET45
-        void ActivityInstanceMap.IActivityReferenceWithEnvironment.UpdateEnvironment(EnvironmentUpdateMap map, Activity activity)
-        {            
-            Fx.Assert(this.substate != Substate.ResolvingVariables, "We must have already performed the same validations in advance.");
-            Fx.Assert(this.substate != Substate.ResolvingArguments, "We must have already performed the same validations in advance.");
-
-            if (this.noSymbols)
-            {
-                // create a new LocationReference and this ActivityInstance becomes the owner of the created environment.
-                LocationEnvironment oldParentEnvironment = this.environment;
-
-                Fx.Assert(oldParentEnvironment != null, "environment must never be null.");
-
-                this.environment = new LocationEnvironment(oldParentEnvironment, map.NewArgumentCount + map.NewVariableCount + map.NewPrivateVariableCount + map.RuntimeDelegateArgumentCount);
-                this.noSymbols = false;
-
-                // traverse the activity instance chain.
-                // Update all its non-environment-owning decedent instances to point to the newly created enviroment,
-                // and, update all its environment-owning decendent instances to have their environment's parent to point to the newly created environment.
-                UpdateLocationEnvironmentHierarchy(oldParentEnvironment, this.environment, this);
-            }
-
-            this.Environment.Update(map, activity);
-        }
-#endif
-
-        internal enum Substate : byte
-        {
-            Executing = 0, // choose the most common persist-time state for the default
-            PreExecuting = 0x80, // used for all states prior to "core execution"
-            Created = 1 | Substate.PreExecuting,
-            ResolvingArguments = 2 | Substate.PreExecuting,
-            // ResolvedArguments = 2,
-            ResolvingVariables = 3 | Substate.PreExecuting,
-            // ResolvedVariables = 3,
-            Initialized = 4 | Substate.PreExecuting,
-            Canceling = 5,
-        }
-
-        // data necessary to support non-mainline usage of instances (i.e. creating bookmarks, using transactions)
-        [DataContract]
-        internal class ExtendedData
-        {
-            private BookmarkList bookmarks;
-            private ActivityReferenceList activityReferences;
-            private int blockingBookmarkCount;
-
-            public ExtendedData()
-            {
-            }
-                        
-            public int BlockingBookmarkCount
-            {
-                get
-                {
-                    return blockingBookmarkCount;
-                }
-                private set
-                {
-                    blockingBookmarkCount = value;
-                }
-            }
-
-            [DataMember(Name = XD.ActivityInstance.WaitingForTransactionContext, EmitDefaultValue = false)]
-            public bool WaitingForTransactionContext
-            {
-                get;
-                set;
-            }
-
-            [DataMember(Name = XD.ActivityInstance.FaultBookmark, EmitDefaultValue = false)]
-            public FaultBookmark FaultBookmark
-            {
-                get;
-                set;
-            }
-
-            public WorkflowDataContext DataContext
-            {
-                get;
-                set;
-            }
-
-            [DataMember(Name = XD.ActivityInstance.BlockingBookmarkCount, EmitDefaultValue = false)]
-            internal int SerializedBlockingBookmarkCount
-            {
-                get { return this.BlockingBookmarkCount; }
-                set { this.BlockingBookmarkCount = value; }
-            }
-
-            [DataMember(Name = XD.ActivityInstance.Bookmarks, EmitDefaultValue = false)]
-            //[SuppressMessage(FxCop.Category.Performance, FxCop.Rule.AvoidUncalledPrivateCode, Justification = "Called from Serialization")]
-            internal BookmarkList Bookmarks
-            {
-                get
-                {
-                    if (this.bookmarks == null || this.bookmarks.Count == 0)
-                    {
-                        return null;
-                    }
-                    else
-                    {
-                        return this.bookmarks;
-                    }
-                }
-                set
-                {
-                    Fx.Assert(value != null, "We don't emit the default value so this should never be null.");
-                    this.bookmarks = value;
-                }
-            }
-
-            [DataMember(Name = XD.ActivityInstance.ActivityReferences, EmitDefaultValue = false)]
-            //[SuppressMessage(FxCop.Category.Performance, FxCop.Rule.AvoidUncalledPrivateCode, Justification = "Called from Serialization")]
-            internal ActivityReferenceList ActivityReferences
-            {
-                get
-                {
-                    if (this.activityReferences == null || this.activityReferences.Count == 0)
-                    {
-                        return null;
-                    }
-                    else
-                    {
-                        return this.activityReferences;
-                    }
-                }
-                set
-                {
-                    Fx.Assert(value != null && value.Count > 0, "We shouldn't emit the default value or empty lists");
-                    this.activityReferences = value;
-                }
-            }
-
-            public bool HasActivityReferences
-            {
-                get
-                {
-                    return this.activityReferences != null && this.activityReferences.Count > 0;
-                }
-            }
-
-            public void AddBookmark(Bookmark bookmark, bool affectsBusyCount)
-            {
-                if (this.bookmarks == null)
-                {
-                    this.bookmarks = new BookmarkList();
-                }
-
-                if (affectsBusyCount)
-                {
-                    this.BlockingBookmarkCount = this.BlockingBookmarkCount + 1;
-                }
-
-                this.bookmarks.Add(bookmark);
-            }
-
-            public void RemoveBookmark(Bookmark bookmark, bool affectsBusyCount)
-            {
-                Fx.Assert(this.bookmarks != null, "The bookmark list should have been initialized if we are trying to remove one.");
-
-                if (affectsBusyCount)
-                {
-                    Fx.Assert(this.BlockingBookmarkCount > 0, "We should never decrement below zero.");
-
-                    this.BlockingBookmarkCount = this.BlockingBookmarkCount - 1;
-                }
-
-                this.bookmarks.Remove(bookmark);
-            }
-
-            public void PurgeBookmarks(BookmarkScopeManager bookmarkScopeManager, BookmarkManager bookmarkManager, ActivityInstance owningInstance)
-            {
-                if (this.bookmarks != null)
-                {
-                    if (this.bookmarks.Count > 0)
-                    {
-                        this.bookmarks.TransferBookmarks(out Bookmark singleBookmark, out IList<Bookmark> multipleBookmarks);
-                        this.bookmarks = null;
-
-                        if (bookmarkScopeManager != null)
-                        {
-                            bookmarkScopeManager.PurgeBookmarks(bookmarkManager, singleBookmark, multipleBookmarks);
-                        }
-                        else
-                        {
-                            bookmarkManager.PurgeBookmarks(singleBookmark, multipleBookmarks);
-                        }
-
-                        // Clean up the busy count
-                        owningInstance.DecrementBusyCount(this.BlockingBookmarkCount);
-                        this.BlockingBookmarkCount = 0;
-                    }
-                }
-            }
-
-            public void AddActivityReference(ActivityInstanceReference reference)
-            {
-                if (this.activityReferences == null)
-                {
-                    this.activityReferences = new ActivityReferenceList();
-                }
-
-                this.activityReferences.Add(reference);
-            }
-
-            public void FillInstanceMap(ActivityInstanceMap instanceMap)
-            {
-                Fx.Assert(this.HasActivityReferences, "Must have references to have called this.");
-
-                this.activityReferences.FillInstanceMap(instanceMap);
-            }
-
-            public void PurgeActivityReferences(ActivityInstanceMap instanceMap)
-            {
-                Fx.Assert(this.HasActivityReferences, "Must have references to have called this.");
-
-                this.activityReferences.PurgeActivityReferences(instanceMap);
-            }
-
-            [DataContract]
-            internal class ActivityReferenceList : HybridCollection<ActivityInstanceReference>
-            {
-                public ActivityReferenceList()
-                    : base()
-                {
-                }
-
-                public void FillInstanceMap(ActivityInstanceMap instanceMap)
-                {
-                    Fx.Assert(this.Count > 0, "Should only call this when we have items");
-
-                    if (this.SingleItem != null)
-                    {
-                        instanceMap.AddEntry(this.SingleItem);
-                    }
-                    else
-                    {
-                        for (int i = 0; i < this.MultipleItems.Count; i++)
-                        {
-                            ActivityInstanceReference reference = this.MultipleItems[i];
-
-                            instanceMap.AddEntry(reference);
-                        }
-                    }
-                }
-
-                public void PurgeActivityReferences(ActivityInstanceMap instanceMap)
-                {
-                    Fx.Assert(this.Count > 0, "Should only call this when we have items");
-
-                    if (this.SingleItem != null)
-                    {
-                        instanceMap.RemoveEntry(this.SingleItem);
-                    }
-                    else
-                    {
-                        for (int i = 0; i < this.MultipleItems.Count; i++)
-                        {
-                            instanceMap.RemoveEntry(this.MultipleItems[i]);
-                        }
-                    }
-                }
-            }
-        }
-
-        [DataContract]
-        internal class ChildList : HybridCollection<ActivityInstance>
-        {
-            private static ReadOnlyCollection<ActivityInstance> emptyChildren;
-
-            public ChildList()
-                : base()
-            {
-            }
-
-            public static ReadOnlyCollection<ActivityInstance> Empty
-            {
-                get
-                {
-                    if (emptyChildren == null)
-                    {
-                        emptyChildren = new ReadOnlyCollection<ActivityInstance>(Array.Empty<ActivityInstance>());
-                    }
-
-                    return emptyChildren;
-                }
-            }
-
-            public void AppendChildren(ActivityUtilities.TreeProcessingList nextInstanceList, ref Queue<IList<ActivityInstance>> instancesRemaining)
-            {
-                // This is only called if there is at least one item in the list.
-
-                if (base.SingleItem != null)
-                {
-                    nextInstanceList.Add(base.SingleItem);
-                }
-                else if (nextInstanceList.Count == 0)
-                {
-                    nextInstanceList.Set(base.MultipleItems);
-                }
-                else
-                {
-                    // Next instance list already has some stuff and we have multiple
-                    // items.  Let's enqueue them for later processing.
-
-                    if (instancesRemaining == null)
-                    {
-                        instancesRemaining = new Queue<IList<ActivityInstance>>();
-                    }
-
-                    instancesRemaining.Enqueue(base.MultipleItems);
-                }
-            }
-
-            public void FixupList(ActivityInstance parent, ActivityInstanceMap instanceMap, ActivityExecutor executor)
-            {
-                if (base.SingleItem != null)
-                {
-                    base.SingleItem.FixupInstance(parent, instanceMap, executor);
-                }
-                else
-                {
-                    for (int i = 0; i < base.MultipleItems.Count; i++)
-                    {
-                        base.MultipleItems[i].FixupInstance(parent, instanceMap, executor);
-                    }
-                }
-            }
-        }
-
-        // Does a depth first walk and uses some knowledge of
-        // the abort process to determine which child to visit next
-        private class AbortEnumerator : IEnumerator<ActivityInstance>
-        {
-            private readonly ActivityInstance root;
-            private ActivityInstance current;
-            private bool initialized;
-
-            public AbortEnumerator(ActivityInstance root)
-            {
-                this.root = root;
-            }
-
-            public ActivityInstance Current
-            {
-                get
-                {
-                    return this.current;
-                }
-            }
-
-            object IEnumerator.Current
-            {
-                get
-                {
-                    return this.Current;
-                }
-            }
-
-            public bool MoveNext()
-            {
-                if (!this.initialized)
-                {
-                    this.current = root;
-
-                    // We start by diving down the tree along the
-                    // "first child" path
-                    while (this.current.HasChildren)
-                    {
-                        this.current = this.current.GetChildren()[0];
-                    }
-
-                    this.initialized = true;
-
-                    return true;
-                }
-                else
-                {
-                    if (this.current == this.root)
-                    {
-                        // We're done if we returned all the way to the root last time
-                        return false;
-                    }
-                    else
-                    {
-                        Fx.Assert(!this.current.Parent.GetChildren().Contains(this.current), "We should always have removed the current one from the parent's list by now.");
-
-                        this.current = this.current.Parent;
-
-                        // Dive down the tree of remaining first children
-                        while (this.current.HasChildren)
-                        {
-                            this.current = this.current.GetChildren()[0];
-                        }
-
-                        return true;
-                    }
-                }
-            }
-
-            public void Reset()
-            {
-                this.current = null;
-                this.initialized = false;
-            }
-
-            public void Dispose()
-            {
-                // no op
-            }
-        }
-    }    
+    }
 }

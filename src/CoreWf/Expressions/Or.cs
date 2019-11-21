@@ -3,15 +3,17 @@
 
 namespace System.Activities.Expressions
 {
+    using System;
     using System.Activities;
     using System.Activities.Runtime;
-    using System.Activities.Validation;
-    using System;
     using System.ComponentModel;
     using System.Linq.Expressions;
 
+
     //[SuppressMessage(FxCop.Category.Naming, FxCop.Rule.IdentifiersShouldNotMatchKeywords,
     //    Justification = "Optimizing for XAML naming. VB imperative users will [] qualify (e.g. New [Or])")]
+    [Diagnostics.CodeAnalysis.SuppressMessage("Naming", "CA1716:Identifiers should not match keywords",
+        Justification = "Optimizing for XAML naming. VB imperative users will [] qualify (e.g. New [Or])")]
     public sealed class Or<TLeft, TRight, TResult> : CodeActivity<TResult>
     {
         //Lock is not needed for operationFunction here. The reason is that delegates for a given Or<TLeft, TRight, TResult> are the same.
@@ -40,7 +42,7 @@ namespace System.Activities.Expressions
 
             if (operationFunction == null)
             {
-                if (!BinaryExpressionHelper.TryGenerateLinqDelegate(ExpressionType.Or, out operationFunction, out ValidationError validationError))
+                if (!BinaryExpressionHelper.TryGenerateLinqDelegate(ExpressionType.Or, out operationFunction, out var validationError))
                 {
                     metadata.AddValidationError(validationError);
                 }
@@ -50,8 +52,8 @@ namespace System.Activities.Expressions
         protected override TResult Execute(CodeActivityContext context)
         {
             Fx.Assert(operationFunction != null, "OperationFunction must exist.");
-            TLeft leftValue = this.Left.Get(context);
-            TRight rightValue = this.Right.Get(context);
+            var leftValue = this.Left.Get(context);
+            var rightValue = this.Right.Get(context);
             return operationFunction(leftValue, rightValue);
         }
     }

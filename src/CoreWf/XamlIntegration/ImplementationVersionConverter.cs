@@ -17,7 +17,7 @@ namespace System.Activities.XamlIntegration
         public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
         {
 
-            if (value is string stringValue && Version.TryParse(stringValue, out Version deserializedVersion))
+            if (value is string stringValue && Version.TryParse(stringValue, out var deserializedVersion))
             {
                 return deserializedVersion;
             }
@@ -32,7 +32,7 @@ namespace System.Activities.XamlIntegration
 
         public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
         {
-            Version implementationVersion = value as Version;
+            var implementationVersion = value as Version;
             if (destinationType == typeof(string) && implementationVersion != null)
             {
                 return implementationVersion.ToString();

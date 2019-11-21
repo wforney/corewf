@@ -105,7 +105,7 @@ namespace System.Activities
 
             try
             {
-                IAsyncResult result = this.executor.BeginResumeBookmark(Bookmark.AsyncOperationCompletionBookmark,
+                var result = this.executor.BeginResumeBookmark(Bookmark.AsyncOperationCompletionBookmark,
                     completeData, TimeSpan.MaxValue, onResumeAsyncCodeActivityBookmark, this.executor);
                 if (result.CompletedSynchronously)
                 {
@@ -130,7 +130,7 @@ namespace System.Activities
                 return;
             }
 
-            ActivityExecutor executor = (ActivityExecutor)result.AsyncState;
+            var executor = (ActivityExecutor)result.AsyncState;
 
             try
             {

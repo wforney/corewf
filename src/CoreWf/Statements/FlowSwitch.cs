@@ -70,7 +70,7 @@ namespace System.Activities.Statements
 
         internal override void GetConnectedNodes(IList<FlowNode> connections)
         {
-            foreach (KeyValuePair<T, FlowNode> item in this.Cases)
+            foreach (var item in this.Cases)
             {
                 connections.Add(item.Value);
             }
@@ -93,8 +93,8 @@ namespace System.Activities.Statements
 
         FlowNode IFlowSwitch.GetNextNode(object value)
         {
-            T newValue = (T)value;
-            if (Cases.TryGetValue(newValue, out FlowNode result))
+            var newValue = (T)value;
+            if (Cases.TryGetValue(newValue, out var result))
             {
                 if (TD.FlowchartSwitchCaseIsEnabled())
                 {

@@ -268,7 +268,7 @@ namespace System.Activities.Debugger
         }
 
         [Fx.Tag.InheritThrows(From = "TryGetProperty", FromDeclaringType = typeof(AttachablePropertyServices))]
-        static int GetIntegerAttachedProperty(object instance, AttachableMemberIdentifier memberIdentifier)
+        private static int GetIntegerAttachedProperty(object instance, AttachableMemberIdentifier memberIdentifier)
         {
             int value;
             if (AttachablePropertyServices.TryGetProperty(instance, memberIdentifier, out value))
@@ -372,10 +372,10 @@ namespace System.Activities.Debugger
 
         internal static void SetSourceLocation(object sender, SourceLocationFoundEventArgs args)
         {
-            object target = args.Target;
-            Type targetType = target.GetType();
-            XamlDebuggerXmlReader reader = (XamlDebuggerXmlReader)sender;
-            bool shouldStoreAttachedProperty = false;
+            var target = args.Target;
+            var targetType = target.GetType();
+            var reader = (XamlDebuggerXmlReader)sender;
+            var shouldStoreAttachedProperty = false;
 
             if (reader.CollectNonActivitySourceLocation)
             {
@@ -399,7 +399,7 @@ namespace System.Activities.Debugger
 
             if (shouldStoreAttachedProperty)
             {
-                SourceLocation sourceLocation = args.SourceLocation;
+                var sourceLocation = args.SourceLocation;
                 XamlDebuggerXmlReader.SetStartLine(target, sourceLocation.StartLine);
                 XamlDebuggerXmlReader.SetStartColumn(target, sourceLocation.StartColumn);
                 XamlDebuggerXmlReader.SetEndLine(target, sourceLocation.EndLine);
@@ -436,9 +436,9 @@ namespace System.Activities.Debugger
                             // representation of initialization text, where a string within an 
                             // object element supplies the type construction information for 
                             // the surrounding object element.
-                            bool isInitializationValue = this.Current.Member == XamlLanguage.Initialization;
+                            var isInitializationValue = this.Current.Member == XamlLanguage.Initialization;
 
-                            bool moreNode = this.underlyingReader.Read();
+                            var moreNode = this.underlyingReader.Read();
                             UnitTestUtility.Assert(moreNode, "Start Member must followed by some other nodes.");
 
                             this.Current = this.CreateCurrentNode();
@@ -453,22 +453,22 @@ namespace System.Activities.Debugger
                                 && this.Current.NodeType == XamlNodeType.Value)
                             {
                                 DocumentRange valueRange;
-                                DocumentLocation currentLocation = new DocumentLocation(this.Current.LineNumber, this.Current.LinePosition);
-                                bool isInAttribute = this.xmlReaderWithSourceLocation.AttributeValueRanges.TryGetValue(currentLocation, out valueRange);
-                                bool isInContent = isInAttribute ? false : this.xmlReaderWithSourceLocation.ContentValueRanges.TryGetValue(currentLocation, out valueRange);
+                                var currentLocation = new DocumentLocation(this.Current.LineNumber, this.Current.LinePosition);
+                                var isInAttribute = this.xmlReaderWithSourceLocation.AttributeValueRanges.TryGetValue(currentLocation, out valueRange);
+                                var isInContent = isInAttribute ? false : this.xmlReaderWithSourceLocation.ContentValueRanges.TryGetValue(currentLocation, out valueRange);
 
                                 if (isInAttribute || (isInContent && !isInitializationValue))
                                 {
                                     // For Value Node with known line info, we want to route the value setting process through this Reader.
                                     // Therefore we need to go back to the member node and replace the XamlMemberInvoker.
-                                    XamlNode startMemberNodeForValue = this.bufferedXamlNodes.Peek();
-                                    XamlMember xamlMemberForValue = startMemberNodeForValue.Member;
+                                    var startMemberNodeForValue = this.bufferedXamlNodes.Peek();
+                                    var xamlMemberForValue = startMemberNodeForValue.Member;
                                     XamlMemberInvoker newXamlMemberInvoker = new ValueNodeXamlMemberInvoker(this, xamlMemberForValue.Invoker, valueRange);
                                     startMemberNodeForValue.Member = xamlMemberForValue.ReplaceXamlMemberInvoker(this.schemaContext, newXamlMemberInvoker);
                                 }
                                 else if (isInContent && isInitializationValue)
                                 {
-                                    XamlNode currentStartObject = this.objectDeclarationRecords.Peek();
+                                    var currentStartObject = this.objectDeclarationRecords.Peek();
                                     
                                     if (!this.initializationValueRanges.ContainsKey(currentStartObject))
                                     {
@@ -526,7 +526,7 @@ namespace System.Activities.Debugger
 
         private static XamlNode CreateCurrentNode(XamlReader xamlReader, IXamlLineInfo xamlLineInfo)
         {
-            XamlNode currentNode = new XamlNode
+            var currentNode = new XamlNode
             {
                 Namespace = xamlReader.Namespace,
                 NodeType = xamlReader.NodeType,
@@ -578,21 +578,21 @@ namespace System.Activities.Debugger
 
         private void OnValueNodeDeserialized(object value, DocumentRange attributeValueLocation)
         {
-            int startLine = attributeValueLocation.Start.LineNumber.Value;
-            int startColumn = attributeValueLocation.Start.LinePosition.Value;
-            int endLine = attributeValueLocation.End.LineNumber.Value;
-            int endColumn = attributeValueLocation.End.LinePosition.Value;
+            var startLine = attributeValueLocation.Start.LineNumber.Value;
+            var startColumn = attributeValueLocation.Start.LinePosition.Value;
+            var endLine = attributeValueLocation.End.LineNumber.Value;
+            var endColumn = attributeValueLocation.End.LinePosition.Value;
             // XamlDebuggerXmlReader has no idea what the filename is (it only knew a stream of data)
             // So we set FileName = null.
 
             // To enhance visual selection, endColumn + 1
-            SourceLocation valueLocation = new SourceLocation(null, startLine, startColumn, endLine, endColumn + 1);
+            var valueLocation = new SourceLocation(null, startLine, startColumn, endLine, endColumn + 1);
             this.NotifySourceLocationFound(value, valueLocation, isValueNode: true);
         }
 
         private void InjectLineInfoXamlNodesToBuffer()
         {
-            XamlNode startNode = this.objectDeclarationRecords.Pop();
+            var startNode = this.objectDeclarationRecords.Pop();
 
             if (!this.SuppressingMarkupExtension() 
                 && (startNode.Type != null && !startNode.Type.IsUnknown && !startNode.Type.IsMarkupExtension))
@@ -600,7 +600,7 @@ namespace System.Activities.Debugger
                 DocumentLocation myStartBracket = null;
                 DocumentLocation myEndBracket = null;
                 DocumentRange myRange;
-                DocumentLocation myStartLocation = new DocumentLocation(startNode.LineNumber, startNode.LinePosition);
+                var myStartLocation = new DocumentLocation(startNode.LineNumber, startNode.LinePosition);
                 if (this.xmlReaderWithSourceLocation.EmptyElementRanges.TryGetValue(myStartLocation, out myRange))
                 {
                     myStartBracket = myRange.Start;
@@ -608,13 +608,13 @@ namespace System.Activities.Debugger
                 }
                 else
                 {
-                    DocumentLocation myEndLocation = new DocumentLocation(this.Current.LineNumber, this.Current.LinePosition);
+                    var myEndLocation = new DocumentLocation(this.Current.LineNumber, this.Current.LinePosition);
                     this.xmlReaderWithSourceLocation.StartElementLocations.TryGetValue(myStartLocation, out myStartBracket);
                     this.xmlReaderWithSourceLocation.EndElementLocations.TryGetValue(myEndLocation, out myEndBracket);
                 }
 
                 // To enhance visual selection
-                DocumentLocation myRealEndBracket = new DocumentLocation(myEndBracket.LineNumber.Value, myEndBracket.LinePosition.Value + 1);
+                var myRealEndBracket = new DocumentLocation(myEndBracket.LineNumber.Value, myEndBracket.LinePosition.Value + 1);
 
                 this.bufferedXamlNodes.Clear();
                 this.InjectLineInfoMembersToBuffer(myStartBracket, myRealEndBracket);
@@ -622,7 +622,7 @@ namespace System.Activities.Debugger
                 DocumentRange valueRange;
                 if (this.initializationValueRanges.TryGetValue(startNode, out valueRange))
                 {
-                    DocumentRange realValueRange = new DocumentRange(valueRange.Start,
+                    var realValueRange = new DocumentRange(valueRange.Start,
                         new DocumentLocation(valueRange.End.LineNumber.Value, valueRange.End.LinePosition.Value + 1));
                     this.SourceLocationCollector.AddValueRange(new DocumentRange(myStartBracket, myRealEndBracket), realValueRange);
                 }
@@ -656,14 +656,14 @@ namespace System.Activities.Debugger
 
         private XamlMember CreateAttachableMember(MethodInfo getter, MethodInfo setter, SourceLocationMemberType memberType)
         {
-            string memberName = memberType.ToString();
-            SourceLocationMemberInvoker invoker = new SourceLocationMemberInvoker(this.SourceLocationCollector, memberType);
+            var memberName = memberType.ToString();
+            var invoker = new SourceLocationMemberInvoker(this.SourceLocationCollector, memberType);
             return new XamlMember(memberName, getter, setter, this.schemaContext, invoker);
         }
 
         private void NotifySourceLocationFound(object instance, SourceLocation currentLocation, bool isValueNode)
         {
-            Argument argumentInstance = instance as Argument;
+            var argumentInstance = instance as Argument;
 
             // For Argument containing an IValueSerializable expression serializing as a ValueNode.
             // We associate the SourceLocation to the expression instead of the Argument.
@@ -784,7 +784,7 @@ namespace System.Activities.Debugger
             public override void SetValue(object instance, object propertyValue)
             {
                 UnitTestUtility.Assert(propertyValue is int, "The value for this attachable property should be an integer and is ensured by the emitter.");
-                int value = (int)propertyValue;
+                var value = (int)propertyValue;
                 switch (this.sourceLocationMember)
                 {
                     case SourceLocationMemberType.StartLine:

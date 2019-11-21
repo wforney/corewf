@@ -14,7 +14,7 @@ namespace Microsoft.VisualBasic.Activities
     //    Justification = "Approved name")]
     public static class VisualBasic
     {
-        static AttachableMemberIdentifier settingsPropertyID = new AttachableMemberIdentifier(typeof(VisualBasic), "Settings");
+        private static AttachableMemberIdentifier settingsPropertyID = new AttachableMemberIdentifier(typeof(VisualBasic), "Settings");
 
         public static void SetSettings(object target, VisualBasicSettings value)
         {
@@ -38,7 +38,7 @@ namespace Microsoft.VisualBasic.Activities
 
         public static bool ShouldSerializeSettings(object target)
         {
-            VisualBasicSettings settings = VisualBasic.GetSettings(target);
+            var settings = VisualBasic.GetSettings(target);
 
             if (settings != null && settings.SuppressXamlSerialization && target is Activity)
             {

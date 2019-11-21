@@ -87,7 +87,7 @@ using System.Activities.DynamicUpdate;
         {
             metadata.AddDelegate(this.Action);
 
-            RuntimeArgument runtimeArgument = new RuntimeArgument("Argument", typeof(T), ArgumentDirection.In, true);
+            var runtimeArgument = new RuntimeArgument("Argument", typeof(T), ArgumentDirection.In, true);
             metadata.Bind(this.Argument, runtimeArgument);
 
             metadata.SetArgumentsCollection(new Collection<RuntimeArgument> { runtimeArgument });

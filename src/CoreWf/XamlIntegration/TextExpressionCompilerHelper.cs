@@ -22,11 +22,11 @@ namespace System.Activities.XamlIntegration
                 return;
             }
 
-            using (XmlReader xmlReader = XmlReader.Create(sourceXamlFileName))
+            using (var xmlReader = XmlReader.Create(sourceXamlFileName))
             {
-                using (XamlXmlReader xreader = new XamlXmlReader(xmlReader, new XamlXmlReaderSettings() { ProvideLineInfo = true }))
+                using (var xreader = new XamlXmlReader(xmlReader, new XamlXmlReaderSettings() { ProvideLineInfo = true }))
                 {
-                    bool hasHitFirstStartObj = false;
+                    var hasHitFirstStartObj = false;
                     while (!hasHitFirstStartObj && xreader.Read())
                     {
                         if (xreader.NodeType == XamlNodeType.StartObject)
@@ -42,12 +42,12 @@ namespace System.Activities.XamlIntegration
                         {
                             if (IsStartMemberTextExprNS(xreader))
                             {
-                                XamlReader subTreeReader = xreader.ReadSubtree();
+                                var subTreeReader = xreader.ReadSubtree();
                                 WalkSubTree(subTreeReader, lineNumbersForNSes);
                             }
                             else if (IsStartMemberTextExprNSForImpl(xreader))
                             {
-                                XamlReader subTreeReader = xreader.ReadSubtree();
+                                var subTreeReader = xreader.ReadSubtree();
                                 WalkSubTree(subTreeReader, lineNumbersForNSesForImpl);
                             }
                             else
@@ -91,8 +91,8 @@ namespace System.Activities.XamlIntegration
                         subTreeReader.Read();
                     }
 
-                    IXamlLineInfo ixamlLineInfo = (IXamlLineInfo)subTreeReader;
-                    string namespaceName = subTreeReader.Value as string;
+                    var ixamlLineInfo = (IXamlLineInfo)subTreeReader;
+                    var namespaceName = subTreeReader.Value as string;
                     if (!string.IsNullOrEmpty(namespaceName))
                     {
                         lineNumbersDictionary[namespaceName] = ixamlLineInfo.LineNumber;

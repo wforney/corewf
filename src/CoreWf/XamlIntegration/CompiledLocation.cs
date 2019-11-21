@@ -130,9 +130,9 @@ namespace System.Activities.XamlIntegration
                     return null;
                 }
 
-                List<Tuple<string, Type>> durableCache = new List<Tuple<string, Type>>(this.locationReferences.Count);
+                var durableCache = new List<Tuple<string, Type>>(this.locationReferences.Count);
 
-                foreach (LocationReference reference in locationReferences)
+                foreach (var reference in locationReferences)
                 {
                     durableCache.Add(new Tuple<string, Type>(reference.Name, reference.Type));
                 }
@@ -148,7 +148,7 @@ namespace System.Activities.XamlIntegration
                 }
 
                 this.locationReferences = new List<LocationReference>(value.Count);
-                foreach (Tuple<string, Type> reference in value)
+                foreach (var reference in value)
                 {
                     this.locationReferences.Add(new CompiledLocationReference(reference.Item1, reference.Item2));
                 }
@@ -196,8 +196,8 @@ namespace System.Activities.XamlIntegration
             // If we've gotten here is means that we have a location that has roundtripped through persistence
             // CompiledDataContext & ICER don't round trip so we need to get them back from the current tree 
             // and get new pointers to the get/set methods for this expression
-            ICompiledExpressionRoot compiledRoot = GetCompiledExpressionRoot();
-            CompiledLocation<T> tempLocation = (CompiledLocation<T>)compiledRoot.InvokeExpression(this.expressionId, this.locations);
+            var compiledRoot = GetCompiledExpressionRoot();
+            var tempLocation = (CompiledLocation<T>)compiledRoot.InvokeExpression(this.expressionId, this.locations);
             this.getMethod = tempLocation.getMethod;
             this.setMethod = tempLocation.setMethod;
         }
@@ -207,10 +207,10 @@ namespace System.Activities.XamlIntegration
             if (this.rootInstance != null && this.rootInstance.Activity != null)
             {
                 ICompiledExpressionRoot compiledExpressionRoot;
-                Activity rootActivity = this.rootInstance.Activity;
+                var rootActivity = this.rootInstance.Activity;
 
-                if (QualifiedId.TryGetElementFromRoot(rootActivity, this.compiledRootActivityQualifiedId, out Activity compiledRootActivity) &&
-                    QualifiedId.TryGetElementFromRoot(rootActivity, this.expressionActivityQualifiedId, out Activity expressionActivity))
+                if (QualifiedId.TryGetElementFromRoot(rootActivity, this.compiledRootActivityQualifiedId, out var compiledRootActivity) &&
+                    QualifiedId.TryGetElementFromRoot(rootActivity, this.expressionActivityQualifiedId, out var expressionActivity))
                 {
                     if (CompiledExpressionInvoker.TryGetCompiledExpressionRoot(expressionActivity, compiledRootActivity, out compiledExpressionRoot))
                     {
@@ -243,7 +243,7 @@ namespace System.Activities.XamlIntegration
                 }
             }
 
-            foreach (Activity containedActivity in WorkflowInspectionServices.GetActivities(activity))
+            foreach (var containedActivity in WorkflowInspectionServices.GetActivities(activity))
             {
                 if (FindCompiledExpressionRoot(containedActivity, out compiledExpressionRoot))
                 {

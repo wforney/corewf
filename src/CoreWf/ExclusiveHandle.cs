@@ -242,7 +242,7 @@ namespace System.Activities
             // Note that we are starting the LocationEnvironment traversal from the current environment's Parent. We don't
             // want to include any BookmarkScopeHandles that are at the same scope level as the ExclusiveHandle. The ExclusiveHandle
             // should only be dependent on BookmarkScopeHandles that are higher in the scope tree.
-            LocationEnvironment current = this.owningInstance.Environment;
+            var current = this.owningInstance.Environment;
             if (current != null)
             {
                 for (current = current.Parent; current != null; current = current.Parent)
@@ -254,11 +254,11 @@ namespace System.Activities
                     }
 
                     // Look at the contained handles for the environment.
-                    List<Handle> handles = current.Handles;
+                    var handles = current.Handles;
                     if (handles != null)
                     {
-                        int count = handles.Count;
-                        for (int i = 0; i < count; i++)
+                        var count = handles.Count;
+                        for (var i = 0; i < count; i++)
                         {
                             if (handles[i] is BookmarkScopeHandle scopeHandle)
                             {
@@ -270,11 +270,11 @@ namespace System.Activities
             }
 
             // Also need to look in the Executor for handles that may have been created without an environment.
-            List<Handle> executorHandles = this.executor.Handles;
+            var executorHandles = this.executor.Handles;
             if (executorHandles != null)
             {
-                int count = executorHandles.Count;
-                for (int i = 0; i < count; i++)
+                var count = executorHandles.Count;
+                for (var i = 0; i < count; i++)
                 {
                     if (executorHandles[i] is BookmarkScopeHandle scopeHandle)
                     {
@@ -323,7 +323,7 @@ namespace System.Activities
             {
                 Fx.Assert(bookmark != null, "A valid bookmark is expected.");
 
-                for (int i = 0; i < this.bookmarks.Count; i++)
+                for (var i = 0; i < this.bookmarks.Count; i++)
                 {
                     if (object.ReferenceEquals(this.bookmarks[i], bookmark))
                     {
@@ -337,7 +337,7 @@ namespace System.Activities
             {
                 Fx.Assert(bookmark != null, "A valid bookmark is expected.");
 
-                for (int i = 0; i < this.bookmarks.Count; i++)
+                for (var i = 0; i < this.bookmarks.Count; i++)
                 {
                     if (object.ReferenceEquals(this.bookmarks[i], bookmark))
                     {

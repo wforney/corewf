@@ -15,11 +15,12 @@ namespace System.Activities.XamlIntegration
     {
         // Give the Lazy<T> a Func<T> to create the ConcurrentDictionary<Type, TypeConverterHelper> because TypeConverterHelper is
         // internal and we want to avoid the demand for ReflectionPermission(MemberAccess).
-        private readonly Lazy<ConcurrentDictionary<Type, TypeConverterHelper>> helpers = new Lazy<ConcurrentDictionary<Type, TypeConverterHelper>>( delegate()
-                        {
-                            return new ConcurrentDictionary<Type, TypeConverterHelper>();
-                        }
+        private readonly Lazy<ConcurrentDictionary<Type, TypeConverterHelper>> helpers = new Lazy<ConcurrentDictionary<Type, TypeConverterHelper>>(delegate ()
+                       {
+                           return new ConcurrentDictionary<Type, TypeConverterHelper>();
+                       }
                     );
+
         private readonly TypeConverterHelper helper;
         private readonly Type baseType;
         private readonly Type helperType;
@@ -58,11 +59,11 @@ namespace System.Activities.XamlIntegration
         {
             if (value is string stringValue)
             {
-                TypeConverterHelper currentHelper = helper;
+                var currentHelper = helper;
                 if (currentHelper == null)
                 {
-                    IDestinationTypeProvider targetService = context.GetService(typeof(IDestinationTypeProvider)) as IDestinationTypeProvider;
-                    Type targetType = targetService.GetDestinationType();
+                    var targetService = context.GetService(typeof(IDestinationTypeProvider)) as IDestinationTypeProvider;
+                    var targetType = targetService.GetDestinationType();
 
                     if (!this.helpers.Value.TryGetValue(targetType, out currentHelper))
                     {
@@ -76,7 +77,7 @@ namespace System.Activities.XamlIntegration
                         }
                     }
                 }
-                object result = currentHelper.UntypedConvertFromString(stringValue, context);
+                var result = currentHelper.UntypedConvertFromString(stringValue, context);
                 return result;
             }
 
@@ -93,7 +94,7 @@ namespace System.Activities.XamlIntegration
             Type[] genericTypeArguments;
             if (baseType.BaseType == targetType)
             {
-                // support non-generic ActivityWithResult, In/Out/InOutArgument 
+                // support non-generic ActivityWithResult, In/Out/InOutArgument
                 genericTypeArguments = new Type[] { TypeHelper.ObjectType };
             }
             else
@@ -112,7 +113,7 @@ namespace System.Activities.XamlIntegration
                 genericTypeArguments = targetType.GetGenericArguments();
             }
 
-            Type concreteHelperType = helperType.MakeGenericType(genericTypeArguments);
+            var concreteHelperType = helperType.MakeGenericType(genericTypeArguments);
             return (TypeConverterHelper)Activator.CreateInstance(concreteHelperType);
         }
 
@@ -122,7 +123,7 @@ namespace System.Activities.XamlIntegration
 
             public static T GetService<T>(ITypeDescriptorContext context) where T : class
             {
-                T service = (T)context.GetService(typeof(T));
+                var service = (T)context.GetService(typeof(T));
                 if (service == null)
                 {
                     throw FxTrace.Exception.AsError(new InvalidOperationException(SR.InvalidTypeConverterUsage));

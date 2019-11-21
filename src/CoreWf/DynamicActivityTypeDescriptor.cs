@@ -90,7 +90,7 @@ namespace System.Activities
 
         public PropertyDescriptorCollection GetProperties(Attribute[] attributes)
         {
-            PropertyDescriptorCollection result = this.cachedProperties;
+            var result = this.cachedProperties;
             if (result != null)
             {
                 return result;
@@ -107,17 +107,17 @@ namespace System.Activities
             }
 
             // initial capacity is Properties + Name + Body 
-            List<PropertyDescriptor> propertyDescriptors = new List<PropertyDescriptor>(this.Properties.Count + 2);
-            for (int i = 0; i < dynamicProperties.Count; i++)
+            var propertyDescriptors = new List<PropertyDescriptor>(this.Properties.Count + 2);
+            for (var i = 0; i < dynamicProperties.Count; i++)
             {
-                PropertyDescriptor dynamicProperty = dynamicProperties[i];
+                var dynamicProperty = dynamicProperties[i];
                 if (dynamicProperty.IsBrowsable)
                 {
                     propertyDescriptors.Add(dynamicProperty);
                 }
             }
 
-            foreach (DynamicActivityProperty property in Properties)
+            foreach (var property in Properties)
             {
                 if (string.IsNullOrEmpty(property.Name)) 
                 {
@@ -167,9 +167,9 @@ namespace System.Activities
                 {
                     if (this.attributes == null)
                     {
-                        AttributeCollection inheritedAttributes = base.Attributes;
-                        Collection<Attribute> propertyAttributes = this.activityProperty.Attributes;
-                        Attribute[] totalAttributes = new Attribute[inheritedAttributes.Count + propertyAttributes.Count + 1];
+                        var inheritedAttributes = base.Attributes;
+                        var propertyAttributes = this.activityProperty.Attributes;
+                        var totalAttributes = new Attribute[inheritedAttributes.Count + propertyAttributes.Count + 1];
                         inheritedAttributes.CopyTo(totalAttributes, 0);
                         propertyAttributes.CopyTo(totalAttributes, inheritedAttributes.Count);
                         totalAttributes[inheritedAttributes.Count + propertyAttributes.Count] = new DesignerSerializationVisibilityAttribute(DesignerSerializationVisibility.Hidden);

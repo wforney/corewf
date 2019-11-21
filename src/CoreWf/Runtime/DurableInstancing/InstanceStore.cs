@@ -17,7 +17,7 @@ namespace System.Activities.Runtime.DurableInstancing
     {
         private readonly Dictionary<Guid, WeakReference> _owners = new Dictionary<Guid, WeakReference>(1);
 
-        private Guid[] _ownerKeysToScan = new Guid[0];
+        private Guid[] _ownerKeysToScan = Array.Empty<Guid>();
         private int _ownerKeysIndexToScan = 0;
 
         protected InstanceStore()
@@ -157,7 +157,7 @@ namespace System.Activities.Runtime.DurableInstancing
             InstanceHandle[] handlesToNotify = null;
             lock (ThisLock)
             {
-                if (!_owners.TryGetValue(owner.InstanceOwnerId, out WeakReference ownerReference) || !object.ReferenceEquals(ownerReference.Target, owner))
+                if (!_owners.TryGetValue(owner.InstanceOwnerId, out var ownerReference) || !object.ReferenceEquals(ownerReference.Target, owner))
                 {
                     throw Fx.Exception.Argument(nameof(owner), SR.OwnerBelongsToWrongStore);
                 }
@@ -174,7 +174,7 @@ namespace System.Activities.Runtime.DurableInstancing
             }
             if (handlesToNotify != null)
             {
-                foreach (InstanceHandle handle in handlesToNotify)
+                foreach (var handle in handlesToNotify)
                 {
                     handle.EventReady(normal);
                 }
@@ -194,12 +194,12 @@ namespace System.Activities.Runtime.DurableInstancing
 
             lock (ThisLock)
             {
-                if (!_owners.TryGetValue(owner.InstanceOwnerId, out WeakReference ownerReference) || !object.ReferenceEquals(ownerReference.Target, owner))
+                if (!_owners.TryGetValue(owner.InstanceOwnerId, out var ownerReference) || !object.ReferenceEquals(ownerReference.Target, owner))
                 {
                     throw Fx.Exception.Argument(nameof(owner), SR.OwnerBelongsToWrongStore);
                 }
 
-                if (!owner.Events.TryGetValue(persistenceEvent.Name, out InstanceNormalEvent normal))
+                if (!owner.Events.TryGetValue(persistenceEvent.Name, out var normal))
                 {
                     return;
                 }
@@ -261,7 +261,7 @@ namespace System.Activities.Runtime.DurableInstancing
 
             lock (ThisLock)
             {
-                if (!_owners.TryGetValue(owner.InstanceOwnerId, out WeakReference ownerReference) || !object.ReferenceEquals(ownerReference.Target, owner))
+                if (!_owners.TryGetValue(owner.InstanceOwnerId, out var ownerReference) || !object.ReferenceEquals(ownerReference.Target, owner))
                 {
                     throw Fx.Exception.Argument(nameof(owner), SR.OwnerBelongsToWrongStore);
                 }
@@ -275,7 +275,7 @@ namespace System.Activities.Runtime.DurableInstancing
             lock (ThisLock)
             {
                 InstanceOwner owner;
-                if (_owners.TryGetValue(instanceOwnerId, out WeakReference ownerRef))
+                if (_owners.TryGetValue(instanceOwnerId, out var ownerRef))
                 {
                     owner = (InstanceOwner)ownerRef.Target;
                     if (owner == null)
@@ -304,7 +304,7 @@ namespace System.Activities.Runtime.DurableInstancing
                         break;
                     }
 
-                    Guid current = _ownerKeysToScan[_ownerKeysIndexToScan++];
+                    var current = _ownerKeysToScan[_ownerKeysIndexToScan++];
                     if (_owners.TryGetValue(current, out ownerRef))
                     {
                         if (ownerRef.Target == null)
@@ -329,7 +329,7 @@ namespace System.Activities.Runtime.DurableInstancing
                 Fx.Assert(_owners.ContainsKey(owner.InstanceOwnerId), "InstanceHandle called PendHandleToEvent on wrong InstanceStore!!");
                 Fx.Assert(object.ReferenceEquals(_owners[owner.InstanceOwnerId].Target, owner), "How did multiple of the same owner become simultaneously active?");
 
-                InstanceNormalEvent normal = GetOwnerEventHelper(persistenceEvent, owner);
+                var normal = GetOwnerEventHelper(persistenceEvent, owner);
                 Fx.Assert(!normal.PendingHandles.Contains(handle), "Should not have already pended the handle.");
                 Fx.Assert(!normal.BoundHandles.Contains(handle), "Should not be able to pend an already-bound handle.");
                 normal.PendingHandles.Add(handle);
@@ -343,7 +343,7 @@ namespace System.Activities.Runtime.DurableInstancing
                 Fx.Assert(_owners.ContainsKey(owner.InstanceOwnerId), "InstanceHandle called AddHandleToEvent on wrong InstanceStore!!");
                 Fx.Assert(object.ReferenceEquals(_owners[owner.InstanceOwnerId].Target, owner), "How did multiple instances of the same owner become simultaneously active?");
 
-                InstanceNormalEvent normal = GetOwnerEventHelper(persistenceEvent, owner);
+                var normal = GetOwnerEventHelper(persistenceEvent, owner);
                 Fx.Assert(normal.PendingHandles.Contains(handle), "Should have already pended the handle.");
                 Fx.Assert(!normal.BoundHandles.Contains(handle), "Should not be able to add a handle to an event twice.");
                 normal.BoundHandles.Add(handle);
@@ -361,7 +361,7 @@ namespace System.Activities.Runtime.DurableInstancing
                 Fx.Assert(object.ReferenceEquals(_owners[owner.InstanceOwnerId].Target, owner), "How did multiple instances of the same owner become simultaneously active?");
 
                 // Entry must exist since it is still registered by the handle.
-                foreach (InstanceNormalEvent normal in eventNames.Select(name => owner.Events[name]))
+                foreach (var normal in eventNames.Select(name => owner.Events[name]))
                 {
                     if (normal.IsSignaled)
                     {
@@ -384,7 +384,7 @@ namespace System.Activities.Runtime.DurableInstancing
                 Fx.Assert(object.ReferenceEquals(_owners[owner.InstanceOwnerId].Target, owner), "How did multiple instances of the same owner become simultaneously active in RemoveHandleFromEvents?");
 
                 // Entry must exist since it is still registered by the handle.
-                foreach (InstanceNormalEvent normal in eventNames.Select(name => owner.Events[name]))
+                foreach (var normal in eventNames.Select(name => owner.Events[name]))
                 {
                     Fx.Assert(normal.BoundHandles.Contains(handle) || normal.PendingHandles.Contains(handle), "Event should still have handle registration.");
 
@@ -401,7 +401,7 @@ namespace System.Activities.Runtime.DurableInstancing
         // Must be called under ThisLock.  Doesn't validate the InstanceOwner.
         private InstanceNormalEvent GetOwnerEventHelper(InstancePersistenceEvent persistenceEvent, InstanceOwner owner)
         {
-            if (!owner.Events.TryGetValue(persistenceEvent.Name, out InstanceNormalEvent normal))
+            if (!owner.Events.TryGetValue(persistenceEvent.Name, out var normal))
             {
                 normal = new InstanceNormalEvent(persistenceEvent);
                 owner.Events.Add(persistenceEvent.Name, normal);

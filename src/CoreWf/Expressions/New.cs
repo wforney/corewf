@@ -18,7 +18,8 @@ namespace System.Activities.Expressions
     //[SuppressMessage(FxCop.Category.Naming, FxCop.Rule.IdentifiersShouldNotHaveIncorrectSuffix,
     //    Justification = "Optimizing for XAML naming.")]
     [ContentProperty("Arguments")]
-    public sealed class New<TResult> : CodeActivity<TResult> 
+    [Diagnostics.CodeAnalysis.SuppressMessage("Naming", "CA1716:Identifiers should not match keywords", Justification = "<Pending>")]
+    public sealed class New<TResult> : CodeActivity<TResult>
     {
         private Collection<Argument> arguments;
         private Func<object[], TResult> function;
@@ -27,8 +28,10 @@ namespace System.Activities.Expressions
             new MruCache<ConstructorInfo, Func<object[], TResult>>(MethodCallExpressionHelper.FuncCacheCapacity);
         private static readonly ReaderWriterLockSlim locker = new ReaderWriterLockSlim();
 
+
         //[SuppressMessage(FxCop.Category.Naming, FxCop.Rule.PropertyNamesShouldNotMatchGetMethods,
         //    Justification = "Optimizing for XAML naming.")]
+        [Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1065:Do not raise exceptions in unexpected locations", Justification = "<Pending>")]
         public Collection<Argument> Arguments
         {
             get
@@ -53,15 +56,15 @@ namespace System.Activities.Expressions
 
         protected override void CacheMetadata(CodeActivityMetadata metadata)
         {
-            bool foundError = false;
-            ConstructorInfo oldConstructorInfo = this.constructorInfo;
+            var foundError = false;
+            var oldConstructorInfo = this.constructorInfo;
 
             // Loop through each argument, validate it, and if validation
             // passed expose it to the metadata
-            Type[] types = new Type[this.Arguments.Count];
-            for (int i = 0; i < this.Arguments.Count; i++)
+            var types = new Type[this.Arguments.Count];
+            for (var i = 0; i < this.Arguments.Count; i++)
             {
-                Argument argument = this.Arguments[i];
+                var argument = this.Arguments[i];
                 if (argument == null || argument.Expression == null)
                 {
                     metadata.AddValidationError(SR.ArgumentRequired("Arguments", typeof(New<TResult>)));
@@ -69,7 +72,7 @@ namespace System.Activities.Expressions
                 }
                 else
                 {
-                    RuntimeArgument runtimeArgument = new RuntimeArgument("Argument" + i, this.arguments[i].ArgumentType, this.arguments[i].Direction, true);
+                    var runtimeArgument = new RuntimeArgument("Argument" + i, this.arguments[i].ArgumentType, this.arguments[i].Direction, true);
                     metadata.Bind(this.arguments[i], runtimeArgument);
                     metadata.AddArgument(runtimeArgument);
                     types[i] = this.Arguments[i].Direction == ArgumentDirection.In ? this.Arguments[i].ArgumentType : this.Arguments[i].ArgumentType.MakeByRefType();
@@ -80,30 +83,30 @@ namespace System.Activities.Expressions
             // we can look for an appropriate constructor.
             if (!foundError)
             {
-                constructorInfo = typeof(TResult).GetConstructor(types);
-                if (constructorInfo == null && (!typeof(TResult).IsValueType || types.Length > 0))
+                this.constructorInfo = typeof(TResult).GetConstructor(types);
+                if (this.constructorInfo == null && (!typeof(TResult).IsValueType || types.Length > 0))
                 {
                     metadata.AddValidationError(SR.ConstructorInfoNotFound(typeof(TResult).Name));
                 }
                 else if ((this.constructorInfo != oldConstructorInfo) || (this.function == null))
                 {
-                    this.function = MethodCallExpressionHelper.GetFunc<TResult>(metadata, constructorInfo, funcCache, locker);
+                    this.function = MethodCallExpressionHelper.GetFunc<TResult>(metadata, this.constructorInfo, funcCache, locker);
                 }
             }
         } 
 
         protected override TResult Execute(CodeActivityContext context)
         {
-            object[] objects = new object[this.Arguments.Count];
-            for (int i = 0; i < this.Arguments.Count; i++)
+            var objects = new object[this.Arguments.Count];
+            for (var i = 0; i < this.Arguments.Count; i++)
             {
                 objects[i] = this.Arguments[i].Get(context);
             }
-            TResult result = this.function(objects);
+            var result = this.function(objects);
             
-            for (int i = 0; i < this.Arguments.Count; i++)
+            for (var i = 0; i < this.Arguments.Count; i++)
             {
-                Argument argument = this.Arguments[i];
+                var argument = this.Arguments[i];
                 if (argument.Direction == ArgumentDirection.InOut || argument.Direction == ArgumentDirection.Out)
                 {
                     argument.Set(context, objects[i]);

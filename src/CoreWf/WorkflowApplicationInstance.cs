@@ -119,13 +119,13 @@ using System.Activities.DynamicUpdate;
 
         internal void MarkAsLoaded()
         {
-            int oldState = Interlocked.CompareExchange(ref this.state, (int)State.Loaded, (int)State.Initialized);
+            var oldState = Interlocked.CompareExchange(ref this.state, (int)State.Loaded, (int)State.Initialized);
             this.ThrowIfLoadedOrAbandoned((State)oldState);
         }
 
         private void MarkAsAbandoned()
         {
-            int oldState = Interlocked.CompareExchange(ref this.state, (int)State.Aborted, (int)State.Initialized);
+            var oldState = Interlocked.CompareExchange(ref this.state, (int)State.Aborted, (int)State.Initialized);
             this.ThrowIfLoadedOrAbandoned((State)oldState);
         }
 

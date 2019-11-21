@@ -69,7 +69,7 @@ namespace System.Activities
         public static bool IsLocation(LambdaExpression expression, Type targetType, out string extraErrorMessage)
         {
             extraErrorMessage = null;
-            Expression body = expression.Body;
+            var body = expression.Body;
 
             if (targetType != null && body.Type != targetType)
             {
@@ -88,11 +88,11 @@ namespace System.Activities
 
                 case ExpressionType.MemberAccess:
                     // This also handles variables, which are emitted as "context.GetLocation<T>("v").Value"
-                    MemberExpression memberExpression = (MemberExpression)body;
-                    MemberTypes memberType = memberExpression.Member.MemberType;
+                    var memberExpression = (MemberExpression)body;
+                    var memberType = memberExpression.Member.MemberType;
                     if (memberType == MemberTypes.Field)
                     {
-                        FieldInfo fieldInfo = (FieldInfo)memberExpression.Member;
+                        var fieldInfo = (FieldInfo)memberExpression.Member;
                         if (fieldInfo.IsInitOnly)
                         {
                             // readOnly field
@@ -102,7 +102,7 @@ namespace System.Activities
                     }
                     else if (memberType == MemberTypes.Property)
                     {
-                        PropertyInfo propertyInfo = (PropertyInfo)memberExpression.Member;
+                        var propertyInfo = (PropertyInfo)memberExpression.Member;
                         if (!propertyInfo.CanWrite)
                         {
                             // no Setter
@@ -117,10 +117,10 @@ namespace System.Activities
                     //     System.Array.Get --> multi-dimensional array
                     //     get_Item --> might be an indexer property if it's special name & default etc.
 
-                    MethodCallExpression callExpression = (MethodCallExpression)body;
-                    MethodInfo method = callExpression.Method;
+                    var callExpression = (MethodCallExpression)body;
+                    var method = callExpression.Method;
 
-                    Type declaringType = method.DeclaringType;
+                    var declaringType = method.DeclaringType;
                     if (declaringType.BaseType == TypeHelper.ArrayType && method.Name == "Get")
                     {
                         return true;
@@ -135,7 +135,7 @@ namespace System.Activities
                     }
                     else if (method.Name == "Get" && declaringType.IsGenericType)
                     {
-                        Type declaringTypeGenericDefinition = declaringType.GetGenericTypeDefinition();
+                        var declaringTypeGenericDefinition = declaringType.GetGenericTypeDefinition();
 
                         if (declaringTypeGenericDefinition == inOutArgumentGenericType ||
                             declaringTypeGenericDefinition == outArgumentGenericType)
@@ -155,7 +155,7 @@ namespace System.Activities
 
         public static LocationFactory<T> CreateLocationFactory<T>(LambdaExpression expression)
         {
-            Expression body = expression.Body;
+            var body = expression.Body;
 
             switch (body.NodeType)
             {
@@ -164,7 +164,7 @@ namespace System.Activities
 
                 case ExpressionType.MemberAccess:
                     // This also handles variables, which are emitted as "context.GetLocation<T>("v").Value"
-                    MemberTypes memberType = ((MemberExpression)body).Member.MemberType;
+                    var memberType = ((MemberExpression)body).Member.MemberType;
                     if (memberType == MemberTypes.Field)
                     {
                         return new FieldLocationFactory<T>(expression);
@@ -183,10 +183,10 @@ namespace System.Activities
                     //     System.Array.Get --> multi-dimensional array
                     //     get_Item --> might be an indexer property if it's special name & default etc.
 
-                    MethodCallExpression callExpression = (MethodCallExpression)body;
-                    MethodInfo method = callExpression.Method;
+                    var callExpression = (MethodCallExpression)body;
+                    var method = callExpression.Method;
 
-                    Type declaringType = method.DeclaringType;
+                    var declaringType = method.DeclaringType;
                     if (declaringType.BaseType == TypeHelper.ArrayType && method.Name == "Get")
                     {
                         return new MultidimensionalArrayLocationFactory<T>(expression);
@@ -201,7 +201,7 @@ namespace System.Activities
                     }
                     else if (method.Name == "Get" && declaringType.IsGenericType)
                     {
-                        Type declaringTypeGenericDefinition = declaringType.GetGenericTypeDefinition();
+                        var declaringTypeGenericDefinition = declaringType.GetGenericTypeDefinition();
 
                         if (declaringTypeGenericDefinition == inOutArgumentGenericType ||
                             declaringTypeGenericDefinition == outArgumentGenericType)
@@ -233,20 +233,20 @@ namespace System.Activities
         private static LocationFactory CreateParentReference(Expression expression, ReadOnlyCollection<ParameterExpression> lambdaParameters)
         {
             // create a LambdaExpression to get access to the expression
-            int parameterCount = lambdaParameters.Count;
-            Type genericFuncType = linqAssembly.GetType("System.Func`" + (parameterCount + 1), true);
-            Type[] delegateParameterTypes = new Type[parameterCount + 1];
+            var parameterCount = lambdaParameters.Count;
+            var genericFuncType = linqAssembly.GetType("System.Func`" + (parameterCount + 1), true);
+            var delegateParameterTypes = new Type[parameterCount + 1];
 
-            for (int i = 0; i < parameterCount; ++i)
+            for (var i = 0; i < parameterCount; ++i)
             {
                 delegateParameterTypes[i] = lambdaParameters[i].Type;
             }
             delegateParameterTypes[parameterCount] = expression.Type;
-            Type funcType = genericFuncType.MakeGenericType(delegateParameterTypes);
-            LambdaExpression parentLambda = Expression.Lambda(funcType, expression, lambdaParameters);
+            var funcType = genericFuncType.MakeGenericType(delegateParameterTypes);
+            var parentLambda = Expression.Lambda(funcType, expression, lambdaParameters);
 
             // call CreateLocationFactory<parentLambda.Type>(parentLambda);
-            MethodInfo typedMethod = createLocationFactoryGenericMethod.MakeGenericMethod(expression.Type);
+            var typedMethod = createLocationFactoryGenericMethod.MakeGenericMethod(expression.Type);
             return (LocationFactory)typedMethod.Invoke(null, new object[] { parentLambda });
         }
 
@@ -258,13 +258,13 @@ namespace System.Activities
                 parameters = parametersCollection.ToArray<ParameterExpression>();
             }
 
-            Expression<Func<ActivityContext, T>> objectLambda = Expression.Lambda<Func<ActivityContext, T>>(objectExpression, parameters);
+            var objectLambda = Expression.Lambda<Func<ActivityContext, T>>(objectExpression, parameters);
             return objectLambda.Compile();
         }
 
         private static T Evaluate<T>(Expression objectExpression, ReadOnlyCollection<ParameterExpression> parametersCollection, ActivityContext context)
         {
-            Func<ActivityContext, T> objectFunc = Compile<T>(objectExpression, parametersCollection);
+            var objectFunc = Compile<T>(objectExpression, parametersCollection);
             return objectFunc(context);
         }
 
@@ -277,7 +277,7 @@ namespace System.Activities
             public ArrayLocationFactory(LambdaExpression expression)
             {
                 Fx.Assert(expression.Body.NodeType == ExpressionType.ArrayIndex, "ArrayIndex expression required");
-                BinaryExpression arrayIndexExpression = (BinaryExpression)expression.Body;
+                var arrayIndexExpression = (BinaryExpression)expression.Body;
 
                 this.arrayFunction = ExpressionUtilities.Compile<T[]>(arrayIndexExpression.Left, expression.Parameters);
                 this.indexFunction = ExpressionUtilities.Compile<int>(arrayIndexExpression.Right, expression.Parameters);
@@ -338,7 +338,7 @@ namespace System.Activities
             public FieldLocationFactory(LambdaExpression expression)
             {
                 Fx.Assert(expression.Body.NodeType == ExpressionType.MemberAccess, "field expression required");
-                MemberExpression memberExpression = (MemberExpression)expression.Body;
+                var memberExpression = (MemberExpression)expression.Body;
 
                 Fx.Assert(memberExpression.Member.MemberType == MemberTypes.Field, "member field expected");
                 this.fieldInfo = (FieldInfo)memberExpression.Member;
@@ -456,7 +456,7 @@ namespace System.Activities
 
             public override Location<T> CreateLocation(ActivityContext context)
             {
-                Argument argument = this.argumentFunction(context);
+                var argument = this.argumentFunction(context);
 
                 return argument.RuntimeArgument.GetLocation(context) as Location<T>;
             }
@@ -473,7 +473,7 @@ namespace System.Activities
 
             public override Location<T> CreateLocation(ActivityContext context)
             {
-                LocationReference locationReference = this.locationReferenceFunction(context);
+                var locationReference = this.locationReferenceFunction(context);
                 return locationReference.GetLocation(context) as Location<T>;
             }
         }
@@ -490,18 +490,18 @@ namespace System.Activities
             {
                 Fx.Assert(expression.Body.NodeType == ExpressionType.Call, "Call expression required.");
 
-                MethodCallExpression callExpression = (MethodCallExpression)expression.Body;
+                var callExpression = (MethodCallExpression)expression.Body;
                 this.getItemMethod = callExpression.Method;
 
                 Fx.Assert(this.getItemMethod.IsSpecialName && this.getItemMethod.Name.StartsWith("get_", StringComparison.Ordinal), "Special get_Item method required.");
 
                 //  Get the set_Item accessor for the same set of parameter/return types if any.
                 this.indexerName = this.getItemMethod.Name.Substring(4);
-                string setItemName = "set_" + this.indexerName;
-                ParameterInfo[] getItemParameters = this.getItemMethod.GetParameters();
-                Type[] setItemParameterTypes = new Type[getItemParameters.Length + 1];
+                var setItemName = "set_" + this.indexerName;
+                var getItemParameters = this.getItemMethod.GetParameters();
+                var setItemParameterTypes = new Type[getItemParameters.Length + 1];
 
-                for (int i = 0; i < getItemParameters.Length; i++)
+                for (var i = 0; i < getItemParameters.Length; i++)
                 {
                     setItemParameterTypes[i] = getItemParameters[i].ParameterType;
                 }
@@ -517,10 +517,10 @@ namespace System.Activities
                     this.targetObjectFunction = ExpressionUtilities.Compile<object>(callExpression.Object, expression.Parameters);
 
                     this.setItemArgumentFunctions = new Func<ActivityContext, object>[callExpression.Arguments.Count];
-                    for (int i = 0; i < callExpression.Arguments.Count; i++)
+                    for (var i = 0; i < callExpression.Arguments.Count; i++)
                     {
                         // convert value types to objects since Linq doesn't do it automatically
-                        Expression argument = callExpression.Arguments[i];
+                        var argument = callExpression.Arguments[i];
                         if (argument.Type.IsValueType)
                         {
                             argument = Expression.Convert(argument, TypeHelper.ObjectType);
@@ -541,7 +541,7 @@ namespace System.Activities
 
                     setItemArguments = new object[this.setItemArgumentFunctions.Length];
 
-                    for (int i = 0; i < this.setItemArgumentFunctions.Length; i++)
+                    for (var i = 0; i < this.setItemArgumentFunctions.Length; i++)
                     {
                         setItemArguments[i] = this.setItemArgumentFunctions[i](context);
                     }
@@ -589,7 +589,7 @@ namespace System.Activities
 
                         if (this.setItemMethod == null)
                         {
-                            string targetObjectTypeName = this.targetObject.GetType().Name;
+                            var targetObjectTypeName = this.targetObject.GetType().Name;
                             throw FxTrace.Exception.AsError(new InvalidOperationException(
                                 SR.MissingSetAccessorForIndexer(this.indexerName, targetObjectTypeName)));
                         }
@@ -599,7 +599,7 @@ namespace System.Activities
                             throw FxTrace.Exception.AsError(new NullReferenceException(SR.CannotDereferenceNull(this.setItemMethod.Name)));
                         }
 
-                        object[] localSetItemArguments = new object[this.setItemArguments.Length + 1];
+                        var localSetItemArguments = new object[this.setItemArguments.Length + 1];
                         Array.ConstrainedCopy(this.setItemArguments, 0, localSetItemArguments, 0, this.setItemArguments.Length);
                         localSetItemArguments[localSetItemArguments.Length - 1] = value;
 
@@ -652,13 +652,13 @@ namespace System.Activities
             public MultidimensionalArrayLocationFactory(LambdaExpression expression)
             {
                 Fx.Assert(expression.Body.NodeType == ExpressionType.Call, "Call expression required.");
-                MethodCallExpression callExpression = (MethodCallExpression)expression.Body;
+                var callExpression = (MethodCallExpression)expression.Body;
 
                 this.arrayFunction = ExpressionUtilities.Compile<Array>(
                     callExpression.Object, expression.Parameters);
 
                 this.indexFunctions = new Func<ActivityContext, int>[callExpression.Arguments.Count];
-                for (int i = 0; i < this.indexFunctions.Length; i++)
+                for (var i = 0; i < this.indexFunctions.Length; i++)
                 {
                     this.indexFunctions[i] = ExpressionUtilities.Compile<int>(
                         callExpression.Arguments[i], expression.Parameters);
@@ -667,8 +667,8 @@ namespace System.Activities
 
             public override Location<T> CreateLocation(ActivityContext context)
             {
-                int[] indices = new int[this.indexFunctions.Length];
-                for (int i = 0; i < indices.Length; i++)
+                var indices = new int[this.indexFunctions.Length];
+                for (var i = 0; i < indices.Length; i++)
                 {
                     indices[i] = this.indexFunctions[i](context);
                 }
@@ -726,7 +726,7 @@ namespace System.Activities
             public PropertyLocationFactory(LambdaExpression expression)
             {
                 Fx.Assert(expression.Body.NodeType == ExpressionType.MemberAccess, "member access expression required");
-                MemberExpression memberExpression = (MemberExpression)expression.Body;
+                var memberExpression = (MemberExpression)expression.Body;
 
                 Fx.Assert(memberExpression.Member.MemberType == MemberTypes.Property, "property access expression expected");
                 this.propertyInfo = (PropertyInfo)memberExpression.Member;
@@ -790,7 +790,7 @@ namespace System.Activities
                         // from the other's perspective, not internal properties, so they're okay as a special case.
                         // E.g. "[N]" from the user's perspective is not accessing a nonpublic property, even though
                         // at an implementation level it is.
-                        MethodInfo getMethodInfo = this.propertyInfo.GetGetMethod();
+                        var getMethodInfo = this.propertyInfo.GetGetMethod();
                         if (getMethodInfo == null && !TypeHelper.AreTypesCompatible(this.propertyInfo.DeclaringType, typeof(Location)))
                         {
                             throw FxTrace.Exception.AsError(new InvalidOperationException(SR.WriteonlyPropertyCannotBeRead(this.propertyInfo.DeclaringType, this.propertyInfo.Name)));
@@ -811,7 +811,7 @@ namespace System.Activities
                         // from the other's perspective, not internal properties, so they're okay as a special case.
                         // E.g. "[N]" from the user's perspective is not accessing a nonpublic property, even though
                         // at an implementation level it is.
-                        MethodInfo setMethodInfo = this.propertyInfo.GetSetMethod();
+                        var setMethodInfo = this.propertyInfo.GetSetMethod();
                         if (setMethodInfo == null && !TypeHelper.AreTypesCompatible(this.propertyInfo.DeclaringType, typeof(Location)))
                         {
                             throw FxTrace.Exception.AsError(new InvalidOperationException(SR.ReadonlyPropertyCannotBeSet(this.propertyInfo.DeclaringType, this.propertyInfo.Name)));
@@ -875,7 +875,7 @@ namespace System.Activities
             Expression left = null;
             Expression right = null;
             Expression other = null;
-            bool hasChanged = false;
+            var hasChanged = false;
             IList<Expression> expressionList = null;
             IList<ElementInit> initializerList = null;
             IList<MemberBinding> bindingList = null;
@@ -928,7 +928,7 @@ namespace System.Activities
                     break;
 
                 case ExpressionType.Conditional:
-                    ConditionalExpression conditional = (ConditionalExpression)expression;
+                    var conditional = (ConditionalExpression)expression;
 
                     hasChanged |= TryRewriteLambdaExpression(conditional.Test, out other, publicAccessor);
                     hasChanged |= TryRewriteLambdaExpression(conditional.IfTrue, out left, publicAccessor);
@@ -947,7 +947,7 @@ namespace System.Activities
                     break;
 
                 case ExpressionType.Invoke:
-                    InvocationExpression invocation = (InvocationExpression)expression;
+                    var invocation = (InvocationExpression)expression;
 
                     hasChanged |= TryRewriteLambdaExpression(invocation.Expression, out other, publicAccessor);
                     hasChanged |= TryRewriteLambdaExpressionCollection(invocation.Arguments, out expressionList, publicAccessor);
@@ -961,7 +961,7 @@ namespace System.Activities
                     break;
 
                 case ExpressionType.Lambda:
-                    LambdaExpression lambda = (LambdaExpression)expression;
+                    var lambda = (LambdaExpression)expression;
 
                     hasChanged |= TryRewriteLambdaExpression(lambda.Body, out other, publicAccessor, isLocationExpression);
 
@@ -975,7 +975,7 @@ namespace System.Activities
                     break;
 
                 case ExpressionType.ListInit:
-                    ListInitExpression listInit = (ListInitExpression)expression;
+                    var listInit = (ListInitExpression)expression;
 
                     hasChanged |= TryRewriteLambdaExpression(listInit.NewExpression, out other, publicAccessor);
                     hasChanged |= TryRewriteLambdaExpressionInitializersCollection(listInit.Initializers, out initializerList, publicAccessor);
@@ -992,11 +992,11 @@ namespace System.Activities
                     break;
 
                 case ExpressionType.MemberAccess:
-                    MemberExpression memberExpression = (MemberExpression)expression;
+                    var memberExpression = (MemberExpression)expression;
 
                     // When creating a location for a member on a struct, we also need a location
                     // for the struct (so we don't just set the member on a copy of the struct)
-                    bool subTreeIsLocationExpression = isLocationExpression && memberExpression.Member.DeclaringType.IsValueType;
+                    var subTreeIsLocationExpression = isLocationExpression && memberExpression.Member.DeclaringType.IsValueType;
 
                     hasChanged |= TryRewriteLambdaExpression(memberExpression.Expression, out other, publicAccessor, subTreeIsLocationExpression);
 
@@ -1009,7 +1009,7 @@ namespace System.Activities
                     break;
 
                 case ExpressionType.MemberInit:
-                    MemberInitExpression memberInit = (MemberInitExpression)expression;
+                    var memberInit = (MemberInitExpression)expression;
 
                     hasChanged |= TryRewriteLambdaExpression(memberInit.NewExpression, out other, publicAccessor);
                     hasChanged |= TryRewriteLambdaExpressionBindingsCollection(memberInit.Bindings, out bindingList, publicAccessor);
@@ -1087,7 +1087,7 @@ namespace System.Activities
                     break;
 
                 case ExpressionType.New:
-                    NewExpression objectCreationExpression = (NewExpression)expression;
+                    var objectCreationExpression = (NewExpression)expression;
 
                     if (objectCreationExpression.Constructor == null)
                     {
@@ -1106,7 +1106,7 @@ namespace System.Activities
                     break;
 
                 case ExpressionType.TypeIs:
-                    TypeBinaryExpression typeBinary = (TypeBinaryExpression)expression;
+                    var typeBinary = (TypeBinaryExpression)expression;
 
                     hasChanged |= TryRewriteLambdaExpression(typeBinary.Expression, out other, publicAccessor);
 
@@ -1156,7 +1156,7 @@ namespace System.Activities
                 // Expression Tree V2.0 types. This is due to the hosted VB compiler generating ET V2.0 nodes.
 
                 case ExpressionType.Block:
-                    BlockExpression block = (BlockExpression)expression;
+                    var block = (BlockExpression)expression;
 
                     hasChanged |= TryRewriteLambdaExpressionCollection(block.Expressions, out expressionList, publicAccessor);
 
@@ -1187,18 +1187,18 @@ namespace System.Activities
         {
             IList<MemberBinding> temporaryBindings = null;
 
-            for (int i = 0; i < bindings.Count; i++)
+            for (var i = 0; i < bindings.Count; i++)
             {
-                MemberBinding binding = bindings[i];
+                var binding = bindings[i];
 
-                if (TryRewriteMemberBinding(binding, out MemberBinding newBinding, publicAccessor))
+                if (TryRewriteMemberBinding(binding, out var newBinding, publicAccessor))
                 {
                     if (temporaryBindings == null)
                     {
                         // We initialize this list with the unchanged bindings
                         temporaryBindings = new List<MemberBinding>(bindings.Count);
 
-                        for (int j = 0; j < i; j++)
+                        for (var j = 0; j < i; j++)
                         {
                             temporaryBindings.Add(bindings[j]);
                         }
@@ -1230,7 +1230,7 @@ namespace System.Activities
         {
             newBinding = binding;
 
-            bool hasChanged = false;
+            var hasChanged = false;
             Expression other = null;
             IList<ElementInit> initializerList = null;
             IList<MemberBinding> bindingList = null;
@@ -1238,7 +1238,7 @@ namespace System.Activities
             switch (binding.BindingType)
             {
                 case MemberBindingType.Assignment:
-                    MemberAssignment assignment = (MemberAssignment)binding;
+                    var assignment = (MemberAssignment)binding;
 
                     hasChanged |= TryRewriteLambdaExpression(assignment.Expression, out other, publicAccessor);
 
@@ -1249,7 +1249,7 @@ namespace System.Activities
                     break;
 
                 case MemberBindingType.ListBinding:
-                    MemberListBinding list = (MemberListBinding)binding;
+                    var list = (MemberListBinding)binding;
 
                     hasChanged |= TryRewriteLambdaExpressionInitializersCollection(list.Initializers, out initializerList, publicAccessor);
 
@@ -1260,7 +1260,7 @@ namespace System.Activities
                     break;
 
                 case MemberBindingType.MemberBinding:
-                    MemberMemberBinding member = (MemberMemberBinding)binding;
+                    var member = (MemberMemberBinding)binding;
 
                     hasChanged |= TryRewriteLambdaExpressionBindingsCollection(member.Bindings, out bindingList, publicAccessor);
 
@@ -1278,11 +1278,11 @@ namespace System.Activities
         {
             IList<Expression> temporaryExpressions = null;
 
-            for (int i = 0; i < expressions.Count; i++)
+            for (var i = 0; i < expressions.Count; i++)
             {
-                Expression expression = expressions[i];
+                var expression = expressions[i];
 
-                if (TryRewriteLambdaExpression(expression, out Expression newExpression, publicAccessor))
+                if (TryRewriteLambdaExpression(expression, out var newExpression, publicAccessor))
                 {
                     if (temporaryExpressions == null)
                     {
@@ -1290,7 +1290,7 @@ namespace System.Activities
                         // expressions over
                         temporaryExpressions = new List<Expression>(expressions.Count);
 
-                        for (int j = 0; j < i; j++)
+                        for (var j = 0; j < i; j++)
                         {
                             temporaryExpressions.Add(expressions[j]);
                         }
@@ -1321,11 +1321,11 @@ namespace System.Activities
         {
             IList<ElementInit> temporaryInitializers = null;
 
-            for (int i = 0; i < initializers.Count; i++)
+            for (var i = 0; i < initializers.Count; i++)
             {
-                ElementInit elementInit = initializers[i];
+                var elementInit = initializers[i];
 
-                if (TryRewriteLambdaExpressionCollection(elementInit.Arguments, out IList<Expression> newExpressions, publicAccessor))
+                if (TryRewriteLambdaExpressionCollection(elementInit.Arguments, out var newExpressions, publicAccessor))
                 {
                     if (temporaryInitializers == null)
                     {
@@ -1333,7 +1333,7 @@ namespace System.Activities
                         // initializers over
                         temporaryInitializers = new List<ElementInit>(initializers.Count);
 
-                        for (int j = 0; j < i; j++)
+                        for (var j = 0; j < i; j++)
                         {
                             temporaryInitializers.Add(initializers[j]);
                         }
@@ -1366,7 +1366,7 @@ namespace System.Activities
 
             Argument argument = null;
 
-            if (CustomMemberResolver(argumentExpression, out object tempArgument) && tempArgument is Argument)
+            if (CustomMemberResolver(argumentExpression, out var tempArgument) && tempArgument is Argument)
             {
                 argument = (Argument)tempArgument;
             }
@@ -1374,8 +1374,8 @@ namespace System.Activities
             {
                 try
                 {
-                    Expression<Func<Argument>> argumentLambda = Expression.Lambda<Func<Argument>>(argumentExpression);
-                    Func<Argument> argumentFunc = argumentLambda.Compile();
+                    var argumentLambda = Expression.Lambda<Func<Argument>>(argumentExpression);
+                    var argumentFunc = argumentLambda.Compile();
                     argument = argumentFunc();
                 }
                 catch (Exception e)
@@ -1394,10 +1394,10 @@ namespace System.Activities
             {
                 if (argumentExpression.NodeType == ExpressionType.MemberAccess)
                 {
-                    MemberExpression memberExpression = (MemberExpression)argumentExpression;
+                    var memberExpression = (MemberExpression)argumentExpression;
                     if (memberExpression.Member.MemberType == MemberTypes.Property)
                     {
-                        RuntimeArgument runtimeArgument = ActivityUtilities.FindArgument(memberExpression.Member.Name, publicAccessor.ActivityMetadata.CurrentActivity);
+                        var runtimeArgument = ActivityUtilities.FindArgument(memberExpression.Member.Name, publicAccessor.ActivityMetadata.CurrentActivity);
 
                         if (runtimeArgument != null && TryGetInlinedReference(publicAccessor, runtimeArgument, isLocationExpression, out inlinedReference))
                         {
@@ -1428,15 +1428,15 @@ namespace System.Activities
             // We verify that this is a method we are expecting (single parameter
             // of type ActivityContext).  If not, we won't rewrite it at all
             // and will just let it fail at runtime.
-            ReadOnlyCollection<Expression> argumentExpressions = originalExpression.Arguments;
+            var argumentExpressions = originalExpression.Arguments;
 
             if (argumentExpressions.Count == 1)
             {
-                Expression contextExpression = argumentExpressions[0];
+                var contextExpression = argumentExpressions[0];
 
                 if (contextExpression.Type == activityContextType)
                 {
-                    if (TryGetInlinedArgumentReference(originalExpression, originalExpression.Object, out LocationReference inlinedReference, publicAccessor, isLocationExpression))
+                    if (TryGetInlinedArgumentReference(originalExpression, originalExpression.Object, out var inlinedReference, publicAccessor, isLocationExpression))
                     {
                         newExpression = Expression.Call(contextExpression, activityContextGetValueGenericMethod.MakeGenericMethod(returnType), Expression.Constant(inlinedReference, typeof(LocationReference)));
                         return true;
@@ -1453,15 +1453,15 @@ namespace System.Activities
             // We verify that this is a method we are expecting (single parameter
             // of type ActivityContext).  If not, we won't rewrite it at all
             // and will just let it fail at runtime.
-            ReadOnlyCollection<Expression> argumentExpressions = originalExpression.Arguments;
+            var argumentExpressions = originalExpression.Arguments;
 
             if (argumentExpressions.Count == 1)
             {
-                Expression contextExpression = argumentExpressions[0];
+                var contextExpression = argumentExpressions[0];
 
                 if (contextExpression.Type == activityContextType)
                 {
-                    if (TryGetInlinedArgumentReference(originalExpression, originalExpression.Object, out LocationReference inlinedReference, publicAccessor, true))
+                    if (TryGetInlinedArgumentReference(originalExpression, originalExpression.Object, out var inlinedReference, publicAccessor, true))
                     {
                         if (returnType == null)
                         {
@@ -1486,15 +1486,15 @@ namespace System.Activities
             // We verify that this is a method we are expecting (single parameter
             // of type ActivityContext).  If not, we won't rewrite it at all
             // and will just let it fail at runtime.
-            ReadOnlyCollection<Expression> argumentExpressions = originalExpression.Arguments;
+            var argumentExpressions = originalExpression.Arguments;
 
             if (argumentExpressions.Count == 1)
             {
-                Expression contextExpression = argumentExpressions[0];
+                var contextExpression = argumentExpressions[0];
 
                 if (contextExpression.Type == activityContextType)
                 {
-                    if (TryGetInlinedLocationReference(originalExpression, originalExpression.Object, out LocationReference inlinedReference, publicAccessor, isLocationExpression))
+                    if (TryGetInlinedLocationReference(originalExpression, originalExpression.Object, out var inlinedReference, publicAccessor, isLocationExpression))
                     {
                         newExpression = Expression.Call(contextExpression, activityContextGetValueGenericMethod.MakeGenericMethod(returnType), Expression.Constant(inlinedReference, typeof(LocationReference)));
                         return true;
@@ -1511,15 +1511,15 @@ namespace System.Activities
             // We verify that this is a method we are expecting (single parameter
             // of type ActivityContext).  If not, we won't rewrite it at all
             // and will just let it fail at runtime.
-            ReadOnlyCollection<Expression> argumentExpressions = originalExpression.Arguments;
+            var argumentExpressions = originalExpression.Arguments;
 
             if (argumentExpressions.Count == 1)
             {
-                Expression contextExpression = argumentExpressions[0];
+                var contextExpression = argumentExpressions[0];
 
                 if (contextExpression.Type == activityContextType)
                 {
-                    if (TryGetInlinedLocationReference(originalExpression, originalExpression.Object, out LocationReference inlinedReference, publicAccessor, true))
+                    if (TryGetInlinedLocationReference(originalExpression, originalExpression.Object, out var inlinedReference, publicAccessor, true))
                     {
                         if (returnType == null)
                         {
@@ -1546,7 +1546,7 @@ namespace System.Activities
             switch (expression.NodeType)
             {
                 case ExpressionType.Constant:
-                    ConstantExpression constantExpression = expression as ConstantExpression;
+                    var constantExpression = expression as ConstantExpression;
                     memberValue = constantExpression.Value;
                     // memberValue = null means:
                     // 1. The expression does not follow the common patterns(local, field or property)
@@ -1556,7 +1556,7 @@ namespace System.Activities
                     return memberValue != null;
 
                 case ExpressionType.MemberAccess:
-                    MemberExpression memberExpression = expression as MemberExpression;
+                    var memberExpression = expression as MemberExpression;
                     if (memberExpression.Expression != null)
                     {
                         CustomMemberResolver(memberExpression.Expression, out memberValue);
@@ -1578,16 +1578,16 @@ namespace System.Activities
                 return null;
             }
 
-            MemberTypes memberType = memberInfo.MemberType;
+            var memberType = memberInfo.MemberType;
             if (memberType == MemberTypes.Property)
             {
-                PropertyInfo propertyInfo = memberInfo as PropertyInfo;
+                var propertyInfo = memberInfo as PropertyInfo;
                 return propertyInfo.GetValue(owner, null);
 
             }
             else if (memberType == MemberTypes.Field)
             {
-                FieldInfo fieldInfo = memberInfo as FieldInfo;
+                var fieldInfo = memberInfo as FieldInfo;
                 return fieldInfo.GetValue(owner);
             }
             return null;
@@ -1598,7 +1598,7 @@ namespace System.Activities
             inlinedReference = null;
 
             LocationReference locationReference = null;
-            if (CustomMemberResolver(locationReferenceExpression, out object tempLocationReference) && tempLocationReference is LocationReference)
+            if (CustomMemberResolver(locationReferenceExpression, out var tempLocationReference) && tempLocationReference is LocationReference)
             {
                 locationReference = (LocationReference)tempLocationReference;
             }
@@ -1606,8 +1606,8 @@ namespace System.Activities
             {
                 try
                 {
-                    Expression<Func<LocationReference>> locationReferenceLambda = Expression.Lambda<Func<LocationReference>>(locationReferenceExpression);
-                    Func<LocationReference> locationReferenceFunc = locationReferenceLambda.Compile();
+                    var locationReferenceLambda = Expression.Lambda<Func<LocationReference>>(locationReferenceExpression);
+                    var locationReferenceFunc = locationReferenceLambda.Compile();
                     locationReference = locationReferenceFunc();
                 }
                 catch (Exception e)
@@ -1647,11 +1647,11 @@ namespace System.Activities
             // We verify that this is a method we are expecting (single parameter
             // of either LocationReference or Argument type).  If not, we won't
             // rewrite it at all and will just let it fail at runtime.
-            ReadOnlyCollection<Expression> argumentExpressions = originalExpression.Arguments;
+            var argumentExpressions = originalExpression.Arguments;
 
             if (argumentExpressions.Count == 1)
             {
-                Expression parameterExpression = argumentExpressions[0];
+                var parameterExpression = argumentExpressions[0];
 
                 if (TypeHelper.AreTypesCompatible(parameterExpression.Type, typeof(Argument)))
                 {
@@ -1685,15 +1685,15 @@ namespace System.Activities
             // We verify that this is a method we are expecting (single parameter
             // of LocationReference type).  If not, we won't rewrite it at all
             // and will just let it fail at runtime.
-            ReadOnlyCollection<Expression> argumentExpressions = originalExpression.Arguments;
+            var argumentExpressions = originalExpression.Arguments;
 
             if (argumentExpressions.Count == 1)
             {
-                Expression locationReference = argumentExpressions[0];
+                var locationReference = argumentExpressions[0];
 
                 if (TypeHelper.AreTypesCompatible(locationReference.Type, locationReferenceType))
                 {
-                    if (TryGetInlinedLocationReference(originalExpression, originalExpression.Arguments[0], out LocationReference inlinedReference, publicAccessor, true))
+                    if (TryGetInlinedLocationReference(originalExpression, originalExpression.Arguments[0], out var inlinedReference, publicAccessor, true))
                     {
                         newExpression = Expression.Call(originalExpression.Object, activityContextGetLocationGenericMethod.MakeGenericMethod(returnType), Expression.Constant(inlinedReference, typeof(LocationReference)));
                         return true;
@@ -1793,8 +1793,8 @@ namespace System.Activities
             //    (new) ref.Get(ctx) => ctx.GetValue<T>(inline)
             //    (new) ref.GetLocation(ctx) => ctx.GetLocation<T>(inline)
 
-            MethodInfo targetMethod = methodCall.Method;
-            Type targetObjectType = targetMethod.DeclaringType;
+            var targetMethod = methodCall.Method;
+            var targetObjectType = targetMethod.DeclaringType;
 
             if (targetObjectType.IsGenericType)
             {
@@ -1802,7 +1802,7 @@ namespace System.Activities
                 // type parameter), but they do make use of the type parameter of the 
                 // generic declaring type.  Because of that we can't do MethodInfo comparison
                 // and fall back to string comparison.
-                Type targetObjectGenericType = targetObjectType.GetGenericTypeDefinition();
+                var targetObjectGenericType = targetObjectType.GetGenericTypeDefinition();
 
                 if (targetObjectGenericType == variableGenericType)
                 {
@@ -1875,7 +1875,7 @@ namespace System.Activities
                     // some not) and GetLocation is a generic method
                     if (targetMethod.Name == "GetValue")
                     {
-                        Type returnType = TypeHelper.ObjectType;
+                        var returnType = TypeHelper.ObjectType;
 
                         if (targetMethod.IsGenericMethod)
                         {
@@ -1902,7 +1902,7 @@ namespace System.Activities
                     // match both overloads with a single check.
                     if (targetMethod.Name == "Get")
                     {
-                        Type returnType = TypeHelper.ObjectType;
+                        var returnType = TypeHelper.ObjectType;
 
                         if (targetMethod.IsGenericMethod)
                         {
@@ -1918,7 +1918,7 @@ namespace System.Activities
                     // match both overloads with a single check.
                     if (targetMethod.Name == "Get")
                     {
-                        Type returnType = TypeHelper.ObjectType;
+                        var returnType = TypeHelper.ObjectType;
 
                         if (targetMethod.IsGenericMethod)
                         {
@@ -1937,8 +1937,8 @@ namespace System.Activities
             // Here's the code for a method call that isn't on our "special" list
             newExpression = methodCall;
 
-            bool hasChanged = TryRewriteLambdaExpression(methodCall.Object, out Expression objectExpression, publicAccessor);
-            hasChanged |= TryRewriteLambdaExpressionCollection(methodCall.Arguments, out IList<Expression> expressionList, publicAccessor);
+            var hasChanged = TryRewriteLambdaExpression(methodCall.Object, out var objectExpression, publicAccessor);
+            hasChanged |= TryRewriteLambdaExpressionCollection(methodCall.Arguments, out var expressionList, publicAccessor);
 
             if (hasChanged)
             {
@@ -1950,7 +1950,7 @@ namespace System.Activities
 
         internal static Expression RewriteNonCompiledExpressionTree(LambdaExpression originalLambdaExpression)
         {
-            ExpressionTreeRewriter expressionVisitor = new ExpressionTreeRewriter();
+            var expressionVisitor = new ExpressionTreeRewriter();
             return expressionVisitor.Visit(Expression.Lambda(
                 typeof(Func<,>).MakeGenericType(typeof(ActivityContext), originalLambdaExpression.ReturnType),
                 originalLambdaExpression.Body, 

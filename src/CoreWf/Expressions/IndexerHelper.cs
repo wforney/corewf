@@ -11,21 +11,21 @@ namespace System.Activities.Expressions
     {
         public static void OnGetArguments<TItem>(Collection<InArgument> indices, OutArgument<Location<TItem>> result, CodeActivityMetadata metadata)
         {
-            for (int i = 0; i < indices.Count; i++)
+            for (var i = 0; i < indices.Count; i++)
             {
-                RuntimeArgument indexArgument = new RuntimeArgument("Index" + i, indices[i].ArgumentType, ArgumentDirection.In, true);
+                var indexArgument = new RuntimeArgument("Index" + i, indices[i].ArgumentType, ArgumentDirection.In, true);
                 metadata.Bind(indices[i], indexArgument);
                 metadata.AddArgument(indexArgument);
             }
 
-            RuntimeArgument resultArgument = new RuntimeArgument("Result", typeof(Location<TItem>), ArgumentDirection.Out);
+            var resultArgument = new RuntimeArgument("Result", typeof(Location<TItem>), ArgumentDirection.Out);
             metadata.Bind(result, resultArgument);
             metadata.AddArgument(resultArgument);
         }
         public static void CacheMethod<TOperand, TItem>(Collection<InArgument> indices, ref MethodInfo getMethod, ref MethodInfo setMethod)
         {
-            Type[] getTypes = new Type[indices.Count];
-            for (int i = 0; i < indices.Count; i++)
+            var getTypes = new Type[indices.Count];
+            for (var i = 0; i < indices.Count; i++)
             {
                 getTypes[i] = indices[i].ArgumentType;
             }
@@ -36,8 +36,8 @@ namespace System.Activities.Expressions
                 getMethod = null;
             }
 
-            Type[] setTypes = new Type[indices.Count + 1];
-            for (int i = 0; i < indices.Count; i++)
+            var setTypes = new Type[indices.Count + 1];
+            for (var i = 0; i < indices.Count; i++)
             {
                 setTypes[i] = indices[i].ArgumentType;
             }

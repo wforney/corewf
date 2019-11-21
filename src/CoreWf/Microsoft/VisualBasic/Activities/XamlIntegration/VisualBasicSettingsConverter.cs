@@ -41,14 +41,14 @@ namespace Microsoft.VisualBasic.Activities.XamlIntegration
 
         public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
         {
-            string sourceString = value as string;
+            var sourceString = value as string;
             if (sourceString != null)
             {
                 if (sourceString.Equals(VisualBasicSettingsValueSerializer.ImplementationVisualBasicSettingsValue))
                 {
                     // this is the VBSettings for the internal implementation
                     // suppress its Xaml serialization
-                    VisualBasicSettings settings = CollectXmlNamespacesAndAssemblies(context);
+                    var settings = CollectXmlNamespacesAndAssemblies(context);
                     if (settings != null)
                     {
                         settings.SuppressXamlSerialization = true;
@@ -71,7 +71,7 @@ namespace Microsoft.VisualBasic.Activities.XamlIntegration
             return base.ConvertTo(context, culture, value, destinationType);
         }
 
-        VisualBasicSettings CollectXmlNamespacesAndAssemblies(ITypeDescriptorContext context)
+        private VisualBasicSettings CollectXmlNamespacesAndAssemblies(ITypeDescriptorContext context)
         {
             return VisualBasicExpressionConverter.CollectXmlNamespacesAndAssemblies(context);
         }

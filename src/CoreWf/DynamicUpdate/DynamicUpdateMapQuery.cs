@@ -3,23 +3,14 @@
 
 namespace System.Activities.DynamicUpdate
 {
-    using System;
-    using System.Activities.DynamicUpdate;
     using System.Activities.Internals;
     using System.Activities.Runtime;
-    using System.Activities.XamlIntegration;
-    using System.Collections.Generic;
-    using System.Collections.ObjectModel;
-    using System.ComponentModel;
-    using System.Globalization;
-    using System.Runtime;
-    using System.Runtime.Serialization;
 
     public class DynamicUpdateMapQuery
     {
-        private DynamicUpdateMap map;
-        private Activity updatedWorkflowDefinition;
-        private Activity originalWorkflowDefinition;
+        private readonly DynamicUpdateMap map;
+        private readonly Activity updatedWorkflowDefinition;
+        private readonly Activity originalWorkflowDefinition;
 
         internal DynamicUpdateMapQuery(DynamicUpdateMap map, Activity updatedWorkflowDefinition, Activity originalWorkflowDefinition)
         {
@@ -35,10 +26,10 @@ namespace System.Activities.DynamicUpdate
         {
             if (activity == null)
             {
-                throw FxTrace.Exception.ArgumentNull("activity");
+                throw FxTrace.Exception.ArgumentNull(nameof(activity));
             }
 
-            if (IsInNewDefinition(activity))
+            if (this.IsInNewDefinition(activity))
             {
                 return this.MatchNewToOld(activity);
             }
@@ -52,10 +43,10 @@ namespace System.Activities.DynamicUpdate
         {
             if (variable == null)
             {
-                throw FxTrace.Exception.ArgumentNull("variable");
+                throw FxTrace.Exception.ArgumentNull(nameof(variable));
             }            
 
-            if (IsInNewDefinition(variable))
+            if (this.IsInNewDefinition(variable))
             {
                 return this.MatchNewToOld(variable);
             }
@@ -69,33 +60,19 @@ namespace System.Activities.DynamicUpdate
         {
             if (activity == null)
             {
-                throw FxTrace.Exception.ArgumentNull("activity");
+                throw FxTrace.Exception.ArgumentNull(nameof(activity));
             }
 
-            return this.CanApplyUpdateWhileRunning(activity, IsInNewDefinition(activity));
+            return this.CanApplyUpdateWhileRunning(activity, this.IsInNewDefinition(activity));
         }
 
-        private Activity MatchNewToOld(Activity newActivity)
-        {
-            DynamicUpdateMapEntry entry;
-            return this.MatchNewToOld(newActivity, out entry);
-        }
+        private Activity MatchNewToOld(Activity newActivity) => this.MatchNewToOld(newActivity, out _);
 
         private Activity MatchNewToOld(Activity newActivity, out DynamicUpdateMapEntry entry)
         {
-            entry = null;
             if (this.map.TryGetUpdateEntryByNewId(newActivity.InternalId, out entry))
             {
-                IdSpace rootIdSpace;
-                if (this.map.IsForImplementation)
-                {
-                    rootIdSpace = this.originalWorkflowDefinition.ParentOf;                    
-                }
-                else
-                {
-                    rootIdSpace = this.originalWorkflowDefinition.MemberOf;
-                }
-
+                var rootIdSpace = this.map.IsForImplementation ? this.originalWorkflowDefinition.ParentOf : this.originalWorkflowDefinition.MemberOf;
                 if (rootIdSpace != null)
                 {
                     return rootIdSpace[entry.OldActivityId];
@@ -112,43 +89,27 @@ namespace System.Activities.DynamicUpdate
                 return null;
             }
 
-            DynamicUpdateMapEntry entry;
-            Activity oldOwner = this.MatchNewToOld(newVariable.Owner, out entry);
+            var oldOwner = this.MatchNewToOld(newVariable.Owner, out var entry);
             if (oldOwner == null)
             {
                 return null;
             }
 
-            int newIndex = newVariable.Owner.RuntimeVariables.IndexOf(newVariable);
-            int? oldIndex = entry.HasEnvironmentUpdates ?
+            var newIndex = newVariable.Owner.RuntimeVariables.IndexOf(newVariable);
+            var oldIndex = entry.HasEnvironmentUpdates ?
                 entry.EnvironmentUpdateMap.GetOldVariableIndex(newIndex) :
                 newIndex;
 
             return oldIndex.HasValue ? oldOwner.RuntimeVariables[oldIndex.Value] : null;
         }
 
-        private Activity MatchOldToNew(Activity oldActivity)
-        {
-            DynamicUpdateMapEntry entry;
-            return this.MatchOldToNew(oldActivity, out entry);
-        }
+        private Activity MatchOldToNew(Activity oldActivity) => this.MatchOldToNew(oldActivity, out _);
 
         private Activity MatchOldToNew(Activity oldActivity, out DynamicUpdateMapEntry entry)
         {
-            entry = null;
-
             if (this.map.TryGetUpdateEntry(oldActivity.InternalId, out entry) && entry.NewActivityId > 0)
             {
-                IdSpace rootIdSpace;
-                if (this.map.IsForImplementation)
-                {
-                    rootIdSpace = this.updatedWorkflowDefinition.ParentOf;                    
-                }
-                else
-                {
-                    rootIdSpace = this.updatedWorkflowDefinition.MemberOf;
-                }
-
+                var rootIdSpace = this.map.IsForImplementation ? this.updatedWorkflowDefinition.ParentOf : this.updatedWorkflowDefinition.MemberOf;
                 if (rootIdSpace != null)
                 {
                     return rootIdSpace[entry.NewActivityId];
@@ -165,15 +126,14 @@ namespace System.Activities.DynamicUpdate
                 return null;
             }
 
-            DynamicUpdateMapEntry entry;
-            Activity newOwner = this.MatchOldToNew(oldVariable.Owner, out entry);
+            var newOwner = this.MatchOldToNew(oldVariable.Owner, out var entry);
             if (newOwner == null)
             {
                 return null;
             }
 
-            int oldIndex = oldVariable.Owner.RuntimeVariables.IndexOf(oldVariable);
-            int? newIndex = entry.HasEnvironmentUpdates ?
+            var oldIndex = oldVariable.Owner.RuntimeVariables.IndexOf(oldVariable);
+            var newIndex = entry.HasEnvironmentUpdates ?
                 entry.EnvironmentUpdateMap.GetNewVariableIndex(oldIndex) :
                 oldIndex;
 
@@ -182,8 +142,8 @@ namespace System.Activities.DynamicUpdate
 
         private bool CanApplyUpdateWhileRunning(Activity activity, bool isInNewDefinition)
         {
-            Activity currentActivity = activity;
-            IdSpace rootIdSpace = activity.MemberOf;
+            var currentActivity = activity;
+            var rootIdSpace = activity.MemberOf;
             do
             {
                 DynamicUpdateMapEntry entry = null;
@@ -213,7 +173,7 @@ namespace System.Activities.DynamicUpdate
 
         private bool IsInNewDefinition(Activity activity, bool isVariableOwner = false)
         {
-            bool result = false;
+            var result = false;
             if (activity.RootActivity == this.updatedWorkflowDefinition)
             {
                 result = true;
@@ -254,16 +214,18 @@ namespace System.Activities.DynamicUpdate
         {
             if (variable.Owner == null)
             {
-                throw FxTrace.Exception.Argument("variable", SR.QueryVariableIsNotInDefinition);
+                throw FxTrace.Exception.Argument(nameof(variable), SR.QueryVariableIsNotInDefinition);
             }
+
             if (!variable.IsPublic)
             {
-                throw FxTrace.Exception.Argument("variable", SR.QueryVariableIsNotPublic);
+                throw FxTrace.Exception.Argument(nameof(variable), SR.QueryVariableIsNotPublic);
             }
-            return IsInNewDefinition(variable.Owner, true);
+
+            return this.IsInNewDefinition(variable.Owner, true);
         }
 
-        private void ThrowNotInDefinition(bool isVariableOwner, string variableMessage, string activityMessage)
+        private static void ThrowNotInDefinition(bool isVariableOwner, string variableMessage, string activityMessage)
         {
             if (isVariableOwner)
             {

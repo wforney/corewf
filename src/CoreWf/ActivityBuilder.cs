@@ -6,7 +6,7 @@ namespace System.Activities
 #if NET45
     using System.Activities.Debugger;
 #endif
-    using System.Activities.Runtime;
+
     using System.Activities.Validation;
     using System.Activities.XamlIntegration;
     using System.Collections.Generic;
@@ -16,30 +16,59 @@ namespace System.Activities
     using System.Xaml;
     using System;
 
+    /// <summary>
+    /// The ActivityBuilder class. This class cannot be inherited.
+    /// </summary>
     [ContentProperty("Implementation")]
-    public sealed class ActivityBuilder
+    public sealed partial class ActivityBuilder
 #if NET45
         : IDebuggableWorkflowTree
 #endif
     {
         // define attached properties that will identify PropertyReferenceExtension-based
         // object properties
+        /// <summary>
+        /// The property reference property identifier
+        /// </summary>
         private static readonly AttachableMemberIdentifier propertyReferencePropertyID = new AttachableMemberIdentifier(typeof(ActivityBuilder), "PropertyReference");
+
+        /// <summary>
+        /// The property references property identifier
+        /// </summary>
         private static readonly AttachableMemberIdentifier propertyReferencesPropertyID = new AttachableMemberIdentifier(typeof(ActivityBuilder), "PropertyReferences");
+
+        /// <summary>
+        /// The properties
+        /// </summary>
         private KeyedCollection<string, DynamicActivityProperty> properties;
+
+        /// <summary>
+        /// The constraints
+        /// </summary>
         private Collection<Constraint> constraints;
+
+        /// <summary>
+        /// The attributes
+        /// </summary>
         private Collection<Attribute> attributes;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ActivityBuilder"/> class.
+        /// </summary>
         public ActivityBuilder()
         {
         }
 
-        public string Name
-        {
-            get;
-            set;
-        }
+        /// <summary>
+        /// Gets or sets the name.
+        /// </summary>
+        /// <value>The name.</value>
+        public string Name { get; set; }
 
+        /// <summary>
+        /// Gets the attributes.
+        /// </summary>
+        /// <value>The attributes.</value>
         [DependsOn("Name")]
         public Collection<Attribute> Attributes
         {
@@ -49,10 +78,15 @@ namespace System.Activities
                 {
                     this.attributes = new Collection<Attribute>();
                 }
+
                 return this.attributes;
             }
         }
 
+        /// <summary>
+        /// Gets the properties.
+        /// </summary>
+        /// <value>The properties.</value>
         [Browsable(false)]
         [DependsOn("Attributes")]
         public KeyedCollection<string, DynamicActivityProperty> Properties
@@ -63,11 +97,15 @@ namespace System.Activities
                 {
                     this.properties = new ActivityPropertyCollection();
                 }
+
                 return this.properties;
             }
         }
 
-
+        /// <summary>
+        /// Gets the constraints.
+        /// </summary>
+        /// <value>The constraints.</value>
         [DependsOn("Properties")]
         [Browsable(false)]
         public Collection<Constraint> Constraints
@@ -78,27 +116,28 @@ namespace System.Activities
                 {
                     this.constraints = new Collection<Constraint>();
                 }
+
                 return this.constraints;
             }
         }
 
+        /// <summary>
+        /// Gets or sets the implementation version.
+        /// </summary>
+        /// <value>The implementation version.</value>
         [TypeConverter(typeof(ImplementationVersionConverter))]
         [DefaultValue(null)]
         [DependsOn("Name")]
-        public Version ImplementationVersion
-        {
-            get;
-            set;
-        }
+        public Version ImplementationVersion { get; set; }
 
+        /// <summary>
+        /// Gets or sets the implementation.
+        /// </summary>
+        /// <value>The implementation.</value>
         [DefaultValue(null)]
         [Browsable(false)]
         [DependsOn("Constraints")]
-        public Activity Implementation
-        {
-            get;
-            set;
-        }
+        public Activity Implementation { get; set; }
 
         // Back-compat workaround: PropertyReference shipped in 4.0. PropertyReferences is new in 4.5.
         //
@@ -112,43 +151,65 @@ namespace System.Activities
         //   the value from SetPropertyReference to also appear in the PropertyReferences collection.
 
         // <ActivityBuilder.PropertyReference>activity property name</ActivityBuilder.PropertyReference>
-        public static ActivityPropertyReference GetPropertyReference(object target)
-        {
-            return GetPropertyReferenceCollection(target).SingleItem;
-        }
+        /// <summary>
+        /// Gets the property reference.
+        /// </summary>
+        /// <param name="target">The target.</param>
+        /// <returns>ActivityPropertyReference.</returns>
+        public static ActivityPropertyReference GetPropertyReference(object target) => GetPropertyReferenceCollection(target).SingleItem;
 
         // <ActivityBuilder.PropertyReference>activity property name</ActivityBuilder.PropertyReference>
-        public static void SetPropertyReference(object target, ActivityPropertyReference value)
-        {
-            GetPropertyReferenceCollection(target).SingleItem = value;
-        }
+        /// <summary>
+        /// Sets the property reference.
+        /// </summary>
+        /// <param name="target">The target.</param>
+        /// <param name="value">The value.</param>
+        public static void SetPropertyReference(object target, ActivityPropertyReference value) => GetPropertyReferenceCollection(target).SingleItem = value;
 
-        public static IList<ActivityPropertyReference> GetPropertyReferences(object target)
-        {
-            return GetPropertyReferenceCollection(target);
-        }
+        /// <summary>
+        /// Gets the property references.
+        /// </summary>
+        /// <param name="target">The target.</param>
+        /// <returns>IList&lt;ActivityPropertyReference&gt;.</returns>
+        public static IList<ActivityPropertyReference> GetPropertyReferences(object target) => GetPropertyReferenceCollection(target);
 
+        /// <summary>
+        /// Shoulds the serialize property reference.
+        /// </summary>
+        /// <param name="target">The target.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public static bool ShouldSerializePropertyReference(object target)
         {
-            PropertyReferenceCollection propertyReferences = GetPropertyReferenceCollection(target);
+            var propertyReferences = GetPropertyReferenceCollection(target);
             return propertyReferences.Count == 1 && propertyReferences.SingleItem != null;
         }
 
+        /// <summary>
+        /// Shoulds the serialize property references.
+        /// </summary>
+        /// <param name="target">The target.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public static bool ShouldSerializePropertyReferences(object target)
         {
-            PropertyReferenceCollection propertyReferences = GetPropertyReferenceCollection(target);
+            var propertyReferences = GetPropertyReferenceCollection(target);
             return propertyReferences.Count > 1 || propertyReferences.SingleItem == null;
         }
 
-        internal static bool HasPropertyReferences(object target)
-        {
-            if (AttachablePropertyServices.TryGetProperty(target, propertyReferencesPropertyID, out PropertyReferenceCollection propertyReferences))
-            {
-                return propertyReferences.Count > 0;
-            }
-            return false;
-        }
+        /// <summary>
+        /// Determines whether [has property references] [the specified target].
+        /// </summary>
+        /// <param name="target">The target.</param>
+        /// <returns><c>true</c> if [has property references] [the specified target]; otherwise, <c>false</c>.</returns>
+        internal static bool HasPropertyReferences(object target) =>
+            AttachablePropertyServices.TryGetProperty(target, propertyReferencesPropertyID, out PropertyReferenceCollection propertyReferences)
+                ? propertyReferences.Count > 0
+                : false;
 
+        /// <summary>
+        /// Gets the property reference collection.
+        /// </summary>
+        /// <param name="target">The target.</param>
+        /// <returns>PropertyReferenceCollection.</returns>
         private static PropertyReferenceCollection GetPropertyReferenceCollection(object target)
         {
             if (!AttachablePropertyServices.TryGetProperty(target, propertyReferencesPropertyID, out PropertyReferenceCollection propertyReferences))
@@ -156,8 +217,8 @@ namespace System.Activities
                 propertyReferences = new PropertyReferenceCollection(target);
                 AttachablePropertyServices.SetProperty(target, propertyReferencesPropertyID, propertyReferences);
             }
-            return propertyReferences;
 
+            return propertyReferences;
         }
 
 #if NET45
@@ -167,148 +228,55 @@ namespace System.Activities
         }
 #endif
 
-        internal static KeyedCollection<string, DynamicActivityProperty> CreateActivityPropertyCollection()
-        {
-            return new ActivityPropertyCollection();
-        }
-
-        private class ActivityPropertyCollection : KeyedCollection<string, DynamicActivityProperty>
-        {
-            protected override string GetKeyForItem(DynamicActivityProperty item)
-            {
-                return item.Name;
-            }
-        }
-
-        // See back-compat requirements in comment above. Design is:
-        // - First value added to collection when it is empty becomes the single PropertyReference value
-        // - If the single value is removed, then PropertyReference AP is removed
-        // - If PropertyReference AP is set to null, we remove the single value.
-        // - If PropertyReference is set to non-null, we replace the existing single value if there
-        //    is one, or else add the new value to the collection.
-        private class PropertyReferenceCollection : Collection<ActivityPropertyReference>
-        {
-            private readonly WeakReference targetObject;
-            private int singleItemIndex = -1;
-
-            public PropertyReferenceCollection(object target)
-            {
-                this.targetObject = new WeakReference(target);
-            }
-
-            public ActivityPropertyReference SingleItem
-            {
-                get
-                {
-                    return this.singleItemIndex >= 0 ? this[this.singleItemIndex] : null;
-                }
-                set
-                {
-                    if (this.singleItemIndex >= 0)
-                    {
-                        if (value != null)
-                        {
-                            SetItem(this.singleItemIndex, value);
-                        }
-                        else
-                        {
-                            RemoveItem(this.singleItemIndex);
-                        }
-                    }
-                    else if (value != null)
-                    {
-                        Add(value);
-                        if (Count > 1)
-                        {
-                            this.singleItemIndex = Count - 1;
-                            UpdateAttachedProperty();
-                        }
-                    }
-                }
-            }
-
-            protected override void ClearItems()
-            {
-                this.singleItemIndex = -1;
-                UpdateAttachedProperty();
-            }
-
-            protected override void InsertItem(int index, ActivityPropertyReference item)
-            {
-                base.InsertItem(index, item);
-                if (index <= this.singleItemIndex)
-                {
-                    this.singleItemIndex++;
-                }
-                else if (Count == 1)
-                {
-                    Fx.Assert(this.singleItemIndex < 0, "How did we have an index if we were empty?");
-                    this.singleItemIndex = 0;
-                    UpdateAttachedProperty();
-                }
-            }
-
-            protected override void RemoveItem(int index)
-            {
-                base.RemoveItem(index);
-                if (index < this.singleItemIndex)
-                {
-                    this.singleItemIndex--;
-                }
-                else if (index == this.singleItemIndex)
-                {
-                    this.singleItemIndex = -1;
-                    UpdateAttachedProperty();
-                }
-            }
-
-            protected override void SetItem(int index, ActivityPropertyReference item)
-            {
-                base.SetItem(index, item);
-                if (index == this.singleItemIndex)
-                {
-                    UpdateAttachedProperty();
-                }
-            }
-
-            private void UpdateAttachedProperty()
-            {
-                object target = this.targetObject.Target;
-                if (target != null)
-                {
-                    if (this.singleItemIndex >= 0)
-                    {
-                        AttachablePropertyServices.SetProperty(target, propertyReferencePropertyID, this[this.singleItemIndex]);
-                    }
-                    else
-                    {
-                        AttachablePropertyServices.RemoveProperty(target, propertyReferencePropertyID);
-                    }
-                }
-            }
-        }
+        /// <summary>
+        /// Creates the activity property collection.
+        /// </summary>
+        /// <returns>KeyedCollection&lt;System.String, DynamicActivityProperty&gt;.</returns>
+        internal static KeyedCollection<string, DynamicActivityProperty> CreateActivityPropertyCollection() => new ActivityPropertyCollection();
     }
 
+    /// <summary>
+    /// The ActivityBuilder class. This class cannot be inherited.
+    /// </summary>
+    /// <typeparam name="TResult">The type of the t result.</typeparam>
     [ContentProperty("Implementation")]
     public sealed class ActivityBuilder<TResult>
 #if NET45
         : IDebuggableWorkflowTree
 #endif
     {
+        /// <summary>
+        /// The properties
+        /// </summary>
         private KeyedCollection<string, DynamicActivityProperty> properties;
+
+        /// <summary>
+        /// The constraints
+        /// </summary>
         private Collection<Constraint> constraints;
+
+        /// <summary>
+        /// The attributes
+        /// </summary>
         private Collection<Attribute> attributes;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ActivityBuilder{TResult}"/> class.
+        /// </summary>
         public ActivityBuilder()
         {
         }
 
-        public string Name
-        {
-            get;
-            set;
-        }
+        /// <summary>
+        /// Gets or sets the name.
+        /// </summary>
+        /// <value>The name.</value>
+        public string Name { get; set; }
 
+        /// <summary>
+        /// Gets the attributes.
+        /// </summary>
+        /// <value>The attributes.</value>
         [DependsOn("Name")]
         public Collection<Attribute> Attributes
         {
@@ -318,10 +286,15 @@ namespace System.Activities
                 {
                     this.attributes = new Collection<Attribute>();
                 }
+
                 return this.attributes;
             }
         }
 
+        /// <summary>
+        /// Gets the properties.
+        /// </summary>
+        /// <value>The properties.</value>
         [Browsable(false)]
         [DependsOn("Attributes")]
         public KeyedCollection<string, DynamicActivityProperty> Properties
@@ -332,10 +305,15 @@ namespace System.Activities
                 {
                     this.properties = ActivityBuilder.CreateActivityPropertyCollection();
                 }
+
                 return this.properties;
             }
         }
 
+        /// <summary>
+        /// Gets the constraints.
+        /// </summary>
+        /// <value>The constraints.</value>
         [DependsOn("Properties")]
         [Browsable(false)]
         public Collection<Constraint> Constraints
@@ -346,27 +324,28 @@ namespace System.Activities
                 {
                     this.constraints = new Collection<Constraint>();
                 }
+
                 return this.constraints;
             }
         }
 
+        /// <summary>
+        /// Gets or sets the implementation version.
+        /// </summary>
+        /// <value>The implementation version.</value>
         [TypeConverter(typeof(ImplementationVersionConverter))]
         [DefaultValue(null)]
         [DependsOn("Name")]
-        public Version ImplementationVersion
-        {
-            get;
-            set;
-        }
+        public Version ImplementationVersion { get; set; }
 
+        /// <summary>
+        /// Gets or sets the implementation.
+        /// </summary>
+        /// <value>The implementation.</value>
         [DefaultValue(null)]
         [Browsable(false)]
         [DependsOn("Constraints")]
-        public Activity Implementation
-        {
-            get;
-            set;
-        }
+        public Activity Implementation { get; set; }
 
 #if NET45
         Activity IDebuggableWorkflowTree.GetWorkflowRoot()
@@ -375,5 +354,4 @@ namespace System.Activities
         }
 #endif
     }
-
 }

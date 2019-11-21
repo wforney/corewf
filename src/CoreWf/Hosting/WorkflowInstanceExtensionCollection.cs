@@ -34,7 +34,7 @@ namespace System.Activities.Hosting
         {
             this.extensionManager = extensionManager;
 
-            int extensionProviderCount = 0;
+            var extensionProviderCount = 0;
             if (extensionManager != null)
             {
                 extensionProviderCount = extensionManager.ExtensionProviders.Count;
@@ -51,11 +51,11 @@ namespace System.Activities.Hosting
 
             // Resolve activity extensions
             Dictionary<Type, WorkflowInstanceExtensionProvider> filteredActivityExtensionProviders = null;
-            if (workflowDefinition.GetActivityExtensionInformation(out Dictionary<Type, WorkflowInstanceExtensionProvider> activityExtensionProviders, out HashSet<Type> requiredActivityExtensionTypes))
+            if (workflowDefinition.GetActivityExtensionInformation(out var activityExtensionProviders, out var requiredActivityExtensionTypes))
             {
                 // a) filter out the extension Types that were already configured by the host. Note that only "primary" extensions are in play here, not
                 // "additional" extensions
-                HashSet<Type> allExtensionTypes = new HashSet<Type>();
+                var allExtensionTypes = new HashSet<Type>();
                 if (extensionManager != null)
                 {
                     extensionManager.AddAllExtensionTypes(allExtensionTypes);
@@ -64,15 +64,15 @@ namespace System.Activities.Hosting
                 if (activityExtensionProviders != null)
                 {
                     filteredActivityExtensionProviders = new Dictionary<Type, WorkflowInstanceExtensionProvider>(activityExtensionProviders.Count);
-                    foreach (KeyValuePair<Type, WorkflowInstanceExtensionProvider> keyedActivityExtensionProvider in activityExtensionProviders)
+                    foreach (var keyedActivityExtensionProvider in activityExtensionProviders)
                     {
-                        Type newExtensionProviderType = keyedActivityExtensionProvider.Key;
+                        var newExtensionProviderType = keyedActivityExtensionProvider.Key;
                         if (!TypeHelper.ContainsCompatibleType(allExtensionTypes, newExtensionProviderType))
                         {
                             // first see if the new provider supersedes any existing ones
                             List<Type> typesToRemove = null;
-                            bool skipNewExtensionProvider = false;
-                            foreach (Type existingExtensionProviderType in filteredActivityExtensionProviders.Keys)
+                            var skipNewExtensionProvider = false;
+                            foreach (var existingExtensionProviderType in filteredActivityExtensionProviders.Keys)
                             {
                                 // Use AreReferenceTypesCompatible for performance since we know that all of these must be reference types
                                 if (TypeHelper.AreReferenceTypesCompatible(existingExtensionProviderType, newExtensionProviderType))
@@ -94,7 +94,7 @@ namespace System.Activities.Hosting
                             // prune unnecessary extension providers (either superseded by the new extension or by an existing extension that supersedes them both)
                             if (typesToRemove != null)
                             {
-                                for (int i = 0; i < typesToRemove.Count; i++)
+                                for (var i = 0; i < typesToRemove.Count; i++)
                                 {
                                     filteredActivityExtensionProviders.Remove(typesToRemove[i]);
                                 }
@@ -117,7 +117,7 @@ namespace System.Activities.Hosting
                 // b) Validate that all required extensions will be provided
                 if (requiredActivityExtensionTypes != null && requiredActivityExtensionTypes.Count > 0)
                 {
-                    foreach (Type requiredType in requiredActivityExtensionTypes)
+                    foreach (var requiredType in requiredActivityExtensionTypes)
                     {
                         if (!TypeHelper.ContainsCompatibleType(allExtensionTypes, requiredType))
                         {
@@ -134,17 +134,17 @@ namespace System.Activities.Hosting
 
                 if (extensionManager != null)
                 {
-                    List<KeyValuePair<Type, WorkflowInstanceExtensionProvider>> extensionProviders = extensionManager.ExtensionProviders;
-                    for (int i = 0; i < extensionProviders.Count; i++)
+                    var extensionProviders = extensionManager.ExtensionProviders;
+                    for (var i = 0; i < extensionProviders.Count; i++)
                     {
-                        KeyValuePair<Type, WorkflowInstanceExtensionProvider> extensionProvider = extensionProviders[i];
+                        var extensionProvider = extensionProviders[i];
                         AddInstanceExtension(extensionProvider.Value); 
                     }
                 }
 
                 if (filteredActivityExtensionProviders != null)
                 {
-                    foreach (WorkflowInstanceExtensionProvider extensionProvider in filteredActivityExtensionProviders.Values)
+                    foreach (var extensionProvider in filteredActivityExtensionProviders.Values)
                     {
                         AddInstanceExtension(extensionProvider);
                     }
@@ -155,7 +155,7 @@ namespace System.Activities.Hosting
         private void AddInstanceExtension(WorkflowInstanceExtensionProvider extensionProvider)
         {
             Fx.Assert(this.instanceExtensions != null, "instanceExtensions should be setup by now");
-            object newExtension = extensionProvider.ProvideValue();
+            var newExtension = extensionProvider.ProvideValue();
             if (newExtension is SymbolResolver)
             {
                 throw FxTrace.Exception.AsError(new InvalidOperationException(SR.SymbolResolverMustBeSingleton));
@@ -231,9 +231,9 @@ namespace System.Activities.Hosting
 
             if (this.shouldSetInstanceForInstanceExtensions)
             {
-                for (int i = 0; i < this.instanceExtensions.Count; i++)
+                for (var i = 0; i < this.instanceExtensions.Count; i++)
                 {
-                    KeyValuePair<WorkflowInstanceExtensionProvider, object> keyedExtension = this.instanceExtensions[i];
+                    var keyedExtension = this.instanceExtensions[i];
                     // for IWorkflowInstance we key off the type of the value, not the declared type
 
                     if (keyedExtension.Value is IWorkflowInstanceExtension workflowInstanceExtension)
@@ -256,9 +256,9 @@ namespace System.Activities.Hosting
 
         private void SetInstance(List<object> extensionsList)
         {
-            for (int i = 0; i < extensionsList.Count; i++)
+            for (var i = 0; i < extensionsList.Count; i++)
             {
-                object extension = extensionsList[i];
+                var extension = extensionsList[i];
                 if (extension is IWorkflowInstanceExtension)
                 {
                     if (this.workflowInstanceExtensions == null)
@@ -276,7 +276,7 @@ namespace System.Activities.Hosting
         {
             T result = null;
 
-            if (TryGetCachedExtension(typeof(T), out object cachedExtension))
+            if (TryGetCachedExtension(typeof(T), out var cachedExtension))
             {
                 return (T)cachedExtension;
             }
@@ -284,9 +284,9 @@ namespace System.Activities.Hosting
             try
             {
                 // when we have support for context.GetExtensions<T>(), then change from early break to ThrowOnMultipleMatches ("There are more than one matched extensions found which is not allowed with GetExtension method call. Please use GetExtensions method instead.")
-                for (int i = 0; i < this.allSingletonExtensions.Count; i++)
+                for (var i = 0; i < this.allSingletonExtensions.Count; i++)
                 {
-                    object extension = this.allSingletonExtensions[i];
+                    var extension = this.allSingletonExtensions[i];
                     result = extension as T;
                     if (result != null)
                     {
@@ -296,9 +296,9 @@ namespace System.Activities.Hosting
 
                 if (this.instanceExtensions != null)
                 {
-                    for (int i = 0; i < this.instanceExtensions.Count; i++)
+                    for (var i = 0; i < this.instanceExtensions.Count; i++)
                     {
-                        KeyValuePair<WorkflowInstanceExtensionProvider, object> keyedExtension = this.instanceExtensions[i];
+                        var keyedExtension = this.instanceExtensions[i];
                         if (keyedExtension.Key.IsMatch<T>(keyedExtension.Value))
                         {
                             result = (T)keyedExtension.Value;
@@ -308,9 +308,9 @@ namespace System.Activities.Hosting
 
                     if (this.additionalInstanceExtensions != null)
                     {
-                        for (int i = 0; i < this.additionalInstanceExtensions.Count; i++)
+                        for (var i = 0; i < this.additionalInstanceExtensions.Count; i++)
                         {
-                            object additionalExtension = this.additionalInstanceExtensions[i];
+                            var additionalExtension = this.additionalInstanceExtensions[i];
                             result = additionalExtension as T;
                             if (result != null)
                             {
@@ -338,16 +338,16 @@ namespace System.Activities.Hosting
             where T : class
         {
             // sometimes we match the single case even when you ask for multiple
-            if (TryGetCachedExtension(typeof(T), out object cachedExtension))
+            if (TryGetCachedExtension(typeof(T), out var cachedExtension))
             {
                 yield return (T)cachedExtension;
             }
             else
             {
                 T lastExtension = null;
-                bool hasMultiple = false;
+                var hasMultiple = false;
 
-                foreach (T extension in this.allSingletonExtensions.OfType<T>())
+                foreach (var extension in this.allSingletonExtensions.OfType<T>())
                 {
                     if (lastExtension == null)
                     {
@@ -361,7 +361,7 @@ namespace System.Activities.Hosting
                     yield return extension;
                 }
 
-                foreach (T extension in GetInstanceExtensions<T>(useObjectTypeForComparison))
+                foreach (var extension in GetInstanceExtensions<T>(useObjectTypeForComparison))
                 {
                     if (lastExtension == null)
                     {
@@ -386,9 +386,9 @@ namespace System.Activities.Hosting
         {
             if (this.instanceExtensions != null)
             {
-                for (int i = 0; i < this.instanceExtensions.Count; i++)
+                for (var i = 0; i < this.instanceExtensions.Count; i++)
                 {
-                    KeyValuePair<WorkflowInstanceExtensionProvider, object> keyedExtension = this.instanceExtensions[i];
+                    var keyedExtension = this.instanceExtensions[i];
                     if ((useObjectTypeForComparison && keyedExtension.Value is T)
                         || keyedExtension.Key.IsMatch<T>(keyedExtension.Value))
                     {
@@ -398,7 +398,7 @@ namespace System.Activities.Hosting
 
                 if (this.additionalInstanceExtensions != null)
                 {
-                    foreach (object additionalExtension in this.additionalInstanceExtensions)
+                    foreach (var additionalExtension in this.additionalInstanceExtensions)
                     {
                         if (additionalExtension is T)
                         {
@@ -413,7 +413,7 @@ namespace System.Activities.Hosting
         {
             // we should only call dispose on instance extensions, since those are
             // the only ones we created
-            foreach (IDisposable disposableExtension in GetInstanceExtensions<IDisposable>(true))
+            foreach (var disposableExtension in GetInstanceExtensions<IDisposable>(true))
             {
                 disposableExtension.Dispose();
             }
@@ -421,7 +421,7 @@ namespace System.Activities.Hosting
 
         public void Cancel()
         {
-            foreach (ICancelable cancelableExtension in GetInstanceExtensions<ICancelable>(true))
+            foreach (var cancelableExtension in GetInstanceExtensions<ICancelable>(true))
             {
                 cancelableExtension.Cancel();
             }

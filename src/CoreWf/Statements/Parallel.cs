@@ -111,9 +111,9 @@ using System.Activities.DynamicUpdate;
 
         protected override void CacheMetadata(NativeActivityMetadata metadata)
         {
-            Collection<Activity> children = new Collection<Activity>();
+            var children = new Collection<Activity>();
 
-            foreach (Activity branch in this.Branches)
+            foreach (var branch in this.Branches)
             {
                 children.Add(branch);
             }
@@ -142,9 +142,9 @@ using System.Activities.DynamicUpdate;
         {
             if (this.branches != null && this.Branches.Count != 0)
             {
-                CompletionCallback onBranchComplete = new CompletionCallback(OnBranchComplete);
+                var onBranchComplete = new CompletionCallback(OnBranchComplete);
 
-                for (int i = this.Branches.Count - 1; i >= 0; i--)
+                for (var i = this.Branches.Count - 1; i >= 0; i--)
                 {
                     context.ScheduleActivity(this.Branches[i], onBranchComplete);
                 }

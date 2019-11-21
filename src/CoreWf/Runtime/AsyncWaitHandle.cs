@@ -46,7 +46,7 @@ namespace System.Activities.Runtime
                     }
                     else if (!_isSignaled)
                     {
-                        AsyncWaiter waiter = new AsyncWaiter(this, callback, state);
+                        var waiter = new AsyncWaiter(this, callback, state);
 
                         if (_asyncWaiters == null)
                         {
@@ -73,9 +73,9 @@ namespace System.Activities.Runtime
 
         private static void OnTimerComplete(object state)
         {
-            AsyncWaiter waiter = (AsyncWaiter)state;
-            AsyncWaitHandle thisPtr = waiter.Parent;
-            bool callWaiter = false;
+            var waiter = (AsyncWaiter)state;
+            var thisPtr = waiter.Parent;
+            var callWaiter = false;
 
             lock (thisPtr._syncObject)
             {
@@ -108,7 +108,7 @@ namespace System.Activities.Runtime
                     }
                     else if (!_isSignaled)
                     {
-                        bool decrementRequired = false;
+                        var decrementRequired = false;
 
                         try
                         {
@@ -190,7 +190,7 @@ namespace System.Activities.Runtime
 
             if (toCallList != null)
             {
-                foreach (AsyncWaiter waiter in toCallList)
+                foreach (var waiter in toCallList)
                 {
                     waiter.CancelTimer();
                     waiter.Call();

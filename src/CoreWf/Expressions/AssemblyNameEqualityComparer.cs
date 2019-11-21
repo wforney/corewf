@@ -72,8 +72,8 @@ namespace System.Activities.Expressions
                 return false;
             }
 
-            byte[] xArray = x.GetPublicKeyToken();
-            byte[] yArray = y.GetPublicKeyToken();
+            var xArray = x.GetPublicKeyToken();
+            var yArray = y.GetPublicKeyToken();
             if (!IsSameKeyToken(xArray, yArray))
             {
                 return false;
@@ -93,7 +93,7 @@ namespace System.Activities.Expressions
 
         public int GetHashCode(AssemblyName obj)
         {
-            int hashcode = 0;
+            var hashcode = 0;
 
             if (obj.Name != null)
             {
@@ -110,7 +110,7 @@ namespace System.Activities.Expressions
                 hashcode ^= obj.CultureInfo.GetHashCode();
             }
 
-            byte[] objArray = obj.GetPublicKeyToken();
+            var objArray = obj.GetPublicKeyToken();
             if (objArray != null)
             {
                 // distinguishing no PKToken from "PKToken = null" which is an array of length=0
@@ -125,7 +125,7 @@ namespace System.Activities.Expressions
 
         public static bool IsSameKeyToken(byte[] reqKeyToken, byte[] curKeyToken)
         {
-            bool isSame = false;
+            var isSame = false;
 
             if (reqKeyToken == null && curKeyToken == null)
             {
@@ -138,7 +138,7 @@ namespace System.Activities.Expressions
                 if (reqKeyToken.Length == curKeyToken.Length)
                 {
                     isSame = true;
-                    for (int i = 0; i < reqKeyToken.Length; i++)
+                    for (var i = 0; i < reqKeyToken.Length; i++)
                     {
                         if (reqKeyToken[i] != curKeyToken[i])
                         {

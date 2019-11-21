@@ -14,8 +14,8 @@ namespace System.Activities.Statements
     {
         public Rethrow()
         {
-            DelegateInArgument<Rethrow> element = new DelegateInArgument<Rethrow>() { Name = "constraintArg" };
-            DelegateInArgument<ValidationContext> validationContext = new DelegateInArgument<ValidationContext>() { Name = "validationContext" };
+            var element = new DelegateInArgument<Rethrow>() { Name = "constraintArg" };
+            var validationContext = new DelegateInArgument<ValidationContext>() { Name = "validationContext" };
             base.Constraints.Add(new Constraint<Rethrow>
             {
                 Body = new ActivityAction<Rethrow, ValidationContext>
@@ -69,21 +69,21 @@ namespace System.Activities.Statements
 
             protected override void CacheMetadata(NativeActivityMetadata metadata)
             {
-                RuntimeArgument parentChainArgument = new RuntimeArgument("ParentChain", typeof(IEnumerable<Activity>), ArgumentDirection.In, true);
+                var parentChainArgument = new RuntimeArgument("ParentChain", typeof(IEnumerable<Activity>), ArgumentDirection.In, true);
                 metadata.Bind(this.ParentChain, parentChainArgument);
                 metadata.AddArgument(parentChainArgument);
 
-                RuntimeArgument rethrowActivityArgument = new RuntimeArgument("RethrowActivity", typeof(Rethrow), ArgumentDirection.In, true);
+                var rethrowActivityArgument = new RuntimeArgument("RethrowActivity", typeof(Rethrow), ArgumentDirection.In, true);
                 metadata.Bind(this.RethrowActivity, rethrowActivityArgument);
                 metadata.AddArgument(rethrowActivityArgument);
             }
 
             protected override void Execute(NativeActivityContext context)
             {
-                IEnumerable<Activity> parentChain = this.ParentChain.Get(context);
-                Rethrow rethrowActivity = this.RethrowActivity.Get(context);
+                var parentChain = this.ParentChain.Get(context);
+                var rethrowActivity = this.RethrowActivity.Get(context);
                 Activity previousActivity = rethrowActivity;
-                bool privateRethrow = false;
+                var privateRethrow = false;
 
                 // TryCatch with Rethrow is usually authored in the following way:
                 // 
@@ -99,7 +99,7 @@ namespace System.Activities.Statements
                 // Notice that the chain of Activities is TryCatch->Sequence->Rethrow
                 // We want to validate that Rethrow is in the catch block of TryCatch
                 // We walk up the parent chain until we find TryCatch.  Then we check if one the catch handlers points to Sequence(the previous activity in the tree)
-                foreach (Activity parent in parentChain)
+                foreach (var parent in parentChain)
                 {
                     // Rethrow is only allowed under the public children of a TryCatch activity.
                     // If any of the activities in the tree is a private child, report a constraint violation.
@@ -112,9 +112,9 @@ namespace System.Activities.Statements
                     {
                         if (previousActivity != null)
                         {
-                            foreach (Catch catchHandler in tryCatch.Catches)
+                            foreach (var catchHandler in tryCatch.Catches)
                             {
-                                ActivityDelegate catchAction = catchHandler.GetAction();
+                                var catchAction = catchHandler.GetAction();
                                 if (catchAction != null && catchAction.Handler == previousActivity)
                                 {
                                     if (privateRethrow)

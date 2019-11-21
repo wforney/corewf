@@ -192,9 +192,9 @@ using System.Activities.DynamicUpdate;
             {
                 metadata.AddValidationError(SR.FlowchartContainsUnconnectedNodes(this.DisplayName));
             }
-            HashSet<Activity> uniqueChildren = new HashSet<Activity>();
-            IEnumerable<FlowNode> childrenNodes = this.ValidateUnconnectedNodes ? this.Nodes.Distinct() : this.reachableNodes;
-            foreach (FlowNode node in childrenNodes)
+            var uniqueChildren = new HashSet<Activity>();
+            var childrenNodes = this.ValidateUnconnectedNodes ? this.Nodes.Distinct() : this.reachableNodes;
+            foreach (var node in childrenNodes)
             {
                 if (this.ValidateUnconnectedNodes)
                 {
@@ -203,8 +203,8 @@ using System.Activities.DynamicUpdate;
                 node.GetChildActivities(uniqueChildren);
             }
 
-            List<Activity> children = new List<Activity>(uniqueChildren.Count);
-            foreach (Activity child in uniqueChildren)
+            var children = new List<Activity>(uniqueChildren.Count);
+            foreach (var child in uniqueChildren)
             {
                 children.Add(child);
             }
@@ -247,8 +247,8 @@ using System.Activities.DynamicUpdate;
         {
             Fx.Assert(visitNodeCallback != null, "This must be supplied since it stops us from infinitely looping.");
 
-            List<FlowNode> connected = new List<FlowNode>();
-            Stack<FlowNode> stack = new Stack<FlowNode>();
+            var connected = new List<FlowNode>();
+            var stack = new Stack<FlowNode>();
             if (start == null)
             {
                 return;
@@ -256,7 +256,7 @@ using System.Activities.DynamicUpdate;
             stack.Push(start);
             while (stack.Count > 0)
             {
-                FlowNode current = stack.Pop();
+                var current = stack.Pop();
 
                 if (current == null)
                 {
@@ -268,7 +268,7 @@ using System.Activities.DynamicUpdate;
                     connected.Clear();
                     current.GetConnectedNodes(connected);
 
-                    for (int i = 0; i < connected.Count; i++)
+                    for (var i = 0; i < connected.Count; i++)
                     {
                         stack.Push(connected[i]);
                     }
@@ -322,10 +322,10 @@ using System.Activities.DynamicUpdate;
 
 
             Fx.Assert(node != null, "caller should validate");
-            FlowNode current = node;
+            var current = node;
             do
             {
-                if (this.ExecuteSingleNode(context, current, out FlowNode next))
+                if (this.ExecuteSingleNode(context, current, out var next))
                 {
                     current = next;
                 }
@@ -362,7 +362,7 @@ using System.Activities.DynamicUpdate;
                 return decision.Execute(context, this.onDecisionCompleted);
             }
 
-            IFlowSwitch switchNode = node as IFlowSwitch;
+            var switchNode = node as IFlowSwitch;
             Fx.Assert(switchNode != null, "unrecognized FlowNode");
 
             return switchNode.Execute(context, this);
@@ -370,33 +370,33 @@ using System.Activities.DynamicUpdate;
 
         private FlowNode GetCurrentNode(NativeActivityContext context)
         {
-            int index = this.currentNode.Get(context);
-            FlowNode result = this.reachableNodes[index];
+            var index = this.currentNode.Get(context);
+            var result = this.reachableNodes[index];
             Fx.Assert(result != null, "corrupt internal state");
             return result;
         }
 
         private void OnStepCompleted(NativeActivityContext context, ActivityInstance completedInstance)
         {
-            FlowStep step = this.GetCurrentNode(context) as FlowStep;
+            var step = this.GetCurrentNode(context) as FlowStep;
             Fx.Assert(step != null, "corrupt internal state");
-            FlowNode next = step.Next;
+            var next = step.Next;
             this.ExecuteNodeChain(context, next, completedInstance);
         }
 
         private void OnDecisionCompleted(NativeActivityContext context, ActivityInstance completedInstance, bool result)
         {
-            FlowDecision decision = this.GetCurrentNode(context) as FlowDecision;
+            var decision = this.GetCurrentNode(context) as FlowDecision;
             Fx.Assert(decision != null, "corrupt internal state");
-            FlowNode next = result ? decision.True : decision.False;
+            var next = result ? decision.True : decision.False;
             this.ExecuteNodeChain(context, next, completedInstance);
         }
 
         internal void OnSwitchCompleted<T>(NativeActivityContext context, ActivityInstance completedInstance, T result)
         {
-            IFlowSwitch switchNode = this.GetCurrentNode(context) as IFlowSwitch;
+            var switchNode = this.GetCurrentNode(context) as IFlowSwitch;
             Fx.Assert(switchNode != null, "corrupt internal state");
-            FlowNode next = switchNode.GetNextNode(result);
+            var next = switchNode.GetNextNode(result);
             this.ExecuteNodeChain(context, next, completedInstance);
         }
     }

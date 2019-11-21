@@ -25,7 +25,7 @@ namespace System.Activities.XamlIntegration
                 ConstructNamespaceCache();
             }
 
-            if (this.namespacesCache.TryGetValue(prefix, out NamespaceDeclaration result))
+            if (this.namespacesCache.TryGetValue(prefix, out var result))
             {
                 return result.Namespace;
             }
@@ -71,7 +71,7 @@ namespace System.Activities.XamlIntegration
 
         public void ExitScope()
         {
-            List<NamespaceDeclaration> namespaceList = this.namespaceStack.Pop();
+            var namespaceList = this.namespaceStack.Pop();
             if (namespaceList.Count != 0)
             {
                 this.namespacesCache = null;
@@ -90,10 +90,10 @@ namespace System.Activities.XamlIntegration
 
         private void ConstructNamespaceCache()
         {
-            Dictionary<string, NamespaceDeclaration> localNamespaces = new Dictionary<string, NamespaceDeclaration>();
+            var localNamespaces = new Dictionary<string, NamespaceDeclaration>();
             if (this.tempNamespaceList != null && this.tempNamespaceList.Count > 0)
             {
-                foreach (NamespaceDeclaration tempNamespace in tempNamespaceList)
+                foreach (var tempNamespace in tempNamespaceList)
                 {
                     if (!localNamespaces.ContainsKey(tempNamespace.Prefix))
                     {
@@ -101,9 +101,9 @@ namespace System.Activities.XamlIntegration
                     }
                 }
             }
-            foreach (List<NamespaceDeclaration> currentNamespaces in this.namespaceStack)
+            foreach (var currentNamespaces in this.namespaceStack)
             {
-                foreach (NamespaceDeclaration currentNamespace in currentNamespaces)
+                foreach (var currentNamespace in currentNamespaces)
                 {
                     if (!localNamespaces.ContainsKey(currentNamespace.Prefix))
                     {

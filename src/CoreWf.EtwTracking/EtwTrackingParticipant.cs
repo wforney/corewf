@@ -1,74 +1,118 @@
 // This file is part of Core WF which is licensed under the MIT license.
 // See LICENSE file in the project root for full license information.
 
-using Newtonsoft.Json;
-using System;
-using System.Activities.Tracking;
-using System.Diagnostics.Tracing;
-
 namespace System.Activities.EtwTracking
 {
+    using System.Activities.Tracking;
+    using System.Diagnostics.Tracing;
+    using System.Text.Json;
+
+    /// <summary>
+    /// The EtwTrackingParticipant class. This class cannot be inherited.
+    /// Implements the <see cref="System.Activities.Tracking.TrackingParticipant" />
+    /// </summary>
+    /// <seealso cref="System.Activities.Tracking.TrackingParticipant" />
     public sealed class EtwTrackingParticipant : TrackingParticipant
     {
+        /// <summary>
+        /// The truncated items tag
+        /// </summary>
         private const string truncatedItemsTag = "<items>...</items>";
+
+        /// <summary>
+        /// The empty items tag
+        /// </summary>
         private const string emptyItemsTag = "<items />";
+
+        /// <summary>
+        /// The items tag
+        /// </summary>
         private const string itemsTag = "items";
+
+        /// <summary>
+        /// The item tag
+        /// </summary>
         private const string itemTag = "item";
+
+        /// <summary>
+        /// The name attribute
+        /// </summary>
         private const string nameAttribute = "name";
+
+        /// <summary>
+        /// The type attribute
+        /// </summary>
         private const string typeAttribute = "type";
 
-        public EtwTrackingParticipant()
-        {
-            this.ApplicationReference = string.Empty;
-        }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="EtwTrackingParticipant" /> class.
+        /// </summary>
+        public EtwTrackingParticipant() => this.ApplicationReference = string.Empty;
 
-        public string ApplicationReference
-        {
-            get;
+        /// <summary>
+        /// Gets or sets the application reference.
+        /// </summary>
+        /// <value>The application reference.</value>
+        public string ApplicationReference { get; set; }
 
-            set;
-        }
-
+        /// <summary>
+        /// Begins the track.
+        /// </summary>
+        /// <param name="record">The record.</param>
+        /// <param name="timeout">The timeout.</param>
+        /// <param name="callback">The callback.</param>
+        /// <param name="state">The state.</param>
+        /// <returns>IAsyncResult.</returns>
         protected override IAsyncResult BeginTrack(TrackingRecord record, TimeSpan timeout, AsyncCallback callback, object state)
         {
-            Track(record, timeout);
+            this.Track(record, timeout);
             return new EtwTrackingAsyncResult(callback, state);
         }
 
+        /// <summary>
+        /// Ends the track.
+        /// </summary>
+        /// <param name="result">The result.</param>
         protected override void EndTrack(IAsyncResult result)
         {
             EtwTrackingAsyncResult.End(result as EtwTrackingAsyncResult);
         }
 
+        /// <summary>
+        /// Tracks the specified record.
+        /// </summary>
+        /// <param name="record">The record.</param>
+        /// <param name="timeout">The timeout.</param>
+        /// <exception cref="PlatformNotSupportedException"></exception>
         protected override void Track(TrackingRecord record, TimeSpan timeout)
         {
             if (record is ActivityStateRecord)
             {
-                TrackActivityRecord((ActivityStateRecord)record);
+                this.TrackActivityRecord((ActivityStateRecord)record);
             }
             else if (record is WorkflowInstanceRecord)
             {
-                TrackWorkflowRecord((WorkflowInstanceRecord)record);
+                this.TrackWorkflowRecord((WorkflowInstanceRecord)record);
             }
             else if (record is BookmarkResumptionRecord)
             {
-                TrackBookmarkRecord((BookmarkResumptionRecord)record);
+                this.TrackBookmarkRecord((BookmarkResumptionRecord)record);
             }
             else if (record is ActivityScheduledRecord)
             {
-                TrackActivityScheduledRecord((ActivityScheduledRecord)record);
+                this.TrackActivityScheduledRecord((ActivityScheduledRecord)record);
             }
             else if (record is CancelRequestedRecord)
             {
-                TrackCancelRequestedRecord((CancelRequestedRecord)record);
+                this.TrackCancelRequestedRecord((CancelRequestedRecord)record);
             }
             else if (record is FaultPropagationRecord)
             {
-                TrackFaultPropagationRecord((FaultPropagationRecord)record);
+                this.TrackFaultPropagationRecord((FaultPropagationRecord)record);
             }
             else if (record is CustomTrackingRecord)
             {
-                TrackCustomRecord((CustomTrackingRecord)record);
+                this.TrackCustomRecord((CustomTrackingRecord)record);
             }
             else
             {
@@ -76,20 +120,34 @@ namespace System.Activities.EtwTracking
             }
         }
 
+        /// <summary>
+        /// Tracks the activity record.
+        /// </summary>
+        /// <param name="record">The record.</param>
         private void TrackActivityRecord(ActivityStateRecord record)
         {
             if (WfEtwTrackingEventSource.Instance.ActivityStateRecordIsEnabled())
             {
-                WfEtwTrackingEventSource.Instance.ActivityStateRecord(record.InstanceId,
-                    record.RecordNumber, record.EventTime, record.State,
-                    record.Activity.Name, record.Activity.Id, record.Activity.InstanceId, record.Activity.TypeName,
-                    record.Arguments.Count > 0 ? JsonConvert.SerializeObject(record.Arguments, Formatting.Indented) : emptyItemsTag,
-                    record.Variables.Count > 0 ? JsonConvert.SerializeObject(record.Variables, Formatting.Indented) : emptyItemsTag,
-                    record.HasAnnotations ? JsonConvert.SerializeObject(record.Annotations, Formatting.Indented) : emptyItemsTag,
+                WfEtwTrackingEventSource.Instance.ActivityStateRecord(
+                    record.InstanceId,
+                    record.RecordNumber,
+                    record.EventTime,
+                    record.State,
+                    record.Activity.Name,
+                    record.Activity.Id,
+                    record.Activity.InstanceId,
+                    record.Activity.TypeName,
+                    record.Arguments.Count > 0 ? JsonSerializer.Serialize(record.Arguments, new JsonSerializerOptions { WriteIndented = true }) : emptyItemsTag,
+                    record.Variables.Count > 0 ? JsonSerializer.Serialize(record.Variables, new JsonSerializerOptions { WriteIndented = true }) : emptyItemsTag,
+                    record.HasAnnotations ? JsonSerializer.Serialize(record.Annotations, new JsonSerializerOptions { WriteIndented = true }) : emptyItemsTag,
                     this.TrackingProfile == null ? string.Empty : this.TrackingProfile.Name, this.ApplicationReference);
             }
         }
 
+        /// <summary>
+        /// Tracks the activity scheduled record.
+        /// </summary>
+        /// <param name="scheduledRecord">The scheduled record.</param>
         private void TrackActivityScheduledRecord(ActivityScheduledRecord scheduledRecord)
         {
             if (WfEtwTrackingEventSource.Instance.ActivityScheduledRecordIsEnabled())
@@ -102,11 +160,15 @@ namespace System.Activities.EtwTracking
                     scheduledRecord.Activity == null ? string.Empty : scheduledRecord.Activity.InstanceId,
                     scheduledRecord.Activity == null ? string.Empty : scheduledRecord.Activity.TypeName,
                     scheduledRecord.Child.Name, scheduledRecord.Child.Id, scheduledRecord.Child.InstanceId, scheduledRecord.Child.TypeName,
-                    scheduledRecord.HasAnnotations ? JsonConvert.SerializeObject(scheduledRecord.Annotations, Formatting.Indented) : emptyItemsTag,
+                    scheduledRecord.HasAnnotations ? JsonSerializer.Serialize(scheduledRecord.Annotations, new JsonSerializerOptions { WriteIndented = true }) : emptyItemsTag,
                     this.TrackingProfile == null ? string.Empty : this.TrackingProfile.Name, this.ApplicationReference);
             }
         }
 
+        /// <summary>
+        /// Tracks the cancel requested record.
+        /// </summary>
+        /// <param name="cancelRecord">The cancel record.</param>
         private void TrackCancelRequestedRecord(CancelRequestedRecord cancelRecord)
         {
             if (WfEtwTrackingEventSource.Instance.CancelRequestedRecordIsEnabled())
@@ -119,11 +181,15 @@ namespace System.Activities.EtwTracking
                     cancelRecord.Activity == null ? string.Empty : cancelRecord.Activity.InstanceId,
                     cancelRecord.Activity == null ? string.Empty : cancelRecord.Activity.TypeName,
                     cancelRecord.Child.Name, cancelRecord.Child.Id, cancelRecord.Child.InstanceId, cancelRecord.Child.TypeName,
-                    cancelRecord.HasAnnotations ? JsonConvert.SerializeObject(cancelRecord.Annotations, Formatting.Indented) : emptyItemsTag,
+                    cancelRecord.HasAnnotations ? JsonSerializer.Serialize(cancelRecord.Annotations, new JsonSerializerOptions { WriteIndented = true }) : emptyItemsTag,
                     this.TrackingProfile == null ? string.Empty : this.TrackingProfile.Name, this.ApplicationReference);
             }
         }
 
+        /// <summary>
+        /// Tracks the fault propagation record.
+        /// </summary>
+        /// <param name="faultRecord">The fault record.</param>
         private void TrackFaultPropagationRecord(FaultPropagationRecord faultRecord)
         {
             if (WfEtwTrackingEventSource.Instance.FaultPropagationRecordIsEnabled())
@@ -137,11 +203,15 @@ namespace System.Activities.EtwTracking
                     faultRecord.FaultHandler != null ? faultRecord.FaultHandler.InstanceId : string.Empty,
                     faultRecord.FaultHandler != null ? faultRecord.FaultHandler.TypeName : string.Empty,
                     faultRecord.Fault.ToString(), faultRecord.IsFaultSource,
-                    faultRecord.HasAnnotations ? JsonConvert.SerializeObject(faultRecord.Annotations, Formatting.Indented) : emptyItemsTag,
+                    faultRecord.HasAnnotations ? JsonSerializer.Serialize(faultRecord.Annotations, new JsonSerializerOptions { WriteIndented = true }) : emptyItemsTag,
                     this.TrackingProfile == null ? string.Empty : this.TrackingProfile.Name, this.ApplicationReference);
             }
         }
 
+        /// <summary>
+        /// Tracks the bookmark record.
+        /// </summary>
+        /// <param name="record">The record.</param>
         private void TrackBookmarkRecord(BookmarkResumptionRecord record)
         {
             if (WfEtwTrackingEventSource.Instance.BookmarkResumptionRecordIsEnabled())
@@ -149,11 +219,15 @@ namespace System.Activities.EtwTracking
                 WfEtwTrackingEventSource.Instance.BookmarkResumptionRecord(record.InstanceId, record.RecordNumber, record.EventTime,
                     record.BookmarkName, record.BookmarkScope, record.Owner.Name, record.Owner.Id,
                     record.Owner.InstanceId, record.Owner.TypeName,
-                    record.HasAnnotations ? JsonConvert.SerializeObject(record.Annotations, Formatting.Indented) : emptyItemsTag,
+                    record.HasAnnotations ? JsonSerializer.Serialize(record.Annotations, new JsonSerializerOptions { WriteIndented = true }) : emptyItemsTag,
                     this.TrackingProfile == null ? string.Empty : this.TrackingProfile.Name, this.ApplicationReference);
             }
         }
 
+        /// <summary>
+        /// Tracks the custom record.
+        /// </summary>
+        /// <param name="record">The record.</param>
         private void TrackCustomRecord(CustomTrackingRecord record)
         {
             switch (record.Level)
@@ -164,8 +238,8 @@ namespace System.Activities.EtwTracking
                         WfEtwTrackingEventSource.Instance.CustomTrackingRecordError(record.InstanceId,
                             record.RecordNumber, record.EventTime, record.Name,
                             record.Activity.Name, record.Activity.Id, record.Activity.InstanceId, record.Activity.TypeName,
-                            JsonConvert.SerializeObject(record.Data, Formatting.Indented),
-                            record.HasAnnotations ? JsonConvert.SerializeObject(record.Annotations, Formatting.Indented) : emptyItemsTag,
+                            JsonSerializer.Serialize(record.Data,  new JsonSerializerOptions { WriteIndented = true }),
+                            record.HasAnnotations ? JsonSerializer.Serialize(record.Annotations,  new JsonSerializerOptions { WriteIndented = true }) : emptyItemsTag,
                             this.TrackingProfile == null ? string.Empty : this.TrackingProfile.Name, this.ApplicationReference);
                     }
                     break;
@@ -175,8 +249,8 @@ namespace System.Activities.EtwTracking
                         WfEtwTrackingEventSource.Instance.CustomTrackingRecordWarning(record.InstanceId,
                             record.RecordNumber, record.EventTime, record.Name,
                             record.Activity.Name, record.Activity.Id, record.Activity.InstanceId, record.Activity.TypeName,
-                            JsonConvert.SerializeObject(record.Data, Formatting.Indented),
-                            record.HasAnnotations ? JsonConvert.SerializeObject(record.Annotations, Formatting.Indented) : emptyItemsTag,
+                            JsonSerializer.Serialize(record.Data,  new JsonSerializerOptions { WriteIndented = true }),
+                            record.HasAnnotations ? JsonSerializer.Serialize(record.Annotations,  new JsonSerializerOptions { WriteIndented = true }) : emptyItemsTag,
                             this.TrackingProfile == null ? string.Empty : this.TrackingProfile.Name, this.ApplicationReference);
                     }
                     break;
@@ -187,14 +261,18 @@ namespace System.Activities.EtwTracking
                         WfEtwTrackingEventSource.Instance.CustomTrackingRecordInfo(record.InstanceId,
                             record.RecordNumber, record.EventTime, record.Name,
                             record.Activity.Name, record.Activity.Id, record.Activity.InstanceId, record.Activity.TypeName,
-                            JsonConvert.SerializeObject(record.Data, Formatting.Indented),
-                            record.HasAnnotations ? JsonConvert.SerializeObject(record.Annotations, Formatting.Indented) : emptyItemsTag,
+                            JsonSerializer.Serialize(record.Data,  new JsonSerializerOptions { WriteIndented = true }),
+                            record.HasAnnotations ? JsonSerializer.Serialize(record.Annotations,  new JsonSerializerOptions { WriteIndented = true }) : emptyItemsTag,
                             this.TrackingProfile == null ? string.Empty : this.TrackingProfile.Name, this.ApplicationReference);
                     }
                     break;
             }
         }
 
+        /// <summary>
+        /// Tracks the workflow record.
+        /// </summary>
+        /// <param name="record">The record.</param>
         private void TrackWorkflowRecord(WorkflowInstanceRecord record)
         {
             // In the TrackWorkflowInstance*Record methods below there are two code paths.
@@ -206,29 +284,33 @@ namespace System.Activities.EtwTracking
             // native method which relies on getting the record arguments in a particular order.
             if (record is WorkflowInstanceUnhandledExceptionRecord)
             {
-                TrackWorkflowInstanceUnhandledExceptionRecord(record);
+                this.TrackWorkflowInstanceUnhandledExceptionRecord(record);
             }
             else if (record is WorkflowInstanceAbortedRecord)
             {
-                TrackWorkflowInstanceAbortedRecord(record);
+                this.TrackWorkflowInstanceAbortedRecord(record);
             }
             else if (record is WorkflowInstanceSuspendedRecord)
             {
-                TrackWorkflowInstanceSuspendedRecord(record);
+                this.TrackWorkflowInstanceSuspendedRecord(record);
             }
             else if (record is WorkflowInstanceTerminatedRecord)
             {
-                TrackWorkflowInstanceTerminatedRecord(record);
+                this.TrackWorkflowInstanceTerminatedRecord(record);
             }
             else
             {
-                TrackWorkflowInstanceRecord(record);
+                this.TrackWorkflowInstanceRecord(record);
             }
         }
 
+        /// <summary>
+        /// Tracks the workflow instance unhandled exception record.
+        /// </summary>
+        /// <param name="record">The record.</param>
         private void TrackWorkflowInstanceUnhandledExceptionRecord(WorkflowInstanceRecord record)
         {
-            WorkflowInstanceUnhandledExceptionRecord unhandled = record as WorkflowInstanceUnhandledExceptionRecord;
+            var unhandled = record as WorkflowInstanceUnhandledExceptionRecord;
             if (unhandled.WorkflowDefinitionIdentity == null)
             {
                 if (WfEtwTrackingEventSource.Instance.WorkflowInstanceUnhandledExceptionRecordIsEnabled())
@@ -237,7 +319,7 @@ namespace System.Activities.EtwTracking
                         unhandled.RecordNumber, unhandled.EventTime, unhandled.ActivityDefinitionId,
                         unhandled.FaultSource.Name, unhandled.FaultSource.Id, unhandled.FaultSource.InstanceId, unhandled.FaultSource.TypeName,
                         unhandled.UnhandledException == null ? string.Empty : unhandled.UnhandledException.ToString(),
-                        unhandled.HasAnnotations ? JsonConvert.SerializeObject(unhandled.Annotations, Formatting.Indented) : emptyItemsTag,
+                        unhandled.HasAnnotations ? JsonSerializer.Serialize(unhandled.Annotations,  new JsonSerializerOptions { WriteIndented = true }) : emptyItemsTag,
                         this.TrackingProfile == null ? string.Empty : this.TrackingProfile.Name, this.ApplicationReference);
                 }
             }
@@ -249,23 +331,27 @@ namespace System.Activities.EtwTracking
                         unhandled.RecordNumber, unhandled.EventTime, unhandled.ActivityDefinitionId,
                         unhandled.FaultSource.Name, unhandled.FaultSource.Id, unhandled.FaultSource.InstanceId, unhandled.FaultSource.TypeName,
                         unhandled.UnhandledException == null ? string.Empty : unhandled.UnhandledException.ToString(),
-                        unhandled.HasAnnotations ? JsonConvert.SerializeObject(unhandled.Annotations, Formatting.Indented) : emptyItemsTag,
+                        unhandled.HasAnnotations ? JsonSerializer.Serialize(unhandled.Annotations,  new JsonSerializerOptions { WriteIndented = true }) : emptyItemsTag,
                         this.TrackingProfile == null ? string.Empty : this.TrackingProfile.Name ?? string.Empty,
                         unhandled.WorkflowDefinitionIdentity.ToString(), this.ApplicationReference);
                 }
             }
         }
 
+        /// <summary>
+        /// Tracks the workflow instance aborted record.
+        /// </summary>
+        /// <param name="record">The record.</param>
         private void TrackWorkflowInstanceAbortedRecord(WorkflowInstanceRecord record)
         {
-            WorkflowInstanceAbortedRecord aborted = record as WorkflowInstanceAbortedRecord;
+            var aborted = record as WorkflowInstanceAbortedRecord;
             if (aborted.WorkflowDefinitionIdentity == null)
             {
                 if (WfEtwTrackingEventSource.Instance.WorkflowInstanceAbortedRecordIsEnabled())
                 {
                     WfEtwTrackingEventSource.Instance.WorkflowInstanceAbortedRecord(aborted.InstanceId, aborted.RecordNumber,
                         aborted.EventTime, aborted.ActivityDefinitionId, aborted.Reason,
-                        aborted.HasAnnotations ? JsonConvert.SerializeObject(aborted.Annotations, Formatting.Indented) : emptyItemsTag,
+                        aborted.HasAnnotations ? JsonSerializer.Serialize(aborted.Annotations,  new JsonSerializerOptions { WriteIndented = true }) : emptyItemsTag,
                         this.TrackingProfile == null ? string.Empty : this.TrackingProfile.Name, this.ApplicationReference);
                 }
             }
@@ -275,23 +361,27 @@ namespace System.Activities.EtwTracking
                 {
                     WfEtwTrackingEventSource.Instance.WorkflowInstanceAbortedRecordWithId(aborted.InstanceId, aborted.RecordNumber,
                         aborted.EventTime, aborted.ActivityDefinitionId, aborted.Reason,
-                        aborted.HasAnnotations ? JsonConvert.SerializeObject(aborted.Annotations, Formatting.Indented) : emptyItemsTag,
+                        aborted.HasAnnotations ? JsonSerializer.Serialize(aborted.Annotations,  new JsonSerializerOptions { WriteIndented = true }) : emptyItemsTag,
                         this.TrackingProfile == null ? string.Empty : this.TrackingProfile.Name ?? string.Empty,
                         aborted.WorkflowDefinitionIdentity.ToString(), this.ApplicationReference);
                 }
             }
         }
 
+        /// <summary>
+        /// Tracks the workflow instance suspended record.
+        /// </summary>
+        /// <param name="record">The record.</param>
         private void TrackWorkflowInstanceSuspendedRecord(WorkflowInstanceRecord record)
         {
-            WorkflowInstanceSuspendedRecord suspended = record as WorkflowInstanceSuspendedRecord;
+            var suspended = record as WorkflowInstanceSuspendedRecord;
             if (suspended.WorkflowDefinitionIdentity == null)
             {
                 if (WfEtwTrackingEventSource.Instance.WorkflowInstanceSuspendedRecordIsEnabled())
                 {
                     WfEtwTrackingEventSource.Instance.WorkflowInstanceSuspendedRecord(suspended.InstanceId, suspended.RecordNumber,
                         suspended.EventTime, suspended.ActivityDefinitionId, suspended.Reason,
-                        suspended.HasAnnotations ? JsonConvert.SerializeObject(suspended.Annotations, Formatting.Indented) : emptyItemsTag,
+                        suspended.HasAnnotations ? JsonSerializer.Serialize(suspended.Annotations,  new JsonSerializerOptions { WriteIndented = true }) : emptyItemsTag,
                         this.TrackingProfile == null ? string.Empty : this.TrackingProfile.Name, this.ApplicationReference);
                 }
             }
@@ -301,23 +391,27 @@ namespace System.Activities.EtwTracking
                 {
                     WfEtwTrackingEventSource.Instance.WorkflowInstanceSuspendedRecordWithId(suspended.InstanceId, suspended.RecordNumber,
                         suspended.EventTime, suspended.ActivityDefinitionId, suspended.Reason,
-                        suspended.HasAnnotations ? JsonConvert.SerializeObject(suspended.Annotations, Formatting.Indented) : emptyItemsTag,
+                        suspended.HasAnnotations ? JsonSerializer.Serialize(suspended.Annotations,  new JsonSerializerOptions { WriteIndented = true }) : emptyItemsTag,
                         this.TrackingProfile == null ? string.Empty : this.TrackingProfile.Name ?? string.Empty,
                         suspended.WorkflowDefinitionIdentity.ToString(), this.ApplicationReference);
                 }
             }
         }
 
+        /// <summary>
+        /// Tracks the workflow instance terminated record.
+        /// </summary>
+        /// <param name="record">The record.</param>
         private void TrackWorkflowInstanceTerminatedRecord(WorkflowInstanceRecord record)
         {
-            WorkflowInstanceTerminatedRecord terminated = record as WorkflowInstanceTerminatedRecord;
+            var terminated = record as WorkflowInstanceTerminatedRecord;
             if (terminated.WorkflowDefinitionIdentity == null)
             {
                 if (WfEtwTrackingEventSource.Instance.WorkflowInstanceTerminatedRecordIsEnabled())
                 {
                     WfEtwTrackingEventSource.Instance.WorkflowInstanceTerminatedRecord(terminated.InstanceId, terminated.RecordNumber,
                         terminated.EventTime, terminated.ActivityDefinitionId, terminated.Reason,
-                        terminated.HasAnnotations ? JsonConvert.SerializeObject(terminated.Annotations, Formatting.Indented) : emptyItemsTag,
+                        terminated.HasAnnotations ? JsonSerializer.Serialize(terminated.Annotations,  new JsonSerializerOptions { WriteIndented = true }) : emptyItemsTag,
                         this.TrackingProfile == null ? string.Empty : this.TrackingProfile.Name, this.ApplicationReference);
                 }
             }
@@ -327,13 +421,17 @@ namespace System.Activities.EtwTracking
                 {
                     WfEtwTrackingEventSource.Instance.WorkflowInstanceTerminatedRecordWithId(terminated.InstanceId, terminated.RecordNumber,
                         terminated.EventTime, terminated.ActivityDefinitionId, terminated.Reason,
-                        terminated.HasAnnotations ? JsonConvert.SerializeObject(terminated.Annotations, Formatting.Indented) : emptyItemsTag,
+                        terminated.HasAnnotations ? JsonSerializer.Serialize(terminated.Annotations,  new JsonSerializerOptions { WriteIndented = true }) : emptyItemsTag,
                         this.TrackingProfile == null ? string.Empty : this.TrackingProfile.Name ?? string.Empty,
                         terminated.WorkflowDefinitionIdentity.ToString(), this.ApplicationReference);
                 }
             }
         }
 
+        /// <summary>
+        /// Tracks the workflow instance record.
+        /// </summary>
+        /// <param name="record">The record.</param>
         private void TrackWorkflowInstanceRecord(WorkflowInstanceRecord record)
         {
             if (record.WorkflowDefinitionIdentity == null)
@@ -343,7 +441,7 @@ namespace System.Activities.EtwTracking
                     WfEtwTrackingEventSource.Instance.WorkflowInstanceRecord(record.InstanceId, record.RecordNumber,
                         record.EventTime, record.ActivityDefinitionId,
                         record.State,
-                        record.HasAnnotations ? JsonConvert.SerializeObject(record.Annotations, Formatting.Indented) : emptyItemsTag,
+                        record.HasAnnotations ? JsonSerializer.Serialize(record.Annotations,  new JsonSerializerOptions { WriteIndented = true }) : emptyItemsTag,
                         this.TrackingProfile == null ? string.Empty : this.TrackingProfile.Name, this.ApplicationReference);
                 }
             }
@@ -354,7 +452,7 @@ namespace System.Activities.EtwTracking
                     WfEtwTrackingEventSource.Instance.WorkflowInstanceRecordWithId(record.InstanceId, record.RecordNumber,
                         record.EventTime, record.ActivityDefinitionId,
                         record.State,
-                        record.HasAnnotations ? JsonConvert.SerializeObject(record.Annotations, Formatting.Indented) : emptyItemsTag,
+                        record.HasAnnotations ? JsonSerializer.Serialize(record.Annotations,  new JsonSerializerOptions { WriteIndented = true }) : emptyItemsTag,
                         this.TrackingProfile == null ? string.Empty : this.TrackingProfile.Name ?? string.Empty,
                         record.WorkflowDefinitionIdentity.ToString(), this.ApplicationReference);
                 }

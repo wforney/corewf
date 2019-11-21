@@ -37,7 +37,7 @@ namespace Microsoft.VisualBasic.Activities
             return (LambdaExpression)typedExpressionScript.RunAsync().GetAwaiter().GetResult().ReturnValue;
         }
 
-        class IdentifiersWalker : VisualBasicSyntaxWalker
+        private class IdentifiersWalker : VisualBasicSyntaxWalker
         {
             private readonly HashSet<string> _identifiers = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 

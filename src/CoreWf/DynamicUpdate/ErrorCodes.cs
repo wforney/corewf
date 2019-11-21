@@ -4,8 +4,8 @@
 namespace System.Activities.DynamicUpdate
 {
     using System;
-    
-    static class ErrorCodes
+
+    internal static class ErrorCodes
     {
         public const string ArgumentsChanged = "0100";
         public const string CannotCreateEnvironment = "0101";

@@ -24,7 +24,7 @@ namespace System.Activities.Runtime
         protected internal override void Invoke(NativeActivityContext context, ActivityInstance completedInstance)
         {
             EnsureCallback(completionCallbackType, completionCallbackParameters);
-            CompletionCallback completionCallback = (CompletionCallback)this.Callback;
+            var completionCallback = (CompletionCallback)this.Callback;
             completionCallback(context, completedInstance);
         }
     }

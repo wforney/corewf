@@ -36,7 +36,7 @@ namespace System.Activities.Debugger
             {
                 if (originalXamlMember.IsAttachable)
                 {
-                    MethodInfo attachablePropertyMethod = originalXamlMember.UnderlyingMember as MethodInfo;
+                    var attachablePropertyMethod = originalXamlMember.UnderlyingMember as MethodInfo;
                     if (attachablePropertyMethod.ReturnType == typeof(void))
                     {
                         return new XamlMember(originalXamlMember.Name, null, originalXamlMember.UnderlyingMember as MethodInfo, schemaContext, newInvoker);
@@ -48,7 +48,7 @@ namespace System.Activities.Debugger
                 }
                 else
                 {
-                    PropertyInfo propertyInfo = originalXamlMember.UnderlyingMember as PropertyInfo;
+                    var propertyInfo = originalXamlMember.UnderlyingMember as PropertyInfo;
                     if (propertyInfo != null)
                     {
                         return new XamlMember(propertyInfo, schemaContext, newInvoker);

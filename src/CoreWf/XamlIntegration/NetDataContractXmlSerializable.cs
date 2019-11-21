@@ -56,7 +56,7 @@ namespace System.Activities.XamlIntegration
 #else
         private DataContractSerializer CreateSerializer()
         {
-            DataContractSerializer result = new DataContractSerializer(typeof(T));
+            var result = new DataContractSerializer(typeof(T));
             return result;
         }
 #endif

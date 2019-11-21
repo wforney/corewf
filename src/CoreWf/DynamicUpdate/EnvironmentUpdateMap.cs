@@ -13,9 +13,9 @@ namespace System.Activities.DynamicUpdate
     [DataContract]
     internal class EnvironmentUpdateMap
     {
-        IList<EnvironmentUpdateMapEntry> variableEntries;       
-        IList<EnvironmentUpdateMapEntry> privateVariableEntries;       
-        IList<EnvironmentUpdateMapEntry> argumentEntries;       
+        private IList<EnvironmentUpdateMapEntry> variableEntries;
+        private IList<EnvironmentUpdateMapEntry> privateVariableEntries;
+        private IList<EnvironmentUpdateMapEntry> argumentEntries;       
         
         public EnvironmentUpdateMap()
         {
@@ -173,7 +173,7 @@ namespace System.Activities.DynamicUpdate
 
             ThrowIfMapsIncompatible(first, second, errorContext);
 
-            EnvironmentUpdateMap result = new EnvironmentUpdateMap
+            var result = new EnvironmentUpdateMap
             {
                 OldArgumentCount = first.OldArgumentCount,
                 NewArgumentCount = second.NewArgumentCount,
@@ -202,7 +202,7 @@ namespace System.Activities.DynamicUpdate
 
         internal int? GetOldVariableIndex(int newIndex)
         {
-            EnvironmentUpdateMapEntry environmentEntry = FindByNewIndex(this.VariableEntries, newIndex);
+            var environmentEntry = FindByNewIndex(this.VariableEntries, newIndex);
             if (environmentEntry != null)
             {
                 return environmentEntry.IsAddition ? (int?)null : environmentEntry.OldOffset;
@@ -212,7 +212,7 @@ namespace System.Activities.DynamicUpdate
 
         internal int? GetNewVariableIndex(int oldIndex)
         {
-            foreach (EnvironmentUpdateMapEntry environmentEntry in this.VariableEntries)
+            foreach (var environmentEntry in this.VariableEntries)
             {
                 if (environmentEntry.OldOffset == oldIndex)
                 {
@@ -225,7 +225,7 @@ namespace System.Activities.DynamicUpdate
 
         internal int? GetNewPrivateVariableIndex(int oldIndex)
         {
-            foreach (EnvironmentUpdateMapEntry environmentEntry in this.PrivateVariableEntries)
+            foreach (var environmentEntry in this.PrivateVariableEntries)
             {
                 if (environmentEntry.OldOffset == oldIndex)
                 {
@@ -236,7 +236,7 @@ namespace System.Activities.DynamicUpdate
             return null;
         }
 
-        static void ThrowIfMapsIncompatible(EnvironmentUpdateMap first, EnvironmentUpdateMap second,
+        private static void ThrowIfMapsIncompatible(EnvironmentUpdateMap first, EnvironmentUpdateMap second,
             DynamicUpdateMap.MergeErrorContext errorContext)
         {
             if (first.NewArgumentCount != second.OldArgumentCount ||
@@ -249,13 +249,13 @@ namespace System.Activities.DynamicUpdate
             }
         }
 
-        static IList<EnvironmentUpdateMapEntry> Merge(int finalCount, IList<EnvironmentUpdateMapEntry> first,
+        private static IList<EnvironmentUpdateMapEntry> Merge(int finalCount, IList<EnvironmentUpdateMapEntry> first,
             IList<EnvironmentUpdateMapEntry> second)
         {
-            List<EnvironmentUpdateMapEntry> result = new List<EnvironmentUpdateMapEntry>();
-            for (int i = 0; i < finalCount; i++)
+            var result = new List<EnvironmentUpdateMapEntry>();
+            for (var i = 0; i < finalCount; i++)
             {
-                EnvironmentUpdateMapEntry resultEntry = MergeEntry(i, first, second);
+                var resultEntry = MergeEntry(i, first, second);
                 if (resultEntry != null)
                 {
                     result.Add(resultEntry);
@@ -265,10 +265,10 @@ namespace System.Activities.DynamicUpdate
             return result.Count > 0 ? result : null;
         }
 
-        static EnvironmentUpdateMapEntry MergeEntry(int finalIndex, IList<EnvironmentUpdateMapEntry> first,
+        private static EnvironmentUpdateMapEntry MergeEntry(int finalIndex, IList<EnvironmentUpdateMapEntry> first,
             IList<EnvironmentUpdateMapEntry> second)
         {
-            EnvironmentUpdateMapEntry secondEntry = FindByNewIndex(second, finalIndex);
+            var secondEntry = FindByNewIndex(second, finalIndex);
             EnvironmentUpdateMapEntry firstEntry;
             if (secondEntry != null)
             {
@@ -282,9 +282,9 @@ namespace System.Activities.DynamicUpdate
             return EnvironmentUpdateMapEntry.Merge(firstEntry, secondEntry);
         }
 
-        static EnvironmentUpdateMapEntry FindByNewIndex(IList<EnvironmentUpdateMapEntry> entries, int newIndex)
+        private static EnvironmentUpdateMapEntry FindByNewIndex(IList<EnvironmentUpdateMapEntry> entries, int newIndex)
         {
-            foreach (EnvironmentUpdateMapEntry environmentEntry in entries)
+            foreach (var environmentEntry in entries)
             {
                 if (environmentEntry.NewOffset == newIndex)
                 {

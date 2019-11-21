@@ -30,9 +30,9 @@ namespace System.Activities.Validation
 
         internal IEnumerable<Activity> GetParents()
         {
-            List<Activity> parentsList = new List<Activity>();
+            var parentsList = new List<Activity>();
 
-            for (int i = 0; i < parentChain.Count; i++)
+            for (var i = 0; i < parentChain.Count; i++)
             {
                 parentsList.Add(parentChain[i].Activity);
             }
@@ -43,14 +43,14 @@ namespace System.Activities.Validation
         internal IEnumerable<Activity> GetWorkflowTree()
         {
             // It is okay to just walk the declared parent chain here
-            Activity currentNode = this.owner.Activity;
+            var currentNode = this.owner.Activity;
             if (currentNode != null)
             {
                 while (currentNode.Parent != null)
                 {
                     currentNode = currentNode.Parent;
                 }
-                List<Activity> nodes = ActivityValidationServices.GetChildren(new ActivityUtilities.ChildActivity(currentNode, true), new ActivityUtilities.ActivityCallStack(), this.options);
+                var nodes = ActivityValidationServices.GetChildren(new ActivityUtilities.ChildActivity(currentNode, true), new ActivityUtilities.ActivityCallStack(), this.options);
                 nodes.Add(currentNode);
                 return nodes;
             }
@@ -81,7 +81,7 @@ namespace System.Activities.Validation
                     validationErrors = new List<ValidationError>();
                 }
 
-                for (int i = 0; i < this.getChildrenErrors.Count; i++)
+                for (var i = 0; i < this.getChildrenErrors.Count; i++)
                 {
                     validationErrors.Add(this.getChildrenErrors[i]);
                 }

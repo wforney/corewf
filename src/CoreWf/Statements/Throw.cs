@@ -24,14 +24,14 @@ namespace System.Activities.Statements
 
         protected override void CacheMetadata(CodeActivityMetadata metadata)
         {
-            RuntimeArgument exceptionArgument = new RuntimeArgument("Exception", typeof(Exception), ArgumentDirection.In, true);
+            var exceptionArgument = new RuntimeArgument("Exception", typeof(Exception), ArgumentDirection.In, true);
             metadata.Bind(this.Exception, exceptionArgument);
             metadata.SetArgumentsCollection(new Collection<RuntimeArgument> { exceptionArgument });
         }
 
         protected override void Execute(CodeActivityContext context)
         {
-            Exception exception = this.Exception.Get(context);
+            var exception = this.Exception.Get(context);
 
             if (exception == null)
             {

@@ -61,7 +61,7 @@ namespace System.Activities.Runtime
         public void Invoke(NativeActivityContext context, Bookmark bookmark, object value)
         {
             EnsureCallback(bookmarkCallbackType, bookmarkCallbackParameters);
-            BookmarkCallback bookmarkCallback = (BookmarkCallback)this.Callback;
+            var bookmarkCallback = (BookmarkCallback)this.Callback;
             bookmarkCallback(context, bookmark, value);
         }
 

@@ -120,7 +120,7 @@ namespace System.Activities
         //    Justification = "Generic needed for type inference")]
         public static TResult Invoke<TResult>(Activity<TResult> workflow, IDictionary<string, object> inputs, TimeSpan timeout)
         {
-            return Invoke(workflow, inputs, out IDictionary<string, object> dummyOutputs, timeout);
+            return Invoke(workflow, inputs, out var dummyOutputs, timeout);
         }
 
         [Fx.Tag.InheritThrows(From = "Invoke")]
@@ -139,7 +139,7 @@ namespace System.Activities
             {
                 additionalOutputs = Invoke(workflow, timeout, null);
             }
-            if (additionalOutputs.TryGetValue("Result", out object untypedResult))
+            if (additionalOutputs.TryGetValue("Result", out var untypedResult))
             {
                 additionalOutputs.Remove("Result");
                 return (TResult)untypedResult;
@@ -185,7 +185,7 @@ namespace System.Activities
                 throw FxTrace.Exception.ArgumentNull(nameof(userState));
             }
 
-            AsyncInvokeContext context = this.RemoveFromPendingInvokes(userState);
+            var context = this.RemoveFromPendingInvokes(userState);
             if (context != null)
             {
                 // cancel does not need a timeout since it's bounded by the invoke timeout
@@ -195,7 +195,7 @@ namespace System.Activities
                 }
                 // cancel only throws TimeoutException and shouldnt throw at all if timeout is infinite
                 // cancel does not need to raise InvokeCompleted since the InvokeAsync invocation would raise it
-                IAsyncResult result = context.WorkflowApplication.BeginCancel(TimeSpan.MaxValue, cancelCallback, context);
+                var result = context.WorkflowApplication.BeginCancel(TimeSpan.MaxValue, cancelCallback, context);
                 if (result.CompletedSynchronously)
                 {
                     context.WorkflowApplication.EndCancel(result);
@@ -295,7 +295,7 @@ namespace System.Activities
 
             TimeoutHelper.ThrowIfNegativeArgument(timeout);
 
-            IDictionary<string, object> outputs = WorkflowApplication.Invoke(workflow, null, extensions, timeout);
+            var outputs = WorkflowApplication.Invoke(workflow, null, extensions, timeout);
 
             if (outputs == null)
             {
@@ -322,7 +322,7 @@ namespace System.Activities
 
             TimeoutHelper.ThrowIfNegativeArgument(timeout);
 
-            IDictionary<string, object> outputs = WorkflowApplication.Invoke(workflow, inputs, extensions, timeout);
+            var outputs = WorkflowApplication.Invoke(workflow, inputs, extensions, timeout);
 
             if (outputs == null)
             {
@@ -373,20 +373,20 @@ namespace System.Activities
             {
                 return;
             }
-            AsyncInvokeContext context = (AsyncInvokeContext)result.AsyncState;
+            var context = (AsyncInvokeContext)result.AsyncState;
             // cancel only throws TimeoutException and shouldnt throw at all if timeout is infinite
             context.WorkflowApplication.EndCancel(result);
         }
 
         private void InternalInvokeAsync(IDictionary<string, object> inputs, TimeSpan timeout, object userState)
         {
-            AsyncInvokeContext context = new AsyncInvokeContext(userState, this);
+            var context = new AsyncInvokeContext(userState, this);
             if (userState != null)
             {
                 AddToPendingInvokes(context);
             }
             Exception error = null;
-            bool completedSynchronously = false;
+            var completedSynchronously = false;
             try
             {
                 if (invokeCallback == null)
@@ -394,7 +394,7 @@ namespace System.Activities
                     invokeCallback = Fx.ThunkCallback(new AsyncCallback(InvokeCallback));
                 }
                 context.Operation.OperationStarted();
-                IAsyncResult result = WorkflowApplication.BeginInvoke(this.workflow, inputs, this.extensions, timeout, SynchronizationContext.Current, context, invokeCallback, context);
+                var result = WorkflowApplication.BeginInvoke(this.workflow, inputs, this.extensions, timeout, SynchronizationContext.Current, context, invokeCallback, context);
                 if (result.CompletedSynchronously)
                 {
                     context.Outputs = this.EndInvoke(result);
@@ -421,8 +421,8 @@ namespace System.Activities
             {
                 return;
             }
-            AsyncInvokeContext context = (AsyncInvokeContext)result.AsyncState;
-            WorkflowInvoker thisPtr = context.Invoker;
+            var context = (AsyncInvokeContext)result.AsyncState;
+            var thisPtr = context.Invoker;
             Exception error = null;
             try
             {
@@ -455,7 +455,7 @@ namespace System.Activities
 
         private void PostInvokeCompleted(AsyncInvokeContext context, bool cancelled, Exception error)
         {
-            InvokeCompletedEventArgs e = new InvokeCompletedEventArgs(error, cancelled, context);
+            var e = new InvokeCompletedEventArgs(error, cancelled, context);
             if (this.InvokeCompleted == null)
             {
                 context.Operation.OperationCompleted();
@@ -477,7 +477,7 @@ namespace System.Activities
 
         private void RaiseInvokeCompleted(object state)
         {
-            EventHandler<InvokeCompletedEventArgs> handler = this.InvokeCompleted;
+            var handler = this.InvokeCompleted;
             if (handler != null)
             {
                 handler(this, (InvokeCompletedEventArgs)state);

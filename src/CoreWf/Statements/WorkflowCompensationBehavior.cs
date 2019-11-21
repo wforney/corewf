@@ -64,10 +64,10 @@ namespace System.Activities.Statements
 
         protected override void Execute(NativeActivityContext context)
         {
-            Bookmark mainRootCompleteBookmark = context.CreateBookmark(OnMainRootComplete, BookmarkOptions.NonBlocking);
+            var mainRootCompleteBookmark = context.CreateBookmark(OnMainRootComplete, BookmarkOptions.NonBlocking);
             context.RegisterMainRootCompleteCallback(mainRootCompleteBookmark);
 
-            CompensationExtension compensationExtension = context.GetExtension<CompensationExtension>();
+            var compensationExtension = context.GetExtension<CompensationExtension>();
             Fx.Assert(compensationExtension != null, "CompensationExtension must be valid");
 
             compensationExtension.WorkflowCompensation = context.CreateBookmark(new BookmarkCallback(OnCompensate));
@@ -84,13 +84,13 @@ namespace System.Activities.Statements
 
         private void OnMainRootComplete(NativeActivityContext context, Bookmark bookmark, object value)
         {
-            CompensationExtension compensationExtension = context.GetExtension<CompensationExtension>();
+            var compensationExtension = context.GetExtension<CompensationExtension>();
             Fx.Assert(compensationExtension != null, "CompensationExtension must be valid");
 
-            CompensationTokenData rootHandle = compensationExtension.Get(CompensationToken.RootCompensationId);
+            var rootHandle = compensationExtension.Get(CompensationToken.RootCompensationId);
             Fx.Assert(rootHandle != null, "rootToken must be valid");
 
-            ActivityInstanceState completionState = (ActivityInstanceState)value;
+            var completionState = (ActivityInstanceState)value;
 
             if (completionState == ActivityInstanceState.Closed)
             {
@@ -111,15 +111,15 @@ namespace System.Activities.Statements
 
         private void OnCompensate(NativeActivityContext context, Bookmark bookmark, object value)
         {
-            CompensationExtension compensationExtension = context.GetExtension<CompensationExtension>();
+            var compensationExtension = context.GetExtension<CompensationExtension>();
             Fx.Assert(compensationExtension != null, "CompensationExtension must be valid");
 
-            CompensationToken rootToken = (CompensationToken)value;
+            var rootToken = (CompensationToken)value;
             Fx.Assert(rootToken != null, "rootToken must be passed");
 
             this.currentCompensationToken.Set(context, rootToken);
 
-            CompensationTokenData rootTokenData = compensationExtension.Get(rootToken.CompensationId);
+            var rootTokenData = compensationExtension.Get(rootToken.CompensationId);
             if (rootTokenData.ExecutionTracker.Count > 0)
             {
                 context.ScheduleActivity(DefaultCompensation, new CompletionCallback(OnCompensationComplete));
@@ -133,7 +133,7 @@ namespace System.Activities.Statements
         private void OnCompensationComplete(NativeActivityContext context, ActivityInstance completedInstance)
         {
             // Remove bookmark.... have a cleanup book mark method...
-            CompensationExtension compensationExtension = context.GetExtension<CompensationExtension>();
+            var compensationExtension = context.GetExtension<CompensationExtension>();
             Fx.Assert(compensationExtension != null, "CompensationExtension must be valid");
 
             context.RemoveBookmark(compensationExtension.WorkflowConfirmation);
@@ -141,15 +141,15 @@ namespace System.Activities.Statements
 
         private void OnConfirm(NativeActivityContext context, Bookmark bookmark, object value)
         {
-            CompensationExtension compensationExtension = context.GetExtension<CompensationExtension>();
+            var compensationExtension = context.GetExtension<CompensationExtension>();
             Fx.Assert(compensationExtension != null, "CompensationExtension must be valid");
 
-            CompensationToken rootToken = (CompensationToken)value;
+            var rootToken = (CompensationToken)value;
             Fx.Assert(rootToken != null, "rootToken must be passed");
 
             this.currentCompensationToken.Set(context, rootToken);
 
-            CompensationTokenData rootTokenData = compensationExtension.Get(rootToken.CompensationId);
+            var rootTokenData = compensationExtension.Get(rootToken.CompensationId);
             if (rootTokenData.ExecutionTracker.Count > 0)
             {
                 context.ScheduleActivity(DefaultConfirmation, new CompletionCallback(OnConfirmationComplete));
@@ -162,7 +162,7 @@ namespace System.Activities.Statements
 
         private void OnConfirmationComplete(NativeActivityContext context, ActivityInstance completedInstance)
         {
-            CompensationExtension compensationExtension = context.GetExtension<CompensationExtension>();
+            var compensationExtension = context.GetExtension<CompensationExtension>();
             Fx.Assert(compensationExtension != null, "CompensationExtension must be valid");
 
             context.RemoveBookmark(compensationExtension.WorkflowCompensation);

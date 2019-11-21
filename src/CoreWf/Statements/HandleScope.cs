@@ -33,7 +33,7 @@ namespace System.Activities.Statements
 
         protected override void CacheMetadata(NativeActivityMetadata metadata)
         {
-            RuntimeArgument handleArgument = new RuntimeArgument("Handle", typeof(THandle), ArgumentDirection.In);
+            var handleArgument = new RuntimeArgument("Handle", typeof(THandle), ArgumentDirection.In);
             metadata.Bind(this.Handle, handleArgument);
             metadata.SetArgumentsCollection(new Collection<RuntimeArgument> { handleArgument });
 

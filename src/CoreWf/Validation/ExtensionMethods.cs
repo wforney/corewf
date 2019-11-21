@@ -16,8 +16,8 @@ namespace System.Activities.Validation
 
         public static string AsCommaSeparatedValues(this IEnumerable<string> c)
         {
-            StringBuilder sb = new StringBuilder();
-            foreach (string s in c)
+            var sb = new StringBuilder();
+            foreach (var s in c)
             {
                 if (!string.IsNullOrEmpty(s))
                 {
@@ -47,12 +47,12 @@ namespace System.Activities.Validation
 
         private static int BinarySearch<T>(IList<T> items, int startIndex, int length, T value, IComparer<T> comparer)
         {
-            int start = startIndex;
-            int end = (startIndex + length) - 1;
+            var start = startIndex;
+            var end = (startIndex + length) - 1;
             while (start <= end)
             {
-                int mid = start + ((end - start) >> 1);
-                int result = comparer.Compare(items[mid], value);
+                var mid = start + ((end - start) >> 1);
+                var result = comparer.Compare(items[mid], value);
                 if (result == 0)
                 {
                     return mid;
@@ -71,7 +71,7 @@ namespace System.Activities.Validation
 
         private static void QuickSort<T>(IList<T> items, int startIndex, int endIndex, IComparer<T> comparer)
         {
-            Stack<int> bounds = new Stack<int>();
+            var bounds = new Stack<int>();
             do
             {
                 if (bounds.Count != 0)
@@ -80,10 +80,10 @@ namespace System.Activities.Validation
                     startIndex = bounds.Pop();
                 }
 
-                T pivot = items[startIndex];
-                int pivotIndex = startIndex;
+                var pivot = items[startIndex];
+                var pivotIndex = startIndex;
 
-                for (int i = startIndex + 1; i <= endIndex; i++)
+                for (var i = startIndex + 1; i <= endIndex; i++)
                 {
                     if (comparer.Compare(pivot, items[i]) > 0)
                     {
@@ -117,7 +117,7 @@ namespace System.Activities.Validation
 
         private static void Swap<T>(this IList<T> items, int i, int j)
         {
-            T temp = items[i];
+            var temp = items[i];
             items[i] = items[j];
             items[j] = temp;
         }

@@ -19,7 +19,7 @@ namespace Microsoft.CSharp.Activities
     [ContentProperty("ExpressionText")]
     public class CSharpReference<TResult> : CodeActivity<Location<TResult>>, ITextExpression
     {
-        CompiledExpressionInvoker invoker;
+        private CompiledExpressionInvoker invoker;
                 
         public CSharpReference()
         {
@@ -62,7 +62,7 @@ namespace Microsoft.CSharp.Activities
 
         protected override Location<TResult> Execute(CodeActivityContext context)
         {
-            Location<TResult> value = (Location<TResult>)this.invoker.InvokeExpression(context);
+            var value = (Location<TResult>)this.invoker.InvokeExpression(context);
 
             return value;
         }

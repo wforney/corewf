@@ -156,7 +156,7 @@ namespace System.Activities.Runtime.DurableInstancing
 
             try
             {
-                bool needNotification = false;
+                var needNotification = false;
                 InstancePersistenceContext currentContext = null;
 
                 lock (ThisLock)
@@ -443,7 +443,7 @@ namespace System.Activities.Runtime.DurableInstancing
         [Fx.Tag.Blocking(CancelMethod = "Free")]
         internal InstancePersistenceContext AcquireExecutionContext(TimeSpan timeout)
         {
-            bool setOperationPending = false;
+            var setOperationPending = false;
             InstancePersistenceContext result = null;
             try
             {
@@ -462,7 +462,7 @@ namespace System.Activities.Runtime.DurableInstancing
 
         internal IAsyncResult BeginAcquireExecutionContext(TimeSpan timeout, AsyncCallback callback, object state)
         {
-            bool setOperationPending = false;
+            var setOperationPending = false;
             IAsyncResult result = null;
             try
             {
@@ -530,7 +530,7 @@ namespace System.Activities.Runtime.DurableInstancing
                             _boundOwnerEvents = new HashSet<XName>();
                         }
 
-                        foreach (InstancePersistenceEvent persistenceEvent in _pendingOwnerEvents)
+                        foreach (var persistenceEvent in _pendingOwnerEvents)
                         {
                             if (!_boundOwnerEvents.Add(persistenceEvent.Name))
                             {
@@ -538,7 +538,7 @@ namespace System.Activities.Runtime.DurableInstancing
                                 continue;
                             }
 
-                            InstancePersistenceEvent normal = Store.AddHandleToEvent(this, persistenceEvent, Owner);
+                            var normal = Store.AddHandleToEvent(this, persistenceEvent, Owner);
                             if (normal != null)
                             {
                                 if (normals == null)
@@ -639,7 +639,7 @@ namespace System.Activities.Runtime.DurableInstancing
                 if (_boundOwnerEvents != null && _boundOwnerEvents.Count > 0)
                 {
                     Fx.Assert(Owner != null, "How do we have owner events without an owner.");
-                    List<InstancePersistenceEvent> readyEvents = Store.SelectSignaledEvents(_boundOwnerEvents, Owner);
+                    var readyEvents = Store.SelectSignaledEvents(_boundOwnerEvents, Owner);
                     if (readyEvents != null)
                     {
                         Fx.Assert(readyEvents.Count != 0, "Should not return a zero-length list.");
@@ -754,7 +754,7 @@ namespace System.Activities.Runtime.DurableInstancing
 
             public static InstancePersistenceContext End(IAsyncResult result)
             {
-                AcquireContextAsyncResult pThis = AsyncResult.End<AcquireContextAsyncResult>(result);
+                var pThis = AsyncResult.End<AcquireContextAsyncResult>(result);
                 Fx.Assert(pThis._executionContext != null, "Somehow the execution context didn't get set.");
                 return pThis._executionContext;
             }
@@ -817,7 +817,7 @@ namespace System.Activities.Runtime.DurableInstancing
                     _timer = new DelayTimer(WaitForEventsAsyncResult.s_timeoutCallback, this);
                 }
 
-                List<InstancePersistenceEvent> existingReadyEvents = _handle.StartWaiting(this, _timer, _timeout);
+                var existingReadyEvents = _handle.StartWaiting(this, _timer, _timeout);
                 if (existingReadyEvents == null)
                 {
                     if (_timeout == TimeSpan.Zero)
@@ -859,7 +859,7 @@ namespace System.Activities.Runtime.DurableInstancing
 
             private static void OnTimeout(object state)
             {
-                WaitForEventsAsyncResult thisPtr = (WaitForEventsAsyncResult)state;
+                var thisPtr = (WaitForEventsAsyncResult)state;
                 if (thisPtr._handle.CancelWaiting(thisPtr))
                 {
                     thisPtr.Complete(false, new TimeoutException(SR.WaitForEventsTimedOut(thisPtr._timeout)));

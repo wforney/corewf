@@ -33,10 +33,10 @@ namespace System.Activities.Statements
 
         protected override void CacheMetadata(CodeActivityMetadata metadata)
         {
-            RuntimeArgument textArgument = new RuntimeArgument("Text", typeof(string), ArgumentDirection.In);
+            var textArgument = new RuntimeArgument("Text", typeof(string), ArgumentDirection.In);
             metadata.Bind(this.Text, textArgument);
 
-            RuntimeArgument textWriterArgument = new RuntimeArgument("TextWriter", typeof(TextWriter), ArgumentDirection.In);
+            var textWriterArgument = new RuntimeArgument("TextWriter", typeof(TextWriter), ArgumentDirection.In);
             metadata.Bind(this.TextWriter, textWriterArgument);
 
             metadata.SetArgumentsCollection(
@@ -49,7 +49,7 @@ namespace System.Activities.Statements
 
         protected override void Execute(CodeActivityContext context)
         {
-            TextWriter writer = this.TextWriter.Get(context);
+            var writer = this.TextWriter.Get(context);
             if (writer == null)
             {
                 writer = context.GetExtension<TextWriter>() ?? Console.Out;

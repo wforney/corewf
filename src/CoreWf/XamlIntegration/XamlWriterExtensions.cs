@@ -12,7 +12,7 @@ namespace System.Activities.XamlIntegration
         {
             if (lineInfo != null)
             {
-                IXamlLineInfoConsumer consumer = targetWriter as IXamlLineInfoConsumer;            
+                var consumer = targetWriter as IXamlLineInfoConsumer;            
                 Fx.Assert(consumer != null && consumer.ShouldProvideLineInfo, "Should only call this function to write into a XamlNodeQueue.Writer, which is always IXamlLineInfoConsumer");
                 consumer.SetLineInfo(lineInfo.LineNumber, lineInfo.LinePosition);                
             }
@@ -20,7 +20,7 @@ namespace System.Activities.XamlIntegration
 
         public static void PropagateLineInfo(XamlWriter targetWriter, int lineNumber, int linePosition)
         {
-            IXamlLineInfoConsumer consumer = targetWriter as IXamlLineInfoConsumer;
+            var consumer = targetWriter as IXamlLineInfoConsumer;
             Fx.Assert(consumer != null && consumer.ShouldProvideLineInfo, "Should only call this function to write into a XamlNodeQueue.Writer, which is always IXamlLineInfoConsumer");
             consumer.SetLineInfo(lineNumber, linePosition);
         }
@@ -28,9 +28,9 @@ namespace System.Activities.XamlIntegration
         // This method is a workaround for TFS bug #788190, since XamlReader.ReadSubtree() should (but doesn't) preserve IXamlLineInfo on the subreader
         public static void Transform(XamlReader reader, XamlWriter writer, IXamlLineInfo readerLineInfo, bool closeWriter)
         {
-            IXamlLineInfoConsumer consumer = writer as IXamlLineInfoConsumer;
+            var consumer = writer as IXamlLineInfoConsumer;
             Fx.Assert(consumer != null && consumer.ShouldProvideLineInfo, "Should only call this function to write into a XamlNodeQueue.Writer, which is always IXamlLineInfoConsumer");
-            bool shouldPassLineNumberInfo = false;
+            var shouldPassLineNumberInfo = false;
             if (readerLineInfo != null)
             {
                 shouldPassLineNumberInfo = true;

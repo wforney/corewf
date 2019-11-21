@@ -37,7 +37,7 @@ namespace System.Activities.Statements
 
         protected override void CacheMetadata(NativeActivityMetadata metadata)
         {
-            RuntimeArgument targetArgument = new RuntimeArgument("Target", typeof(CompensationToken), ArgumentDirection.In);
+            var targetArgument = new RuntimeArgument("Target", typeof(CompensationToken), ArgumentDirection.In);
             metadata.Bind(this.Target, targetArgument);
 
             metadata.SetArgumentsCollection(new Collection<RuntimeArgument> { targetArgument });
@@ -55,14 +55,14 @@ namespace System.Activities.Statements
 
         private void InternalExecute(NativeActivityContext context, ActivityInstance completedInstance)
         {
-            CompensationExtension compensationExtension = context.GetExtension<CompensationExtension>();
+            var compensationExtension = context.GetExtension<CompensationExtension>();
             if (compensationExtension == null)
             {
                 throw FxTrace.Exception.AsError(new InvalidOperationException(SR.CompensateWithoutCompensableActivity(this.DisplayName)));
             }
 
-            CompensationToken token = Target.Get(context);
-            CompensationTokenData tokenData = token == null ? null : compensationExtension.Get(token.CompensationId);
+            var token = Target.Get(context);
+            var tokenData = token == null ? null : compensationExtension.Get(token.CompensationId);
 
             Fx.Assert(tokenData != null, "CompensationTokenData must be valid");
 

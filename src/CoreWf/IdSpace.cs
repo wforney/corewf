@@ -67,7 +67,7 @@ namespace System.Activities
         {
             get
             {
-                int lookupId = id - 1;
+                var lookupId = id - 1;
                 if (this.members == null || lookupId < 0 || lookupId >= this.members.Count)
                 {
                     return null;

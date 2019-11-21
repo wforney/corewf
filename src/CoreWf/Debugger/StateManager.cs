@@ -30,25 +30,20 @@ namespace System.Activities.Debugger
     [Fx.Tag.XamlVisible(false)]
     public sealed class StateManager : IDisposable
     {
-        static readonly Guid WorkflowLanguageGuid = new Guid("1F1149BB-9732-4EB8-9ED4-FA738768919C");
-
-        static readonly LocalsItemDescription[] debugInfoDescriptions = new LocalsItemDescription[] {
+        private static readonly Guid WorkflowLanguageGuid = new Guid("1F1149BB-9732-4EB8-9ED4-FA738768919C");
+        private static readonly LocalsItemDescription[] debugInfoDescriptions = new LocalsItemDescription[] {
                 new LocalsItemDescription("debugInfo", typeof(DebugInfo))
             };
-
-        static Type threadWorkerControllerType = typeof(ThreadWorkerController);
-        static MethodInfo islandWorkerMethodInfo = threadWorkerControllerType.GetMethod("IslandWorker", BindingFlags.Static | BindingFlags.Public);
+        private static Type threadWorkerControllerType = typeof(ThreadWorkerController);
+        private static MethodInfo islandWorkerMethodInfo = threadWorkerControllerType.GetMethod("IslandWorker", BindingFlags.Static | BindingFlags.Public);
         internal const string MethodWithPrimingPrefix = "_";
-
-        List<LogicalThread> threads;
-
-        DynamicModuleManager dynamicModuleManager;
+        private List<LogicalThread> threads;
+        private DynamicModuleManager dynamicModuleManager;
 
         // Don't expose this, because that would expose the setters. Changing the properties
         // after baking types has undefined semantics and would be confusing to the user.
-        Properties properties;
-
-        bool debugStartedAtRoot;
+        private Properties properties;
+        private bool debugStartedAtRoot;
 
         // Simple default constructor.
         internal StateManager()
@@ -136,11 +131,11 @@ namespace System.Activities.Debugger
 
         internal int CreateLogicalThread(string threadName)
         {
-            int threadId = -1;
+            var threadId = -1;
 
             // Reuse thread if exists
             // Start from 1 since main thread never disposed earlier.
-            for (int i = 1; i < this.threads.Count; ++i)
+            for (var i = 1; i < this.threads.Count; ++i)
             {
                 if (this.threads[i] == null)
                 {
@@ -211,7 +206,7 @@ namespace System.Activities.Debugger
         // [DebuggerHidden]
         internal void InvokeWorker(object islandArguments, VirtualStackFrame stackFrame)
         {
-            State state = stackFrame.State;
+            var state = stackFrame.State;
             if (!state.DebuggingEnabled)
             {
                 // We need to short circuit and call IslandWorker because that is what the generated code
@@ -220,21 +215,21 @@ namespace System.Activities.Debugger
                 return;
             }
 
-            MethodInfo methodInfo = this.dynamicModuleManager.GetIsland(state, this.IsPriming);
-            IDictionary<string, object> allLocals = stackFrame.Locals;
+            var methodInfo = this.dynamicModuleManager.GetIsland(state, this.IsPriming);
+            var allLocals = stackFrame.Locals;
 
             // Package up the raw arguments array.
             const int numberOfBaseArguments = 2;
-            int numberOfEarlyLocals = state.NumberOfEarlyLocals;
-            object[] arguments = new object[numberOfBaseArguments + numberOfEarlyLocals]; // +1 for IslandArguments and +1 for IsPriming
+            var numberOfEarlyLocals = state.NumberOfEarlyLocals;
+            var arguments = new object[numberOfBaseArguments + numberOfEarlyLocals]; // +1 for IslandArguments and +1 for IsPriming
             arguments[0] = this.IsPriming;
             arguments[1] = islandArguments;
             if (numberOfEarlyLocals > 0)
             {
-                int i = numberOfBaseArguments;
-                foreach (LocalsItemDescription localsItemDescription in state.EarlyLocals)
+                var i = numberOfBaseArguments;
+                foreach (var localsItemDescription in state.EarlyLocals)
                 {
-                    string name = localsItemDescription.Name;
+                    var name = localsItemDescription.Name;
                     object value;
                     if (allLocals.TryGetValue(name, out value))
                     {
@@ -265,7 +260,7 @@ namespace System.Activities.Debugger
 
         internal void ExitThreads()
         {
-            foreach (LogicalThread logicalThread in this.threads)
+            foreach (var logicalThread in this.threads)
             {
                 if (logicalThread != null)
                 {
@@ -282,7 +277,7 @@ namespace System.Activities.Debugger
         {
             Fx.Assert(threadIndex >= 0, "Invalid thread index");
             Fx.Assert(this.threads[threadIndex] != null, "Cannot dispose null LogicalThread");
-            LogicalThread thread = this.threads[threadIndex];
+            var thread = this.threads[threadIndex];
             thread.Exit();
 
             // Null the entry on the List for future reuse.
@@ -352,11 +347,11 @@ namespace System.Activities.Debugger
         }
 
         [DebuggerNonUserCode]
-        class LogicalThread
+        private class LogicalThread
         {
-            int threadId;
-            Stack<VirtualStackFrame> callStack;
-            ThreadWorkerController controller;
+            private int threadId;
+            private Stack<VirtualStackFrame> callStack;
+            private ThreadWorkerController controller;
 
             public LogicalThread(int threadId, string threadName, StateManager stateManager)
             {
@@ -367,7 +362,7 @@ namespace System.Activities.Debugger
             }
 
             // Unwind call stack cleanly.
-            void UnwindCallStack()
+            private void UnwindCallStack()
             {
                 while (this.callStack.Count > 0)
                 { // LeaveState will do the popping.
@@ -403,7 +398,7 @@ namespace System.Activities.Debugger
             {
                 if (this.callStack.Count > 0)
                 {
-                    VirtualStackFrame stackFrame = this.callStack.Pop();
+                    var stackFrame = this.callStack.Pop();
                     Fx.Assert(
                         (state == null && stackFrame == null) ||
                         (stackFrame != null && stackFrame.State == state),
@@ -427,28 +422,28 @@ namespace System.Activities.Debugger
         internal class DynamicModuleManager
         {
             // List of all state that have been created with DefineState.
-            List<State> states;
-            Dictionary<SourceLocation, State> stateMap = new Dictionary<SourceLocation, State>();
+            private List<State> states;
+            private Dictionary<SourceLocation, State> stateMap = new Dictionary<SourceLocation, State>();
 
             // Index into states array of the last set of states baked.
             // So Bake() will build islands for each state 
             // { states[x], where indexLastBaked <= x < states.Length; }
-            int indexLastBaked;
+            private int indexLastBaked;
 
             // Mapping from State --> MethodInfo for that state.
             // This gets populated as states get baked
             [Fx.Tag.SecurityNote(Critical = "Used in generating the dynamic assembly.")]
             [SecurityCritical]
-            Dictionary<State, MethodInfo> islands;
+            private Dictionary<State, MethodInfo> islands;
             [Fx.Tag.SecurityNote(Critical = "Used in generating the dynamic assembly.")]
             [SecurityCritical]
-            Dictionary<State, MethodInfo> islandsWithPriming;
+            private Dictionary<State, MethodInfo> islandsWithPriming;
             [Fx.Tag.SecurityNote(Critical = "Used in generating the dynamic assembly.")]
             [SecurityCritical]
-            ModuleBuilder dynamicModule;
+            private ModuleBuilder dynamicModule;
             [Fx.Tag.SecurityNote(Critical = "Used in generating the dynamic assembly.")]
             [SecurityCritical]
-            Dictionary<string, ISymbolDocumentWriter> sourceDocuments;
+            private Dictionary<string, ISymbolDocumentWriter> sourceDocuments;
 
             [Fx.Tag.SecurityNote(Critical = "Accesses Critical members and calling Critical method InitDynamicModule.",
                 Safe = "We are only creating empty dictionaries, not populating them. And we are validating the provided moduleNamePrefix in partial trust.")]
@@ -528,21 +523,21 @@ namespace System.Activities.Debugger
                     if (this.indexLastBaked < this.states.Count)    // there are newly created states.
                     {
                         // Ensure typename is unique. Append a number if needed.
-                        int suffix = 1;
+                        var suffix = 1;
                         while (this.dynamicModule.GetType(typeName) != null)
                         {
                             typeName = typeNamePrefix + "_" + suffix.ToString(CultureInfo.InvariantCulture);
                             ++suffix;
                         }
 
-                        TypeBuilder typeBuilder = this.dynamicModule.DefineType(typeName, TypeAttributes.Public | TypeAttributes.Class);
+                        var typeBuilder = this.dynamicModule.DefineType(typeName, TypeAttributes.Public | TypeAttributes.Class);
 
-                        for (int i = indexLastBaked; i < this.states.Count; i++)
+                        for (var i = indexLastBaked; i < this.states.Count; i++)
                         {
                             // Only create the island if debugging is enabled for the state.
                             if (this.states[i].DebuggingEnabled)
                             {
-                                MethodBuilder methodBuilder = this.CreateIsland(typeBuilder, this.states[i], false, checksumCache);
+                                var methodBuilder = this.CreateIsland(typeBuilder, this.states[i], false, checksumCache);
                                 Fx.Assert(methodBuilder != null, "CreateIsland call should have succeeded");
 
                                 // Always generate method with priming, for the following scenario:
@@ -551,7 +546,7 @@ namespace System.Activities.Debugger
                                 //  3. Workflow continued, workflow debug session 2 starts (debugStartedAtRoot = false, instrumentation is skipped because the static dynamicModuleManager is being reused and the instrumentation is done)
                                 //  4. PrimeCallStack is called to rebuild the call stack
                                 //  5. NullReferenceException will be thrown if MethodInfo with prime is not available
-                                MethodBuilder methodBuilderWithPriming = this.CreateIsland(typeBuilder, this.states[i], true, checksumCache);
+                                var methodBuilderWithPriming = this.CreateIsland(typeBuilder, this.states[i], true, checksumCache);
                                 Fx.Assert(methodBuilderWithPriming != null, "CreateIsland call should have succeeded");
 
                                 // Save information needed to call Type.GetMethod() later.
@@ -575,7 +570,7 @@ namespace System.Activities.Debugger
             internal MethodBuilder CreateMethodBuilder(TypeBuilder typeBuilder, Type typeIslandArguments, State state, bool withPriming)
             {
                 // create the method            
-                string methodName = (state.Name != null ? state.Name : ("Line_" + state.Location.StartLine));
+                var methodName = (state.Name != null ? state.Name : ("Line_" + state.Location.StartLine));
 
                 if (withPriming)
                 {
@@ -587,25 +582,25 @@ namespace System.Activities.Debugger
                 // 2. IDict of late-bound locals.
                 // 3 ... N.  list of early bound locals.
                 const int numberOfBaseArguments = 2;
-                IEnumerable<LocalsItemDescription> earlyLocals = state.EarlyLocals;
-                int numberOfEarlyLocals = state.NumberOfEarlyLocals;
+                var earlyLocals = state.EarlyLocals;
+                var numberOfEarlyLocals = state.NumberOfEarlyLocals;
 
-                Type[] parameterTypes = new Type[numberOfBaseArguments + numberOfEarlyLocals];
+                var parameterTypes = new Type[numberOfBaseArguments + numberOfEarlyLocals];
                 parameterTypes[0] = typeof(bool);
                 parameterTypes[1] = typeIslandArguments;
 
                 if (numberOfEarlyLocals > 0)
                 {
-                    int i = numberOfBaseArguments;
-                    foreach (LocalsItemDescription localsItemDescription in earlyLocals)
+                    var i = numberOfBaseArguments;
+                    foreach (var localsItemDescription in earlyLocals)
                     {
                         parameterTypes[i] = localsItemDescription.Type;
                         i++;
                     }
                 }
 
-                Type returnType = typeof(void);
-                MethodBuilder methodbuilder = typeBuilder.DefineMethod(
+                var returnType = typeof(void);
+                var methodbuilder = typeBuilder.DefineMethod(
                     methodName,
                     MethodAttributes.Static | MethodAttributes.Public,
                     returnType, parameterTypes);
@@ -620,8 +615,8 @@ namespace System.Activities.Debugger
                 // info for them.  Eg., the StepInTarget argument doesn't appear to show up in VS at all.
                 if (numberOfEarlyLocals > 0)
                 {
-                    int i = numberOfBaseArguments + 1;
-                    foreach (LocalsItemDescription localsItemDescription in earlyLocals)
+                    var i = numberOfBaseArguments + 1;
+                    foreach (var localsItemDescription in earlyLocals)
                     {
                         methodbuilder.DefineParameter(i, ParameterAttributes.None, localsItemDescription.Name);
                         i++;
@@ -635,10 +630,10 @@ namespace System.Activities.Debugger
             [Fx.Tag.InheritThrows(From = "GetILGenerator", FromDeclaringType = typeof(MethodBuilder))]
             [Fx.Tag.SecurityNote(Critical = "Used in generating the dynamic module.")]
             [SecurityCritical]
-            MethodBuilder CreateIsland(TypeBuilder typeBuilder, State state, bool withPrimingTest, Dictionary<string, byte[]>checksumCache)
+            private MethodBuilder CreateIsland(TypeBuilder typeBuilder, State state, bool withPrimingTest, Dictionary<string, byte[]>checksumCache)
             {
-                MethodBuilder methodbuilder = this.CreateMethodBuilder(typeBuilder, threadWorkerControllerType, state, withPrimingTest);
-                ILGenerator ilGenerator = methodbuilder.GetILGenerator();
+                var methodbuilder = this.CreateMethodBuilder(typeBuilder, threadWorkerControllerType, state, withPrimingTest);
+                var ilGenerator = methodbuilder.GetILGenerator();
                 const int lineHidden = 0xFeeFee; // #line hidden directive
 
                 // Island:
@@ -649,9 +644,9 @@ namespace System.Activities.Debugger
                 //     call Worker(m)
                 //     ret;
                 // }
-                SourceLocation stateLocation = state.Location;
-                ISymbolDocumentWriter document = this.GetSourceDocument(stateLocation.FileName, stateLocation.Checksum, checksumCache);
-                Label islandWorkerLabel = ilGenerator.DefineLabel();
+                var stateLocation = state.Location;
+                var document = this.GetSourceDocument(stateLocation.FileName, stateLocation.Checksum, checksumCache);
+                var islandWorkerLabel = ilGenerator.DefineLabel();
 
                 // Hide all the opcodes before the real source line.
                 // This is needed for Island which is called during priming (Attach to Process):
@@ -679,33 +674,33 @@ namespace System.Activities.Debugger
             //[SuppressMessage(FxCop.Category.Security, FxCop.Rule.SecureAsserts, Justification = "The validations of the user input are done elsewhere.")]
             [Fx.Tag.SecurityNote(Critical = "Because we Assert UnmanagedCode in order to be able to emit symbols.")]
             [SecurityCritical]
-            void InitDynamicModule(string asmName)
+            private void InitDynamicModule(string asmName)
             {
                 // See http://blogs.msdn.com/jmstall/archive/2005/02/03/366429.aspx for a simple example
                 // of debuggable reflection-emit.
                 Fx.Assert(dynamicModule == null, "can only be initialized once");
 
                 // create a dynamic assembly and module 
-                AssemblyName assemblyName = new AssemblyName();
+                var assemblyName = new AssemblyName();
                 assemblyName.Name = asmName;
 
                 AssemblyBuilder assemblyBuilder;
 
                 // The temporary assembly needs to be Transparent.
-                ConstructorInfo transparentCtor =
+                var transparentCtor =
                     typeof(SecurityTransparentAttribute).GetConstructor(
                         Type.EmptyTypes);
-                CustomAttributeBuilder transparent = new CustomAttributeBuilder(
+                var transparent = new CustomAttributeBuilder(
                     transparentCtor,
-                    new Object[] { });
+                    Array.Empty<object>());
 
                 assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(assemblyName, AssemblyBuilderAccess.Run, new CustomAttributeBuilder[] { transparent });
 
                 // Mark generated code as debuggable. 
                 // See http://blogs.msdn.com/rmbyers/archive/2005/06/26/432922.aspx for explanation.        
-                Type debuggableAttributeType = typeof(DebuggableAttribute);
-                ConstructorInfo constructorInfo = debuggableAttributeType.GetConstructor(new Type[] { typeof(DebuggableAttribute.DebuggingModes) });
-                CustomAttributeBuilder builder = new CustomAttributeBuilder(constructorInfo, new object[] {
+                var debuggableAttributeType = typeof(DebuggableAttribute);
+                var constructorInfo = debuggableAttributeType.GetConstructor(new Type[] { typeof(DebuggableAttribute.DebuggingModes) });
+                var builder = new CustomAttributeBuilder(constructorInfo, new object[] {
                     DebuggableAttribute.DebuggingModes.DisableOptimizations |
                     DebuggableAttribute.DebuggingModes.Default
                 });
@@ -713,7 +708,7 @@ namespace System.Activities.Debugger
 
                 // We need UnmanagedCode permissions because we are asking for Symbols to be emitted.
                 // We are protecting the dynamicModule so that only Critical code modifies it.
-                PermissionSet unmanagedCodePermissionSet = new PermissionSet(PermissionState.None);
+                var unmanagedCodePermissionSet = new PermissionSet(PermissionState.None);
                 unmanagedCodePermissionSet.AddPermission(new SecurityPermission(SecurityPermissionFlag.UnmanagedCode));
                 unmanagedCodePermissionSet.Assert();
                 try

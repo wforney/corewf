@@ -55,7 +55,7 @@ namespace System.Activities.Expressions
                 if (!UnaryExpressionHelper.TryGenerateLinqDelegate(
                             operatorType,
                             out operationFunction,
-                            out ValidationError validationError))
+                            out var validationError))
                 {
                     metadata.AddValidationError(validationError);
                 }
@@ -64,7 +64,7 @@ namespace System.Activities.Expressions
 
         protected override TResult Execute(CodeActivityContext context)
         {
-            TOperand operandValue = this.Operand.Get(context);
+            var operandValue = this.Operand.Get(context);
             
             //if user changed Checked flag between Open and Execution, 
             //a NRE may be thrown and that's by design

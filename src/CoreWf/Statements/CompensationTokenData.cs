@@ -72,7 +72,7 @@ namespace System.Activities.Statements
 
         internal void RemoveBookmark(NativeActivityContext context, CompensationBookmarkName bookmarkName)
         {
-            Bookmark bookmark = this.BookmarkTable[bookmarkName];
+            var bookmark = this.BookmarkTable[bookmarkName];
 
             if (bookmark != null)
             {

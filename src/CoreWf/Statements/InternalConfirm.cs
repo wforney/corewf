@@ -28,21 +28,21 @@ namespace System.Activities.Statements
 
         protected override void CacheMetadata(NativeActivityMetadata metadata)
         {
-            RuntimeArgument targetArgument = new RuntimeArgument("Target", typeof(CompensationToken), ArgumentDirection.In);
+            var targetArgument = new RuntimeArgument("Target", typeof(CompensationToken), ArgumentDirection.In);
             metadata.Bind(this.Target, targetArgument);
             metadata.SetArgumentsCollection(new Collection<RuntimeArgument> { targetArgument });
         }
 
         protected override void Execute(NativeActivityContext context)
         {
-            CompensationExtension compensationExtension = context.GetExtension<CompensationExtension>();
+            var compensationExtension = context.GetExtension<CompensationExtension>();
             Fx.Assert(compensationExtension != null, "CompensationExtension must be valid");
 
-            CompensationToken compensationToken = Target.Get(context);
+            var compensationToken = Target.Get(context);
             Fx.Assert(compensationToken != null, "compensationToken must be valid");
 
             // The compensationToken should be a valid one at this point. Ensure its validated in Confirm activity.
-            CompensationTokenData tokenData = compensationExtension.Get(compensationToken.CompensationId);
+            var tokenData = compensationExtension.Get(compensationToken.CompensationId);
             Fx.Assert(tokenData != null, "The compensationToken should be a valid one at this point. Ensure its validated in Confirm activity.");
 
             Fx.Assert(tokenData.BookmarkTable[CompensationBookmarkName.Confirmed] == null, "Bookmark should not be already initialized in the bookmark table.");
@@ -55,14 +55,14 @@ namespace System.Activities.Statements
         // Successfully received Confirmed response.
         private void OnConfirmed(NativeActivityContext context, Bookmark bookmark, object value)
         {
-            CompensationExtension compensationExtension = context.GetExtension<CompensationExtension>();
+            var compensationExtension = context.GetExtension<CompensationExtension>();
             Fx.Assert(compensationExtension != null, "CompensationExtension must be valid");
 
-            CompensationToken compensationToken = Target.Get(context);
+            var compensationToken = Target.Get(context);
             Fx.Assert(compensationToken != null, "compensationToken must be valid");
 
             // The compensationToken should be a valid one at this point. Ensure its validated in Confirm activity.
-            CompensationTokenData tokenData = compensationExtension.Get(compensationToken.CompensationId);
+            var tokenData = compensationExtension.Get(compensationToken.CompensationId);
             Fx.Assert(tokenData != null, "The compensationToken should be a valid one at this point. Ensure its validated in Confirm activity.");
 
             tokenData.CompensationState = CompensationState.Confirmed;
@@ -74,7 +74,7 @@ namespace System.Activities.Statements
             // Remove the token from the parent! 
             if (tokenData.ParentCompensationId != CompensationToken.RootCompensationId)
             {
-                CompensationTokenData parentToken = compensationExtension.Get(tokenData.ParentCompensationId);
+                var parentToken = compensationExtension.Get(tokenData.ParentCompensationId);
                 Fx.Assert(parentToken != null, "parentToken must be valid");
 
                 parentToken.ExecutionTracker.Remove(tokenData);
@@ -82,7 +82,7 @@ namespace System.Activities.Statements
             else
             {
                 // remove from workflow root...
-                CompensationTokenData parentToken = compensationExtension.Get(CompensationToken.RootCompensationId);
+                var parentToken = compensationExtension.Get(CompensationToken.RootCompensationId);
                 Fx.Assert(parentToken != null, "parentToken must be valid");
 
                 parentToken.ExecutionTracker.Remove(tokenData);

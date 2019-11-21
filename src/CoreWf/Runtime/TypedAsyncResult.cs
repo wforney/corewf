@@ -27,7 +27,7 @@ namespace System.Activities.Runtime
 
         public static T End(IAsyncResult result)
         {
-            TypedAsyncResult<T> completedResult = AsyncResult.End<TypedAsyncResult<T>>(result);
+            var completedResult = AsyncResult.End<TypedAsyncResult<T>>(result);
             return completedResult.Data;
         }
     }

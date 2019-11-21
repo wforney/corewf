@@ -81,14 +81,14 @@ using System.Activities.DynamicUpdate;
         sealed internal override void InternalExecute(ActivityInstance instance, ActivityExecutor executor, BookmarkManager bookmarkManager)
         {
             // first set up an async context
-            AsyncOperationContext asyncContext = executor.SetupAsyncOperationBlock(instance);
+            var asyncContext = executor.SetupAsyncOperationBlock(instance);
             instance.IncrementBusyCount();
 
-            AsyncCodeActivityContext context = new AsyncCodeActivityContext(asyncContext, instance, executor);
-            bool success = false;
+            var context = new AsyncCodeActivityContext(asyncContext, instance, executor);
+            var success = false;
             try
             {
-                IAsyncResult result = BeginExecute(context, AsyncCodeActivity.OnExecuteComplete, asyncContext);
+                var result = BeginExecute(context, AsyncCodeActivity.OnExecuteComplete, asyncContext);
 
                 if (result == null)
                 {
@@ -141,9 +141,9 @@ using System.Activities.DynamicUpdate;
 
         sealed internal override void InternalCancel(ActivityInstance instance, ActivityExecutor executor, BookmarkManager bookmarkManager)
         {
-            if (executor.TryGetPendingOperation(instance, out AsyncOperationContext asyncContext))
+            if (executor.TryGetPendingOperation(instance, out var asyncContext))
             {
-                AsyncCodeActivityContext context = new AsyncCodeActivityContext(asyncContext, instance, executor);
+                var context = new AsyncCodeActivityContext(asyncContext, instance, executor);
                 try
                 {
                     asyncContext.HasCalledAsyncCodeActivityCancel = true;
@@ -158,7 +158,7 @@ using System.Activities.DynamicUpdate;
 
         sealed internal override void InternalAbort(ActivityInstance instance, ActivityExecutor executor, Exception terminationReason)
         {
-            if (executor.TryGetPendingOperation(instance, out AsyncOperationContext asyncContext))
+            if (executor.TryGetPendingOperation(instance, out var asyncContext))
             {
                 try
                 {
@@ -181,7 +181,7 @@ using System.Activities.DynamicUpdate;
 
         sealed internal override void OnInternalCacheMetadata(bool createEmptyBindings)
         {
-            CodeActivityMetadata metadata = new CodeActivityMetadata(this, this.GetParentEnvironment(), createEmptyBindings);
+            var metadata = new CodeActivityMetadata(this, this.GetParentEnvironment(), createEmptyBindings);
             CacheMetadata(metadata);
             metadata.Dispose();
         }
@@ -269,7 +269,7 @@ using System.Activities.DynamicUpdate;
                     try
                     {
                         context = new AsyncCodeActivityContext(this.asyncContext, this.ActivityInstance, executor);
-                        IAsyncCodeActivity owner = (IAsyncCodeActivity)this.ActivityInstance.Activity;
+                        var owner = (IAsyncCodeActivity)this.ActivityInstance.Activity;
                         owner.FinishExecution(context, this.result);
                     }
                     catch (Exception e)
@@ -352,14 +352,14 @@ using System.Activities.DynamicUpdate;
         sealed internal override void InternalExecute(ActivityInstance instance, ActivityExecutor executor, BookmarkManager bookmarkManager)
         {
             // first set up an async context
-            AsyncOperationContext asyncContext = executor.SetupAsyncOperationBlock(instance);
+            var asyncContext = executor.SetupAsyncOperationBlock(instance);
             instance.IncrementBusyCount();
 
-            AsyncCodeActivityContext context = new AsyncCodeActivityContext(asyncContext, instance, executor);
-            bool success = false;
+            var context = new AsyncCodeActivityContext(asyncContext, instance, executor);
+            var success = false;
             try
             {
-                IAsyncResult result = BeginExecute(context, AsyncCodeActivity.OnExecuteComplete, asyncContext);
+                var result = BeginExecute(context, AsyncCodeActivity.OnExecuteComplete, asyncContext);
 
                 if (result == null)
                 {
@@ -390,15 +390,15 @@ using System.Activities.DynamicUpdate;
 
         void IAsyncCodeActivity.FinishExecution(AsyncCodeActivityContext context, IAsyncResult result)
         {
-            TResult executionResult = this.EndExecute(context, result);
+            var executionResult = this.EndExecute(context, result);
             this.Result.Set(context, executionResult);
         }
 
         sealed internal override void InternalCancel(ActivityInstance instance, ActivityExecutor executor, BookmarkManager bookmarkManager)
         {
-            if (executor.TryGetPendingOperation(instance, out AsyncOperationContext asyncContext))
+            if (executor.TryGetPendingOperation(instance, out var asyncContext))
             {
-                AsyncCodeActivityContext context = new AsyncCodeActivityContext(asyncContext, instance, executor);
+                var context = new AsyncCodeActivityContext(asyncContext, instance, executor);
                 try
                 {
                     asyncContext.HasCalledAsyncCodeActivityCancel = true;
@@ -413,7 +413,7 @@ using System.Activities.DynamicUpdate;
 
         sealed internal override void InternalAbort(ActivityInstance instance, ActivityExecutor executor, Exception terminationReason)
         {
-            if (executor.TryGetPendingOperation(instance, out AsyncOperationContext asyncContext))
+            if (executor.TryGetPendingOperation(instance, out var asyncContext))
             {
                 try
                 {
@@ -436,7 +436,7 @@ using System.Activities.DynamicUpdate;
 
         sealed internal override void OnInternalCacheMetadataExceptResult(bool createEmptyBindings)
         {
-            CodeActivityMetadata metadata = new CodeActivityMetadata(this, this.GetParentEnvironment(), createEmptyBindings);
+            var metadata = new CodeActivityMetadata(this, this.GetParentEnvironment(), createEmptyBindings);
             CacheMetadata(metadata);
             metadata.Dispose();
         }

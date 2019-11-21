@@ -232,8 +232,8 @@ namespace System.Activities.Runtime
             // Need to reinitialize the handles in the list.
             if (this.handles != null)
             {
-                int count = this.handles.Count;
-                for (int i = 0; i < count; i++)
+                var count = this.handles.Count;
+                for (var i = 0; i < count; i++)
                 {
                     this.handles[i].Reinitialize(handleScope);
                     this.hasHandles = true;
@@ -273,9 +273,9 @@ namespace System.Activities.Runtime
                 }
                 else if (this.locations != null)
                 {
-                    for (int i = 0; i < this.locations.Length; i++)
+                    for (var i = 0; i < this.locations.Length; i++)
                     {
-                        Location location = this.locations[i];
+                        var location = this.locations[i];
 
                         if (location.CanBeMapped)
                         {
@@ -311,18 +311,18 @@ namespace System.Activities.Runtime
 
         private void UninitializeHandles(ActivityInstance scope, IList<Variable> variables, ref HandleInitializationContext context)
         {
-            for (int i = 0; i < variables.Count; i++)
+            for (var i = 0; i < variables.Count; i++)
             {
-                Variable variable = variables[i];
+                var variable = variables[i];
                 Fx.Assert(variable.Owner == this.Definition, "We should only be targeting the vairables at this scope.");
 
                 if (variable.IsHandle)
                 {
-                    Location location = GetSpecificLocation(variable.Id);
+                    var location = GetSpecificLocation(variable.Id);
 
                     if (location != null)
                     {
-                        Handle handle = (Handle)location.Value;
+                        var handle = (Handle)location.Value;
 
                         if (handle != null)
                         {
@@ -410,9 +410,9 @@ namespace System.Activities.Runtime
             }
             else
             {
-                for (int i = 0; i < this.locations.Length; i++)
+                for (var i = 0; i < this.locations.Length; i++)
                 {
-                    Location referenceLocation = this.locations[i];
+                    var referenceLocation = this.locations[i];
 
                     if (referenceLocation != null &&
                         object.ReferenceEquals(referenceLocation.TemporaryResolutionEnvironment, this))
@@ -437,7 +437,7 @@ namespace System.Activities.Runtime
             }
             else if (this.locations != null)
             {
-                for (int i = 0; i < this.locations.Length; i++)
+                for (var i = 0; i < this.locations.Length; i++)
                 {
                     if (this.locations[i] == location)
                     {
@@ -463,7 +463,7 @@ namespace System.Activities.Runtime
         {
             if (this.locationsToRegister != null)
             {
-                foreach (LocationReference locationReference in this.locationsToRegister)
+                foreach (var locationReference in this.locationsToRegister)
                 {
                     RegisterLocation(GetSpecificLocation(locationReference.Id), locationReference, activityInstance);
                 }
@@ -472,7 +472,7 @@ namespace System.Activities.Runtime
 
             if (this.locationsToUnregister != null)
             {
-                foreach (Location location in this.locationsToUnregister)
+                foreach (var location in this.locationsToUnregister)
                 {
                     UnregisterLocation(location);
                 }
@@ -509,7 +509,7 @@ namespace System.Activities.Runtime
         {
             ThrowIfDisposed();
 
-            LocationEnvironment targetEnvironment = this;
+            var targetEnvironment = this;
 
             while (targetEnvironment != null && targetEnvironment.Definition != environmentOwner)
             {

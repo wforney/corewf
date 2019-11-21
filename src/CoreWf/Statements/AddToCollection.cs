@@ -33,13 +33,13 @@ namespace System.Activities.Statements
 
         protected override void CacheMetadata(CodeActivityMetadata metadata)
         {
-            Collection<RuntimeArgument> arguments = new Collection<RuntimeArgument>();
+            var arguments = new Collection<RuntimeArgument>();
 
-            RuntimeArgument collectionArgument = new RuntimeArgument("Collection", typeof(ICollection<T>), ArgumentDirection.In, true);
+            var collectionArgument = new RuntimeArgument("Collection", typeof(ICollection<T>), ArgumentDirection.In, true);
             metadata.Bind(this.Collection, collectionArgument);
             arguments.Add(collectionArgument);
 
-            RuntimeArgument itemArgument = new RuntimeArgument("Item", typeof(T), ArgumentDirection.In, true);
+            var itemArgument = new RuntimeArgument("Item", typeof(T), ArgumentDirection.In, true);
             metadata.Bind(this.Item, itemArgument);
             arguments.Add(itemArgument);
 
@@ -48,12 +48,12 @@ namespace System.Activities.Statements
 
         protected override void Execute(CodeActivityContext context)
         {
-            ICollection<T> collection = this.Collection.Get(context);
+            var collection = this.Collection.Get(context);
             if (collection == null)
             {
                 throw FxTrace.Exception.AsError(new InvalidOperationException(SR.CollectionActivityRequiresCollection(this.DisplayName)));
             }
-            T item = this.Item.Get(context);
+            var item = this.Item.Get(context);
 
             collection.Add(item);
         }

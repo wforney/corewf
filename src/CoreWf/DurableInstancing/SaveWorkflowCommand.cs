@@ -137,7 +137,7 @@ namespace System.Activities.DurableInstancing
 
             if (this.keysToAssociate != null)
             {
-                foreach (KeyValuePair<Guid, IDictionary<XName, InstanceValue>> key in this.keysToAssociate)
+                foreach (var key in this.keysToAssociate)
                 {
                     InstancePersistence.ValidatePropertyBag(key.Value);
                 }
@@ -145,7 +145,7 @@ namespace System.Activities.DurableInstancing
 
             if (this.keyMetadataChanges != null)
             {
-                foreach (KeyValuePair<Guid, IDictionary<XName, InstanceValue>> key in this.keyMetadataChanges)
+                foreach (var key in this.keyMetadataChanges)
                 {
                     InstancePersistence.ValidatePropertyBag(key.Value, true);
                 }

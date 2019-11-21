@@ -86,13 +86,13 @@ namespace System.Activities.Statements
 
         protected override void CacheMetadata(NativeActivityMetadata metadata)
         {
-            RuntimeArgument expressionArgument = new RuntimeArgument("Expression", typeof(T), ArgumentDirection.In, true);
+            var expressionArgument = new RuntimeArgument("Expression", typeof(T), ArgumentDirection.In, true);
             metadata.Bind(Expression, expressionArgument);
             metadata.SetArgumentsCollection(new Collection<RuntimeArgument> { expressionArgument });
 
-            Collection<Activity> children = new Collection<Activity>();
+            var children = new Collection<Activity>();
 
-            foreach (Activity child in Cases.Values)
+            foreach (var child in Cases.Values)
             {
                 children.Add(child);
             }
@@ -107,9 +107,9 @@ namespace System.Activities.Statements
 
         protected override void Execute(NativeActivityContext context)
         {
-            T result = Expression.Get(context);
+            var result = Expression.Get(context);
 
-            if (!Cases.TryGetValue(result, out Activity selection))
+            if (!Cases.TryGetValue(result, out var selection))
             {
                 if (this.Default != null)
                 {

@@ -35,9 +35,9 @@ namespace System.Activities.Runtime
             }
             else
             {
-                for (int i = 0; i < activity.RuntimeArguments.Count; i++)
+                for (var i = 0; i < activity.RuntimeArguments.Count; i++)
                 {
-                    RuntimeArgument argument = activity.RuntimeArguments[i];
+                    var argument = activity.RuntimeArguments[i];
 
                     if (argument.IsResult)
                     {
@@ -51,11 +51,11 @@ namespace System.Activities.Runtime
 
         protected override void GatherOutputs(ActivityInstance completedInstance)
         {
-            int resultId = -1;
+            var resultId = -1;
 
             if (completedInstance.Activity.HandlerOf != null)
             {
-                DelegateOutArgument resultArgument = completedInstance.Activity.HandlerOf.GetResultArgument();
+                var resultArgument = completedInstance.Activity.HandlerOf.GetResultArgument();
                 if (resultArgument != null)
                 {
                     resultId = resultArgument.Id;
@@ -77,7 +77,7 @@ namespace System.Activities.Runtime
 
             if (resultId >= 0)
             {
-                Location location = completedInstance.Environment.GetSpecificLocation(resultId);
+                var location = completedInstance.Environment.GetSpecificLocation(resultId);
 
                 if (location is Location<T> typedLocation)
                 {
@@ -98,7 +98,7 @@ namespace System.Activities.Runtime
             // Call the EnsureCallback overload that also looks for SomeMethod<T> where T is the result type
             // and the signature matches.
             EnsureCallback(callbackType, callbackParameterTypes, callbackParameterTypes[2]);
-            CompletionCallback<T> completionCallback = (CompletionCallback<T>)this.Callback;
+            var completionCallback = (CompletionCallback<T>)this.Callback;
             completionCallback(context, completedInstance, this.resultValue);
         }
 

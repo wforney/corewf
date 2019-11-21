@@ -109,7 +109,7 @@ namespace System.Activities.Runtime
 
         private long GetNextTemporaryId()
         {
-            long temp = this.nextTemporaryId;
+            var temp = this.nextTemporaryId;
             this.nextTemporaryId++;
 
             return temp;
@@ -119,14 +119,14 @@ namespace System.Activities.Runtime
         {
             Fx.Assert(scope != null, "We should never have a null scope.");
 
-            BookmarkScope lookupScope = scope;
+            var lookupScope = scope;
 
             if (scope.IsDefault)
             {
                 lookupScope = this.defaultScope;
             }
 
-            if (!this.bookmarkManagers.TryGetValue(lookupScope, out BookmarkManager manager))
+            if (!this.bookmarkManagers.TryGetValue(lookupScope, out var manager))
             {
                 throw FxTrace.Exception.AsError(new InvalidOperationException(SR.RegisteredBookmarkScopeRequired));
             }
@@ -138,14 +138,14 @@ namespace System.Activities.Runtime
         {
             Fx.Assert(scope != null, "We should never have a null scope.");
 
-            BookmarkScope lookupScope = scope;
+            var lookupScope = scope;
 
             if (scope.IsDefault)
             {
                 lookupScope = this.defaultScope;
             }
 
-            if (this.bookmarkManagers.TryGetValue(lookupScope, out BookmarkManager manager))
+            if (this.bookmarkManagers.TryGetValue(lookupScope, out var manager))
             {
                 return manager.Remove(bookmark, instanceAttemptingRemove);
             }
@@ -160,7 +160,7 @@ namespace System.Activities.Runtime
             Fx.Assert(scope != null, "We should never have a null sub instance.");
 
             workItem = null;
-            BookmarkScope lookupScope = scope;
+            var lookupScope = scope;
 
             if (scope.IsDefault)
             {
@@ -169,24 +169,24 @@ namespace System.Activities.Runtime
 
             // We don't really care about the return value since we'll
             // use null to know we should check uninitialized sub instances
-            this.bookmarkManagers.TryGetValue(lookupScope, out BookmarkManager manager);
+            this.bookmarkManagers.TryGetValue(lookupScope, out var manager);
 
             if (manager == null)
             {
                 Fx.Assert(lookupScope != null, "The sub instance should not be default if we are here.");
 
-                BookmarkResumptionResult finalResult = BookmarkResumptionResult.NotFound;
+                var finalResult = BookmarkResumptionResult.NotFound;
 
                 // Check the uninitialized sub instances for a matching bookmark
                 if (this.uninitializedScopes != null)
                 {
-                    for (int i = 0; i < this.uninitializedScopes.Count; i++)
+                    for (var i = 0; i < this.uninitializedScopes.Count; i++)
                     {
-                        BookmarkScope uninitializedScope = this.uninitializedScopes[i];
+                        var uninitializedScope = this.uninitializedScopes[i];
 
                         Fx.Assert(this.bookmarkManagers.ContainsKey(uninitializedScope), "We must always have the uninitialized sub instances.");
                         BookmarkResumptionResult resumptionResult;
-                        if (!this.bookmarkManagers[uninitializedScope].TryGetBookmarkFromInternalList(bookmark, out Bookmark internalBookmark, out BookmarkCallbackWrapper callbackWrapper))
+                        if (!this.bookmarkManagers[uninitializedScope].TryGetBookmarkFromInternalList(bookmark, out var internalBookmark, out var callbackWrapper))
                         {
                             resumptionResult = BookmarkResumptionResult.NotFound;
                         }
@@ -244,7 +244,7 @@ namespace System.Activities.Runtime
             else
             {
                 BookmarkResumptionResult resumptionResult;
-                if (!manager.TryGetBookmarkFromInternalList(bookmark, out Bookmark bookmarkFromList, out BookmarkCallbackWrapper callbackWrapper))
+                if (!manager.TryGetBookmarkFromInternalList(bookmark, out var bookmarkFromList, out var callbackWrapper))
                 {
                     resumptionResult = BookmarkResumptionResult.NotFound;
                 }
@@ -275,7 +275,7 @@ namespace System.Activities.Runtime
 
         public void PopulateBookmarkInfo(ref List<BookmarkInfo> bookmarks)
         {
-            foreach (BookmarkManager manager in this.bookmarkManagers.Values)
+            foreach (var manager in this.bookmarkManagers.Values)
             {
                 if (manager.HasBookmarks)
                 {
@@ -293,14 +293,14 @@ namespace System.Activities.Runtime
         {
             Fx.Assert(scope != null, "We should never be passed null here.");
 
-            BookmarkScope lookupScope = scope;
+            var lookupScope = scope;
 
             if (scope.IsDefault)
             {
                 lookupScope = this.defaultScope;
             }
 
-            if (this.bookmarkManagers.TryGetValue(lookupScope, out BookmarkManager manager))
+            if (this.bookmarkManagers.TryGetValue(lookupScope, out var manager))
             {
                 if (!manager.HasBookmarks)
                 {
@@ -311,7 +311,7 @@ namespace System.Activities.Runtime
 
             if (manager != null)
             {
-                List<BookmarkInfo> bookmarks = new List<BookmarkInfo>();
+                var bookmarks = new List<BookmarkInfo>();
 
                 manager.PopulateBookmarkInfo(bookmarks);
 
@@ -351,7 +351,7 @@ namespace System.Activities.Runtime
         {
             Fx.Assert(!scope.IsInitialized, "This should have been checked by the caller.");
 
-            BookmarkScope lookupScope = InitializeBookmarkScopeWithoutKeyAssociation(scope, id);
+            var lookupScope = InitializeBookmarkScopeWithoutKeyAssociation(scope, id);
             CreateAssociatedKey(lookupScope);
         }
 
@@ -359,7 +359,7 @@ namespace System.Activities.Runtime
         {
             Fx.Assert(!scope.IsInitialized, "This should have been checked by the caller.");
 
-            BookmarkScope lookupScope = scope;
+            var lookupScope = scope;
 
             if (scope.IsDefault)
             {
@@ -378,11 +378,11 @@ namespace System.Activities.Runtime
                 throw FxTrace.Exception.AsError(new InvalidOperationException(SR.BookmarkScopeWithIdAlreadyExists(id)));
             }
 
-            BookmarkManager bookmarks = this.bookmarkManagers[lookupScope];
+            var bookmarks = this.bookmarkManagers[lookupScope];
             this.bookmarkManagers.Remove(lookupScope);
             this.uninitializedScopes.Remove(lookupScope);
 
-            long temporaryId = lookupScope.TemporaryId;
+            var temporaryId = lookupScope.TemporaryId;
             // We initialize and re-add to our dictionary.  We have to
             // re-add because the hash has changed.
             lookupScope.Id = id;
@@ -434,7 +434,7 @@ namespace System.Activities.Runtime
                 //
                 // Try to find one in the existing sub-instances
                 //
-                foreach (BookmarkScope eachScope in this.bookmarkManagers.Keys)
+                foreach (var eachScope in this.bookmarkManagers.Keys)
                 {
                     if (eachScope.Id.Equals(scopeId))
                     {
@@ -517,7 +517,7 @@ namespace System.Activities.Runtime
 
             if (this.bookmarkManagers != null)
             {
-                foreach (KeyValuePair<BookmarkScope, BookmarkManager> scopeBookmarks in this.bookmarkManagers)
+                foreach (var scopeBookmarks in this.bookmarkManagers)
                 {
                     IEquatable<BookmarkScope> comparison = scopeBookmarks.Key;
                     if (!comparison.Equals(scope))
@@ -537,9 +537,9 @@ namespace System.Activities.Runtime
         {
             if (bookmark.ExclusiveHandles != null)
             {
-                for (int i = 0; i < bookmark.ExclusiveHandles.Count; i++)
+                for (var i = 0; i < bookmark.ExclusiveHandles.Count; i++)
                 {
-                    ExclusiveHandle handle = bookmark.ExclusiveHandles[i];
+                    var handle = bookmark.ExclusiveHandles[i];
                     Fx.Assert(handle != null, "Internal error..ExclusiveHandle was null");
                     if ((handle.ImportantBookmarks != null && handle.ImportantBookmarks.Contains(bookmark)) && (handle.UnimportantBookmarks != null && handle.UnimportantBookmarks.Count != 0))
                     {
@@ -559,9 +559,9 @@ namespace System.Activities.Runtime
             else
             {
                 Fx.Assert(multipleBookmarks != null, "caller should never pass null");
-                for (int i = 0; i < multipleBookmarks.Count; i++)
+                for (var i = 0; i < multipleBookmarks.Count; i++)
                 {
-                    Bookmark bookmark = multipleBookmarks[i];
+                    var bookmark = multipleBookmarks[i];
 
                     PurgeBookmark(bookmark, nonScopedBookmarkManager);
                 }
@@ -574,7 +574,7 @@ namespace System.Activities.Runtime
 
             if (bookmark.Scope != null)
             {
-                BookmarkScope lookupScope = bookmark.Scope;
+                var lookupScope = bookmark.Scope;
 
                 if (bookmark.Scope.IsDefault)
                 {

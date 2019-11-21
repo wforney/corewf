@@ -205,29 +205,29 @@ namespace System.Activities.Tracking
         internal IDictionary<string, object> GetVariables(ICollection<string> variables)
         {
             Dictionary<string, object> trackedVariables = null; // delay allocated through TrackData
-            ActivityInstance currentInstance = this.Activity.Instance;
+            var currentInstance = this.Activity.Instance;
 
             if (currentInstance != null)
             {
-                Activity currentElement = currentInstance.Activity;
-                Activity startActivity = currentInstance.Activity;
-                bool containsWildcard = variables.Contains("*");
+                var currentElement = currentInstance.Activity;
+                var startActivity = currentInstance.Activity;
+                var containsWildcard = variables.Contains("*");
                 //count defines how many items we can get in this lookup. It represents the maximum number of items that can be extracted, 
                 //if * is specified, any other names specified are expected to be variables defined in scope, not in the activity itself. 
                 //if a variable name in the activity is specified, the lookup continues through the variables in scope. 
-                int count = containsWildcard ? currentElement.RuntimeVariables.Count + variables.Count - 1 : variables.Count;
+                var count = containsWildcard ? currentElement.RuntimeVariables.Count + variables.Count - 1 : variables.Count;
 
-                IdSpace activityIdSpace = currentElement.MemberOf;
+                var activityIdSpace = currentElement.MemberOf;
 
                 while (currentInstance != null)
                 {
                     //* only extracts variables of the current Activity and not variables in scope. 
-                    bool useWildCard = containsWildcard && startActivity == currentElement;
+                    var useWildCard = containsWildcard && startActivity == currentElement;
 
                     // we only track public Variables, not ImplementationVariables
-                    for (int i = 0; i < currentElement.RuntimeVariables.Count; i++)
+                    for (var i = 0; i < currentElement.RuntimeVariables.Count; i++)
                     {
-                        Variable variable = currentElement.RuntimeVariables[i];
+                        var variable = currentElement.RuntimeVariables[i];
                         if (TrackData(variable.Name, variable.Id, currentInstance, variables, useWildCard, ref trackedVariables))
                         {
                             if (trackedVariables.Count == count)
@@ -237,7 +237,7 @@ namespace System.Activities.Tracking
                         }
                     }
 
-                    bool foundNext = false;
+                    var foundNext = false;
 
                     while (!foundNext)
                     {
@@ -271,19 +271,19 @@ namespace System.Activities.Tracking
         internal IDictionary<string, object> GetArguments(ICollection<string> arguments)
         {
             Dictionary<string, object> trackedArguments = null; // delay allocated through TrackData
-            ActivityInstance currentInstance = this.Activity.Instance;
+            var currentInstance = this.Activity.Instance;
 
             if (currentInstance != null)
             {
-                Activity currentElement = currentInstance.Activity;
-                bool containsWildcard = arguments.Contains("*");
-                int count = containsWildcard ? currentElement.RuntimeArguments.Count : arguments.Count;
-                bool isActivityStateExecuting = ActivityStates.Executing.Equals(this.State, StringComparison.Ordinal);
+                var currentElement = currentInstance.Activity;
+                var containsWildcard = arguments.Contains("*");
+                var count = containsWildcard ? currentElement.RuntimeArguments.Count : arguments.Count;
+                var isActivityStateExecuting = ActivityStates.Executing.Equals(this.State, StringComparison.Ordinal);
 
                 //look at arguments for this element. 
-                for (int i = 0; i < currentElement.RuntimeArguments.Count; i++)
+                for (var i = 0; i < currentElement.RuntimeArguments.Count; i++)
                 {
-                    RuntimeArgument argument = currentElement.RuntimeArguments[i];
+                    var argument = currentElement.RuntimeArguments[i];
 
                     // OutArguments will always start with default(T), so there is no need to track them when state == Executing
                     if (isActivityStateExecuting && argument.Direction == ArgumentDirection.Out)
@@ -316,7 +316,7 @@ namespace System.Activities.Tracking
         {
             if (wildcard || data.Contains(name))
             {
-                Location location = currentInstance.Environment.GetSpecificLocation(id);
+                var location = currentInstance.Environment.GetSpecificLocation(id);
                 if (location != null)
                 {
                     if (trackedData == null)
@@ -324,7 +324,7 @@ namespace System.Activities.Tracking
                         trackedData = new Dictionary<string, object>(10);
                     }
 
-                    string dataName = name ?? NameGenerator.Next();
+                    var dataName = name ?? NameGenerator.Next();
                     trackedData[dataName] = location.Value;
                     if (TD.TrackingDataExtractedIsEnabled())
                     {

@@ -61,7 +61,7 @@ namespace System.Activities.Runtime.DurableInstancing
             InstanceOwnerId = instanceOwnerId;
             if (serializableInstanceOwnerMetadata != null)
             {
-                Dictionary<XName, object> copy = new Dictionary<XName, object>(serializableInstanceOwnerMetadata);
+                var copy = new Dictionary<XName, object>(serializableInstanceOwnerMetadata);
                 SerializableInstanceOwnerMetadata = new ReadOnlyDictionary<XName, object>(copy);
             }
         }

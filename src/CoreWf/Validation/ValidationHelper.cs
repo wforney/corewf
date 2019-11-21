@@ -18,7 +18,7 @@ namespace System.Activities.Validation
             if (!requiredArgumentsNotInOverloadGroups.IsNullOrEmpty())
             {
                 // 1. Check if there are any Required arguments (outside overload groups) that were not specified.
-                foreach (RuntimeArgument argument in requiredArgumentsNotInOverloadGroups)
+                foreach (var argument in requiredArgumentsNotInOverloadGroups)
                 {
                     if (CheckIfArgumentIsNotBound(argument, inputs))
                     {
@@ -33,16 +33,16 @@ namespace System.Activities.Validation
                 // An overload group is considered to be completely configured if all it's required arguments
                 // are non-null. If an overload group does not have any required arguments then the group is 
                 // considered configured if any of the optional arguments are configured.
-                Dictionary<string, bool> configurationResults = new Dictionary<string, bool>();
-                string configuredGroupName = string.Empty;
-                int configuredCount = 0;
-                int overloadGroupsWithNoRequiredArgs = 0;
+                var configurationResults = new Dictionary<string, bool>();
+                var configuredGroupName = string.Empty;
+                var configuredCount = 0;
+                var overloadGroupsWithNoRequiredArgs = 0;
 
-                foreach (KeyValuePair<string, List<RuntimeArgument>> entry in overloadGroups)
+                foreach (var entry in overloadGroups)
                 {
-                    string groupName = entry.Key;
+                    var groupName = entry.Key;
                     configurationResults.Add(groupName, false);
-                    IEnumerable<RuntimeArgument> requiredArguments = entry.Value.Where((a) => a.IsRequired);
+                    var requiredArguments = entry.Value.Where((a) => a.IsRequired);
 
                     if (requiredArguments.Count() > 0)
                     {
@@ -56,7 +56,7 @@ namespace System.Activities.Validation
                     else
                     {
                         overloadGroupsWithNoRequiredArgs++;
-                        IEnumerable<RuntimeArgument> optionalArguments = entry.Value.Where((a) => !a.IsRequired);
+                        var optionalArguments = entry.Value.Where((a) => !a.IsRequired);
                         if (optionalArguments.Any(localArgument => CheckIfArgumentIsBound(localArgument, inputs)))
                         {
                             configurationResults[groupName] = true;
@@ -79,8 +79,8 @@ namespace System.Activities.Validation
                 // required or optional activity arguments set.
                 else if (configuredCount == 1)
                 {
-                    HashSet<RuntimeArgument> configuredOverloadSet = new HashSet<RuntimeArgument>(overloadGroups[configuredGroupName]);
-                    Predicate<RuntimeArgument> checkIfArgumentIsBound = new Predicate<RuntimeArgument>(localArgument => CheckIfArgumentIsBound(localArgument, inputs));
+                    var configuredOverloadSet = new HashSet<RuntimeArgument>(overloadGroups[configuredGroupName]);
+                    var checkIfArgumentIsBound = new Predicate<RuntimeArgument>(localArgument => CheckIfArgumentIsBound(localArgument, inputs));
 
                     List<string> disjointGroups = null;
                     if (!equivalenceInfo.DisjointGroupsDictionary.IsNullOrEmpty())
@@ -95,13 +95,13 @@ namespace System.Activities.Validation
                     }
 
                     // Iterate over the groups that may not be completely configured.
-                    foreach (string groupName in configurationResults.Keys.Where((k) => configurationResults[k] == false))
+                    foreach (var groupName in configurationResults.Keys.Where((k) => configurationResults[k] == false))
                     {
                         // Check if the partially configured group name is in the disjoint groups list. 
                         // If so, find all configured arguments.
                         if (disjointGroups != null && disjointGroups.Contains(groupName))
                         {
-                            foreach (RuntimeArgument configuredArgument in overloadGroups[groupName].FindAll(checkIfArgumentIsBound))
+                            foreach (var configuredArgument in overloadGroups[groupName].FindAll(checkIfArgumentIsBound))
                             {
                                 ActivityUtilities.Add(ref validationErrors, new ValidationError(SR.ExtraOverloadGroupPropertiesConfigured(configuredGroupName,
                                     configuredArgument.Name, groupName), false, activity));
@@ -110,11 +110,11 @@ namespace System.Activities.Validation
                         else if (overlappingGroups != null && overlappingGroups.Contains(groupName))
                         {
                             // Find all arguments of the Overlapping group that are not in the configuredOverloadSet.
-                            HashSet<RuntimeArgument> overloadGroupSet = new HashSet<RuntimeArgument>(overloadGroups[groupName]);
-                            IEnumerable<RuntimeArgument> intersectSet = overloadGroupSet.Intersect(configuredOverloadSet);
-                            List<RuntimeArgument> exceptList = overloadGroupSet.Except(intersectSet).ToList();
+                            var overloadGroupSet = new HashSet<RuntimeArgument>(overloadGroups[groupName]);
+                            var intersectSet = overloadGroupSet.Intersect(configuredOverloadSet);
+                            var exceptList = overloadGroupSet.Except(intersectSet).ToList();
 
-                            foreach (RuntimeArgument configuredArgument in exceptList.FindAll(checkIfArgumentIsBound))
+                            foreach (var configuredArgument in exceptList.FindAll(checkIfArgumentIsBound))
                             {
                                 ActivityUtilities.Add(ref validationErrors, new ValidationError(SR.ExtraOverloadGroupPropertiesConfigured(configuredGroupName,
                                     configuredArgument.Name, groupName), false, activity));
@@ -137,18 +137,18 @@ namespace System.Activities.Validation
             requiredArgumentsNotInOverloadGroups = null;
             IEnumerable<RuntimeArgument> runtimeArguments = activity.RuntimeArguments;
 
-            foreach (RuntimeArgument runtimeArgument in runtimeArguments)
+            foreach (var runtimeArgument in runtimeArguments)
             {
                 if (!runtimeArgument.OverloadGroupNames.IsNullOrEmpty())
                 {
-                    foreach (string groupName in runtimeArgument.OverloadGroupNames)
+                    foreach (var groupName in runtimeArgument.OverloadGroupNames)
                     {
                         if (overloadGroups == null)
                         {
                             overloadGroups = new Dictionary<string, List<RuntimeArgument>>();
                         }
 
-                        if (!overloadGroups.TryGetValue(groupName, out List<RuntimeArgument> arguments))
+                        if (!overloadGroups.TryGetValue(groupName, out var arguments))
                         {
                             arguments = new List<RuntimeArgument>();
                             overloadGroups.Add(groupName, arguments);
@@ -181,16 +181,16 @@ namespace System.Activities.Validation
         {
             Fx.Assert(equivalenceInfo != null, "equivalenceInfo should have been setup before calling this method");
 
-            bool noErrors = true;
+            var noErrors = true;
 
             if (!equivalenceInfo.EquivalentGroupsDictionary.IsNullOrEmpty())
             {
-                Hashtable keysVisited = new Hashtable(equivalenceInfo.EquivalentGroupsDictionary.Count);
-                foreach (KeyValuePair<string, List<string>> entry in equivalenceInfo.EquivalentGroupsDictionary)
+                var keysVisited = new Hashtable(equivalenceInfo.EquivalentGroupsDictionary.Count);
+                foreach (var entry in equivalenceInfo.EquivalentGroupsDictionary)
                 {
                     if (!keysVisited.Contains(entry.Key))
                     {
-                        string[] equivalentGroups = new string[entry.Value.Count + 1];
+                        var equivalentGroups = new string[entry.Value.Count + 1];
                         equivalentGroups[0] = entry.Key;
                         entry.Value.CopyTo(equivalentGroups, 1);
 
@@ -198,7 +198,7 @@ namespace System.Activities.Validation
                         ActivityUtilities.Add(ref validationErrors, new ValidationError(SR.OverloadGroupsAreEquivalent(sortedList.AsCommaSeparatedValues()), false, activity));
                         noErrors = false;
 
-                        for (int i = 0; i < equivalentGroups.Length; i++)
+                        for (var i = 0; i < equivalentGroups.Length; i++)
                         {
                             keysVisited.Add(equivalentGroups[i], null);
                         }
@@ -207,15 +207,15 @@ namespace System.Activities.Validation
             }
             else if (!equivalenceInfo.SupersetOfGroupsDictionary.IsNullOrEmpty())
             {
-                foreach (KeyValuePair<string, List<string>> entry in equivalenceInfo.SupersetOfGroupsDictionary)
+                foreach (var entry in equivalenceInfo.SupersetOfGroupsDictionary)
                 {
                     IList<string> sortedList = entry.Value.OrderBy((s) => s, StringComparer.Ordinal).ToList();
-                    string[] subsetGroups = new string[sortedList.Count];
-                    int index = 0;
+                    var subsetGroups = new string[sortedList.Count];
+                    var index = 0;
 
                     // Select only subsets that have atleast one required argument in them.
                     // We ignore the subsets that have no required arguments in them.
-                    foreach (string subsetGroup in sortedList)
+                    foreach (var subsetGroup in sortedList)
                     {
                         if (overloadGroups[subsetGroup].Any<RuntimeArgument>((a) => a.IsRequired))
                         {
@@ -237,21 +237,21 @@ namespace System.Activities.Validation
 
         private static OverloadGroupEquivalenceInfo GetOverloadGroupEquivalence(Dictionary<string, List<RuntimeArgument>> groupDefinitions)
         {
-            OverloadGroupEquivalenceInfo overloadGroupsInfo = new OverloadGroupEquivalenceInfo();
+            var overloadGroupsInfo = new OverloadGroupEquivalenceInfo();
 
             if (!groupDefinitions.IsNullOrEmpty())
             {
-                string[] groupNames = new string[groupDefinitions.Count];
+                var groupNames = new string[groupDefinitions.Count];
                 groupDefinitions.Keys.CopyTo(groupNames, 0);
 
-                for (int i = 0; i < groupNames.Length; i++)
+                for (var i = 0; i < groupNames.Length; i++)
                 {
-                    string group1 = groupNames[i];
-                    HashSet<RuntimeArgument> group1Args = new HashSet<RuntimeArgument>(groupDefinitions[group1]);
-                    for (int j = i + 1; j < groupNames.Length; j++)
+                    var group1 = groupNames[i];
+                    var group1Args = new HashSet<RuntimeArgument>(groupDefinitions[group1]);
+                    for (var j = i + 1; j < groupNames.Length; j++)
                     {
-                        string group2 = groupNames[j];
-                        HashSet<RuntimeArgument> group2Args = new HashSet<RuntimeArgument>(groupDefinitions[group2]);
+                        var group2 = groupNames[j];
+                        var group2Args = new HashSet<RuntimeArgument>(groupDefinitions[group2]);
 
                         if (group1Args.IsProperSupersetOf(group2Args))
                         {
@@ -390,7 +390,7 @@ namespace System.Activities.Validation
                     dictionary = new Dictionary<string, List<string>>();
                 }
 
-                if (!dictionary.TryGetValue(dictionaryKey, out List<string> listValues))
+                if (!dictionary.TryGetValue(dictionaryKey, out var listValues))
                 {
                     listValues = new List<string> { listEntry };
                     dictionary.Add(dictionaryKey, listValues);

@@ -33,7 +33,7 @@ namespace System.Activities.Expressions
 
             if (operationFunction == null)
             {
-                if (!UnaryExpressionHelper.TryGenerateLinqDelegate(ExpressionType.Not, out operationFunction, out ValidationError validationError))
+                if (!UnaryExpressionHelper.TryGenerateLinqDelegate(ExpressionType.Not, out operationFunction, out var validationError))
                 {
                     metadata.AddValidationError(validationError);
                 }
@@ -42,7 +42,7 @@ namespace System.Activities.Expressions
         protected override TResult Execute(CodeActivityContext context)
         {
             Fx.Assert(operationFunction != null, "OperationFunction must exist.");
-            TOperand operandValue = this.Operand.Get(context);
+            var operandValue = this.Operand.Get(context);
             return operationFunction(operandValue);
         }
     }

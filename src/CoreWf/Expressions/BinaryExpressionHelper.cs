@@ -13,10 +13,10 @@ namespace System.Activities.Expressions
     {
         public static void OnGetArguments<TLeft, TRight>(CodeActivityMetadata metadata, InArgument<TLeft> left, InArgument<TRight> right)
         {
-            RuntimeArgument rightArgument = new RuntimeArgument("Right", typeof(TRight), ArgumentDirection.In, true);
+            var rightArgument = new RuntimeArgument("Right", typeof(TRight), ArgumentDirection.In, true);
             metadata.Bind(right, rightArgument);
 
-            RuntimeArgument leftArgument = new RuntimeArgument("Left", typeof(TLeft), ArgumentDirection.In, true);
+            var leftArgument = new RuntimeArgument("Left", typeof(TLeft), ArgumentDirection.In, true);
             metadata.Bind(left, leftArgument);
 
             metadata.SetArgumentsCollection(
@@ -32,15 +32,15 @@ namespace System.Activities.Expressions
             function = null;
             validationError = null;
 
-            ParameterExpression leftParameter = Expression.Parameter(typeof(TLeft), "left");
-            ParameterExpression rightParameter = Expression.Parameter(typeof(TRight), "right");
+            var leftParameter = Expression.Parameter(typeof(TLeft), "left");
+            var rightParameter = Expression.Parameter(typeof(TRight), "right");
 
             try
             {
-                BinaryExpression binaryExpression = Expression.MakeBinary(operatorType, leftParameter, rightParameter);
+                var binaryExpression = Expression.MakeBinary(operatorType, leftParameter, rightParameter);
 
-                Expression expressionToCompile = OperatorPermissionHelper.InjectReflectionPermissionIfNecessary(binaryExpression.Method, binaryExpression);
-                Expression<Func<TLeft, TRight, TResult>> lambdaExpression = Expression.Lambda<Func<TLeft, TRight, TResult>>(expressionToCompile, leftParameter, rightParameter);
+                var expressionToCompile = OperatorPermissionHelper.InjectReflectionPermissionIfNecessary(binaryExpression.Method, binaryExpression);
+                var lambdaExpression = Expression.Lambda<Func<TLeft, TRight, TResult>>(expressionToCompile, leftParameter, rightParameter);
                 function = lambdaExpression.Compile();
 
                 return true;

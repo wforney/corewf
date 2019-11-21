@@ -121,10 +121,10 @@ namespace System.Activities.Expressions
                 return false;
             }
 
-            byte[] requiredToken = reference.GetPublicKeyToken();
+            var requiredToken = reference.GetPublicKeyToken();
             if (requiredToken != null)
             {
-                byte[] actualToken = assemblyName.GetPublicKeyToken();
+                var actualToken = assemblyName.GetPublicKeyToken();
                 if (!AssemblyNameEqualityComparer.IsSameKeyToken(requiredToken, actualToken))
                 {
                     return false;
@@ -151,7 +151,7 @@ namespace System.Activities.Expressions
                 }
             }
 
-            Assembly assembly = assemblyCache[assemblyName] as Assembly;
+            var assembly = assemblyCache[assemblyName] as Assembly;
             if (assembly != null)
             {
                 return assembly;
@@ -163,24 +163,24 @@ namespace System.Activities.Expressions
             // as Xaml would do.  that is to find the first match
             // found starting from the end of the array of Assemblies
             // returned by AppDomain.GetAssemblies()
-            Assembly[] currentAssemblies = AppDomain.CurrentDomain.GetAssemblies();
-            for (int i = currentAssemblies.Length - 1; i >= 0; i--)
+            var currentAssemblies = AppDomain.CurrentDomain.GetAssemblies();
+            for (var i = currentAssemblies.Length - 1; i >= 0; i--)
             {
-                Assembly curAsm = currentAssemblies[i];
+                var curAsm = currentAssemblies[i];
                 if (curAsm.IsDynamic)
                 {
                     // ignore dynamic assemblies
                     continue;
                 }
 
-                AssemblyName curAsmName = GetFastAssemblyName(curAsm);
-                Version curVersion = curAsmName.Version;
-                CultureInfo curCulture = curAsmName.CultureInfo;
-                byte[] curKeyToken = curAsmName.GetPublicKeyToken();
+                var curAsmName = GetFastAssemblyName(curAsm);
+                var curVersion = curAsmName.Version;
+                var curCulture = curAsmName.CultureInfo;
+                var curKeyToken = curAsmName.GetPublicKeyToken();
 
-                Version reqVersion = assemblyName.Version;
-                CultureInfo reqCulture = assemblyName.CultureInfo;
-                byte[] reqKeyToken = assemblyName.GetPublicKeyToken();
+                var reqVersion = assemblyName.Version;
+                var reqCulture = assemblyName.CultureInfo;
+                var reqKeyToken = assemblyName.GetPublicKeyToken();
 
                 if ((String.Compare(curAsmName.Name, assemblyName.Name, StringComparison.OrdinalIgnoreCase) == 0) &&
                          (reqVersion == null || reqVersion.Equals(curVersion)) &&
@@ -252,7 +252,7 @@ namespace System.Activities.Expressions
             Assembly loaded = null;
 
             Fx.Assert(assemblyName.Name != null, "AssemblyName.Name cannot be null");
-            byte[] publicKeyToken = assemblyName.GetPublicKeyToken();
+            var publicKeyToken = assemblyName.GetPublicKeyToken();
             if (assemblyName.Version != null || assemblyName.CultureInfo != null || publicKeyToken != null)
             {
                 // Assembly.Load(string)

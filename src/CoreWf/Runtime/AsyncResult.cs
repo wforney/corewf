@@ -213,19 +213,19 @@ namespace System.Activities.Runtime
                 return;
             }
 
-            AsyncResult thisPtr = (AsyncResult)result.AsyncState;
+            var thisPtr = (AsyncResult)result.AsyncState;
             if (!thisPtr.OnContinueAsyncCompletion(result))
             {
                 return;
             }
 
-            AsyncCompletion callback = thisPtr.GetNextCompletion();
+            var callback = thisPtr.GetNextCompletion();
             if (callback == null)
             {
                 ThrowInvalidAsyncResult(result);
             }
 
-            bool completeSelf = false;
+            var completeSelf = false;
             Exception completionException = null;
             try
             {
@@ -282,12 +282,12 @@ namespace System.Activities.Runtime
 
         protected bool CheckSyncContinue(IAsyncResult result)
         {
-            return TryContinueHelper(result, out AsyncCompletion dummy);
+            return TryContinueHelper(result, out var dummy);
         }
 
         protected bool SyncContinue(IAsyncResult result)
         {
-            if (TryContinueHelper(result, out AsyncCompletion callback))
+            if (TryContinueHelper(result, out var callback))
             {
                 return callback(result);
             }
@@ -327,7 +327,7 @@ namespace System.Activities.Runtime
 
         private AsyncCompletion GetNextCompletion()
         {
-            AsyncCompletion result = _nextAsyncCompletion;
+            var result = _nextAsyncCompletion;
             _nextAsyncCompletion = null;
             return result;
         }
@@ -339,7 +339,7 @@ namespace System.Activities.Runtime
 
         protected static void ThrowInvalidAsyncResult(string debugText)
         {
-            string message = SR.InvalidAsyncResultImplementationGeneric;
+            var message = SR.InvalidAsyncResultImplementationGeneric;
             if (debugText != null)
             {
 #if DEBUG

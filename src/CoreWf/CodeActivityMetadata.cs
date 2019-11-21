@@ -77,7 +77,7 @@ namespace System.Activities
                 return false;
             }
 
-            CodeActivityMetadata other = (CodeActivityMetadata)obj;
+            var other = (CodeActivityMetadata)obj;
             return other.activity == this.activity && other.Environment == this.Environment
                 && other.CreateEmptyBindings == this.CreateEmptyBindings;
         }

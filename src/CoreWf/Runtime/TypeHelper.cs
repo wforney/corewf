@@ -71,7 +71,7 @@ namespace System.Activities.Runtime
         // variation to OfType<T> that uses AreTypesCompatible instead of Type equality
         public static IEnumerable<Type> GetCompatibleTypes(IEnumerable<Type> enumerable, Type targetType)
         {
-            foreach (Type sourceType in enumerable)
+            foreach (var sourceType in enumerable)
             {
                 if (TypeHelper.AreTypesCompatible(sourceType, targetType))
                 {
@@ -82,7 +82,7 @@ namespace System.Activities.Runtime
 
         public static bool ContainsCompatibleType(IEnumerable<Type> enumerable, Type targetType)
         {
-            foreach (Type sourceType in enumerable)
+            foreach (var sourceType in enumerable)
             {
                 if (TypeHelper.AreTypesCompatible(sourceType, targetType))
                 {
@@ -112,7 +112,7 @@ namespace System.Activities.Runtime
                 return default(T);
             }
 
-            if (TryNumericConversion<T>(source, out T result))
+            if (TryNumericConversion<T>(source, out var result))
             {
                 return result;
             }
@@ -123,7 +123,7 @@ namespace System.Activities.Runtime
         // get all of the types that this Type implements (based classes, interfaces, etc)
         public static IEnumerable<Type> GetImplementedTypes(Type type)
         {
-            Dictionary<Type, object> typesEncountered = new Dictionary<Type, object>();
+            var typesEncountered = new Dictionary<Type, object>();
 
             GetImplementedTypesHelper(type, typesEncountered);
             return typesEncountered.Keys;
@@ -139,13 +139,13 @@ namespace System.Activities.Runtime
 
             typesEncountered.Add(type, type);
 
-            Type[] interfaces = type.GetInterfaces();
-            for (int i = 0; i < interfaces.Length; ++i)
+            var interfaces = type.GetInterfaces();
+            for (var i = 0; i < interfaces.Length; ++i)
             {
                 GetImplementedTypesHelper(interfaces[i], typesEncountered);
             }
 
-            Type baseType = type.BaseType();
+            var baseType = type.BaseType();
             while ((baseType != null) && (baseType != TypeHelper.ObjectType))
             {
                 GetImplementedTypesHelper(baseType, typesEncountered);
@@ -157,8 +157,8 @@ namespace System.Activities.Runtime
         //Justification = "Need to check all possible numeric conversions")]
         private static bool IsImplicitNumericConversion(Type source, Type destination)
         {
-            TypeCode sourceTypeCode = source.GetTypeCode();
-            TypeCode destinationTypeCode = destination.GetTypeCode();
+            var sourceTypeCode = source.GetTypeCode();
+            var destinationTypeCode = destination.GetTypeCode();
 
             switch (sourceTypeCode)
             {
@@ -307,14 +307,14 @@ namespace System.Activities.Runtime
         private static bool TryNumericConversion<T>(object source, out T result)
         {
             Fx.Assert(source != null, "caller must verify");
-            TypeCode sourceTypeCode = source.GetType().GetTypeCode();
-            TypeCode destinationTypeCode = typeof(T).GetTypeCode();
+            var sourceTypeCode = source.GetType().GetTypeCode();
+            var destinationTypeCode = typeof(T).GetTypeCode();
 
             switch (sourceTypeCode)
             {
                 case TypeCode.SByte:
                     {
-                        SByte sbyteSource = (SByte)source;
+                        var sbyteSource = (SByte)source;
                         switch (destinationTypeCode)
                         {
                             case TypeCode.Int16:
@@ -340,7 +340,7 @@ namespace System.Activities.Runtime
                     }
                 case TypeCode.Byte:
                     {
-                        Byte byteSource = (Byte)source;
+                        var byteSource = (Byte)source;
                         switch (destinationTypeCode)
                         {
                             case TypeCode.Int16:
@@ -375,7 +375,7 @@ namespace System.Activities.Runtime
                     }
                 case TypeCode.Int16:
                     {
-                        Int16 int16Source = (Int16)source;
+                        var int16Source = (Int16)source;
                         switch (destinationTypeCode)
                         {
                             case TypeCode.Int32:
@@ -398,7 +398,7 @@ namespace System.Activities.Runtime
                     }
                 case TypeCode.UInt16:
                     {
-                        UInt16 uint16Source = (UInt16)source;
+                        var uint16Source = (UInt16)source;
                         switch (destinationTypeCode)
                         {
                             case TypeCode.Int32:
@@ -427,7 +427,7 @@ namespace System.Activities.Runtime
                     }
                 case TypeCode.Int32:
                     {
-                        Int32 int32Source = (Int32)source;
+                        var int32Source = (Int32)source;
                         switch (destinationTypeCode)
                         {
                             case TypeCode.Int64:
@@ -447,7 +447,7 @@ namespace System.Activities.Runtime
                     }
                 case TypeCode.UInt32:
                     {
-                        UInt32 uint32Source = (UInt32)source;
+                        var uint32Source = (UInt32)source;
                         switch (destinationTypeCode)
                         {
                             case TypeCode.UInt32:
@@ -473,7 +473,7 @@ namespace System.Activities.Runtime
                     }
                 case TypeCode.Int64:
                     {
-                        Int64 int64Source = (Int64)source;
+                        var int64Source = (Int64)source;
                         switch (destinationTypeCode)
                         {
                             case TypeCode.Single:
@@ -490,7 +490,7 @@ namespace System.Activities.Runtime
                     }
                 case TypeCode.UInt64:
                     {
-                        UInt64 uint64Source = (UInt64)source;
+                        var uint64Source = (UInt64)source;
                         switch (destinationTypeCode)
                         {
                             case TypeCode.Single:
@@ -507,7 +507,7 @@ namespace System.Activities.Runtime
                     }
                 case TypeCode.Char:
                     {
-                        Char charSource = (Char)source;
+                        var charSource = (Char)source;
                         switch (destinationTypeCode)
                         {
                             case TypeCode.UInt16:
@@ -561,7 +561,7 @@ namespace System.Activities.Runtime
 
             if (type.IsEnum())
             {
-                Array enumValues = Enum.GetValues(type);
+                var enumValues = Enum.GetValues(type);
                 if (enumValues.Length > 0)
                 {
                     return enumValues.GetValue(0);

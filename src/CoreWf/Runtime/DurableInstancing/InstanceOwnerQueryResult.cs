@@ -23,7 +23,7 @@ namespace System.Activities.Runtime.DurableInstancing
         // One
         public InstanceOwnerQueryResult(Guid instanceOwnerId, IDictionary<XName, InstanceValue> metadata)
         {
-            Dictionary<Guid, IDictionary<XName, InstanceValue>> owners = new Dictionary<Guid, IDictionary<XName, InstanceValue>>(1);
+            var owners = new Dictionary<Guid, IDictionary<XName, InstanceValue>>(1);
             IDictionary<XName, InstanceValue> safeMetadata; // if metadata is not readonly, copy it.
             if (metadata == null || metadata.IsReadOnly)
                 safeMetadata = metadata;
@@ -40,8 +40,8 @@ namespace System.Activities.Runtime.DurableInstancing
         // N
         public InstanceOwnerQueryResult(IDictionary<Guid, IDictionary<XName, InstanceValue>> instanceOwners)
         {
-            Dictionary<Guid, IDictionary<XName, InstanceValue>> owners = new Dictionary<Guid, IDictionary<XName, InstanceValue>>(instanceOwners.Count);
-            foreach (KeyValuePair<Guid, IDictionary<XName, InstanceValue>> metadata in instanceOwners)
+            var owners = new Dictionary<Guid, IDictionary<XName, InstanceValue>>(instanceOwners.Count);
+            foreach (var metadata in instanceOwners)
             {
                 IDictionary<XName, InstanceValue> safeMetadata; // if metadata is not readonly, copy it.
                 if (metadata.Value == null || metadata.Value.IsReadOnly)

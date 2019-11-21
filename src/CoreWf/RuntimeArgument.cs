@@ -184,7 +184,7 @@ namespace System.Activities
         {
             if (this.bindingProperty != null)
             {
-                Argument argument = (Argument)this.bindingProperty.GetValue(this.bindingPropertyOwner);
+                var argument = (Argument)this.bindingProperty.GetValue(this.bindingPropertyOwner);
 
                 if (argument == null)
                 {
@@ -203,13 +203,13 @@ namespace System.Activities
             }
             else if (!this.IsBound)
             {
-                PropertyDescriptorCollection properties = TypeDescriptor.GetProperties(owningElement);
+                var properties = TypeDescriptor.GetProperties(owningElement);
 
                 PropertyDescriptor targetProperty = null;
 
-                for (int i = 0; i < properties.Count; i++)
+                for (var i = 0; i < properties.Count; i++)
                 {
-                    PropertyDescriptor property = properties[i];
+                    var property = properties[i];
 
                     // We only support auto-setting the property
                     // for generic types.  Otherwise we have no
@@ -218,7 +218,7 @@ namespace System.Activities
                     // type.
                     if (property.Name == this.Name && property.PropertyType.IsGenericType)
                     {
-                        if (ActivityUtilities.TryGetArgumentDirectionAndType(property.PropertyType, out ArgumentDirection direction, out Type argumentType))
+                        if (ActivityUtilities.TryGetArgumentDirectionAndType(property.PropertyType, out var direction, out var argumentType))
                         {
                             if (this.Type == argumentType && this.Direction == direction)
                             {
@@ -330,7 +330,7 @@ namespace System.Activities
                     "need to deal with potential issues around someone providing and override for " +
                     "a result - with the current code it wouldn't end up in the resultLocation.");
 
-                Location location = this.boundArgument.CreateDefaultLocation();
+                var location = this.boundArgument.CreateDefaultLocation();
                 targetEnvironment.Declare(this, location, targetActivityInstance);
                 location.Value = argumentValueOverride;
                 return true;
@@ -354,7 +354,7 @@ namespace System.Activities
             }
             else
             {
-                Location location = this.boundArgument.CreateDefaultLocation();
+                var location = this.boundArgument.CreateDefaultLocation();
                 targetEnvironment.Declare(this, location, targetActivityInstance);
                 return true;
             }
@@ -441,7 +441,7 @@ namespace System.Activities
         {
             Fx.Assert(this.IsInTree, "Argument must be opened");
 
-            if (!environment.TryGetLocation(this.Id, this.Owner, out Location location))
+            if (!environment.TryGetLocation(this.Id, this.Owner, out var location))
             {
                 throw FxTrace.Exception.AsError(new InvalidOperationException(SR.ArgumentDoesNotExistInEnvironment(this.Name)));
             }
@@ -486,13 +486,13 @@ namespace System.Activities
             [SecuritySafeCritical]
             public unsafe static UInt32 Calculate(string s)
             {
-                UInt32 result = 0xffffffff;
-                int byteLength = s.Length * sizeof(char);
+                var result = 0xffffffff;
+                var byteLength = s.Length * sizeof(char);
 
                 fixed (char* pString = s)
                 {
-                    byte* pbString = (byte*)pString;
-                    for (int i = 0; i < byteLength; i++)
+                    var pbString = (byte*)pString;
+                    for (var i = 0; i < byteLength; i++)
                     {
                         result ^= pbString[i];
                         result = ((result & 1) * polynomial) ^ (result >> 1);

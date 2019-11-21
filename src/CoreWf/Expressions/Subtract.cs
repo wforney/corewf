@@ -63,7 +63,7 @@ namespace System.Activities.Expressions
                 if (!BinaryExpressionHelper.TryGenerateLinqDelegate(
                             operatorType,
                             out operationFunction,
-                            out ValidationError validationError))
+                            out var validationError))
                 {
                     metadata.AddValidationError(validationError);
                 }
@@ -72,8 +72,8 @@ namespace System.Activities.Expressions
 
         protected override TResult Execute(CodeActivityContext context)
         {
-            TLeft leftValue = this.Left.Get(context);
-            TRight rightValue = this.Right.Get(context);
+            var leftValue = this.Left.Get(context);
+            var rightValue = this.Right.Get(context);
 
             //if user changed Checked flag between Open and Execution, 
             //a NRE may be thrown and that's by design

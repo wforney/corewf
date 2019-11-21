@@ -99,16 +99,16 @@ namespace System.Activities.Expressions
 
         protected override void CacheMetadata(CodeActivityMetadata metadata)
         {
-            Collection<RuntimeArgument> arguments = new Collection<RuntimeArgument>();
+            var arguments = new Collection<RuntimeArgument>();
 
-            Type targetObjectType = TypeHelper.ObjectType;
+            var targetObjectType = TypeHelper.ObjectType;
 
             if (this.TargetObject != null)
             {
                 targetObjectType = this.TargetObject.ArgumentType;
             }
 
-            RuntimeArgument targetObjectArgument = new RuntimeArgument("TargetObject", targetObjectType, ArgumentDirection.In);
+            var targetObjectArgument = new RuntimeArgument("TargetObject", targetObjectType, ArgumentDirection.In);
             metadata.Bind(this.TargetObject, targetObjectArgument);
             arguments.Add(targetObjectArgument);
 

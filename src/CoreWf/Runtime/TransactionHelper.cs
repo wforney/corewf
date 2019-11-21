@@ -16,7 +16,7 @@ namespace System.Activities.Runtime
             if (transaction.TransactionInformation.Status == TransactionStatus.Aborted || transaction.TransactionInformation.Status == TransactionStatus.InDoubt)
             {
                 //This will throw TransactionAbortedException/TransactionInDoubtException with corresponding inner exception if any
-                using (TransactionScope scope = new TransactionScope(transaction))
+                using (var scope = new TransactionScope(transaction))
                 {
                     //empty
                 }
@@ -33,7 +33,7 @@ namespace System.Activities.Runtime
             }
             catch (TransactionAbortedException)
             {
-                CommittableTransaction tempTransaction = new CommittableTransaction();
+                var tempTransaction = new CommittableTransaction();
                 try
                 {
                     return new TransactionScope(tempTransaction.Clone());
@@ -47,7 +47,7 @@ namespace System.Activities.Runtime
 
         public static void CompleteTransactionScope(ref TransactionScope scope)
         {
-            TransactionScope localScope = scope;
+            var localScope = scope;
             if (localScope != null)
             {
                 scope = null;

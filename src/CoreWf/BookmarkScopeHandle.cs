@@ -90,8 +90,8 @@ namespace System.Activities
         {
             if (this.BookmarkScope != null)
             {
-                int scopeRefCount = this.BookmarkScope.DecrementHandleReferenceCount();
-                DisassociateInstanceKeysExtension extension = context.GetExtension<DisassociateInstanceKeysExtension>();
+                var scopeRefCount = this.BookmarkScope.DecrementHandleReferenceCount();
+                var extension = context.GetExtension<DisassociateInstanceKeysExtension>();
                 // We only unregister the BookmarkScope if the extension exists and is enabled and if we had the last reference to it.
                 if ((extension != null) && extension.AutomaticDisassociationEnabled && (scopeRefCount == 0))
                 {

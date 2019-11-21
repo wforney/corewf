@@ -31,7 +31,7 @@ namespace System.Activities.Expressions
 
         protected override void CacheMetadata(CodeActivityMetadata metadata)
         {
-            bool isRequired = false;
+            var isRequired = false;
             if (typeof(TOperand).IsEnum)
             {
                 metadata.AddValidationError(SR.TargetTypeCannotBeEnum(this.GetType().Name, this.DisplayName));
@@ -44,7 +44,7 @@ namespace System.Activities.Expressions
             else
             {
                 PropertyInfo propertyInfo = null;
-                Type operandType = typeof(TOperand);
+                var operandType = typeof(TOperand);
                 propertyInfo = operandType.GetProperty(this.PropertyName);
 
                 if (propertyInfo == null)
@@ -58,13 +58,13 @@ namespace System.Activities.Expressions
                     this.isOperationFunctionStatic = propertyInfo.GetAccessors()[0].IsStatic;
                     isRequired = !this.isOperationFunctionStatic;
 
-                    if (!MemberExpressionHelper.TryGenerateLinqDelegate(this.PropertyName, false, this.isOperationFunctionStatic, out this.operationFunction, out ValidationError validationError))
+                    if (!MemberExpressionHelper.TryGenerateLinqDelegate(this.PropertyName, false, this.isOperationFunctionStatic, out this.operationFunction, out var validationError))
                     {
                         metadata.AddValidationError(validationError);
                     }
 
-                    MethodInfo getMethod = propertyInfo.GetGetMethod();
-                    MethodInfo setMethod = propertyInfo.GetSetMethod();
+                    var getMethod = propertyInfo.GetGetMethod();
+                    var setMethod = propertyInfo.GetSetMethod();
 
                     if ((getMethod != null && !getMethod.IsStatic) || (setMethod != null && !setMethod.IsStatic))
                     {
@@ -77,14 +77,14 @@ namespace System.Activities.Expressions
 
         protected override TResult Execute(CodeActivityContext context)
         {
-            TOperand operandValue = this.Operand.Get(context);
+            var operandValue = this.Operand.Get(context);
 
             if (!this.isOperationFunctionStatic && operandValue == null)
             {
                 throw FxTrace.Exception.AsError(new InvalidOperationException(SR.MemberCannotBeNull("Operand", this.GetType().Name, this.DisplayName)));
             }
 
-            TResult result = this.operationFunction(operandValue);
+            var result = this.operationFunction(operandValue);
             return result;
         }
     }

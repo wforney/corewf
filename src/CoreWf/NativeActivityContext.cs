@@ -543,7 +543,7 @@ namespace System.Activities
 
         private ActivityInstance InternalScheduleActivity(Activity activity, CompletionBookmark onCompleted, FaultBookmark onFaulted)
         {
-            ActivityInstance parent = this.CurrentInstance;
+            var parent = this.CurrentInstance;
 
             if (!activity.IsMetadataCached || activity.CacheId != parent.Activity.CacheId)
             {
@@ -582,7 +582,7 @@ namespace System.Activities
         {
             ThrowIfDisposed();
 
-            ActivityInstance parent = this.CurrentInstance;
+            var parent = this.CurrentInstance;
 
             if (activityAction == null)
             {
@@ -611,7 +611,7 @@ namespace System.Activities
         {
             ThrowIfDisposed();
 
-            ActivityInstance parent = this.CurrentInstance;
+            var parent = this.CurrentInstance;
 
             if (activityAction == null)
             {
@@ -628,7 +628,7 @@ namespace System.Activities
                 throw FxTrace.Exception.Argument(nameof(onFaulted), SR.InvalidExecutionCallback(onFaulted, parent.Activity.ToString()));
             }
 
-            Dictionary<string, object> inputParameters = new Dictionary<string, object>(1)
+            var inputParameters = new Dictionary<string, object>(1)
             {
                 { ActivityDelegate.ArgumentName, argument },
             };
@@ -645,7 +645,7 @@ namespace System.Activities
         {
             ThrowIfDisposed();
 
-            ActivityInstance parent = this.CurrentInstance;
+            var parent = this.CurrentInstance;
 
             if (activityAction == null)
             {
@@ -662,7 +662,7 @@ namespace System.Activities
                 throw FxTrace.Exception.Argument(nameof(onFaulted), SR.InvalidExecutionCallback(onFaulted, parent.Activity.ToString()));
             }
 
-            Dictionary<string, object> inputParameters = new Dictionary<string, object>(2)
+            var inputParameters = new Dictionary<string, object>(2)
             {
                 { ActivityDelegate.Argument1Name, argument1 },
                 { ActivityDelegate.Argument2Name, argument2 },
@@ -680,7 +680,7 @@ namespace System.Activities
         {
             ThrowIfDisposed();
 
-            ActivityInstance parent = this.CurrentInstance;
+            var parent = this.CurrentInstance;
 
             if (activityAction == null)
             {
@@ -697,7 +697,7 @@ namespace System.Activities
                 throw FxTrace.Exception.Argument(nameof(onFaulted), SR.InvalidExecutionCallback(onFaulted, parent.Activity.ToString()));
             }
 
-            Dictionary<string, object> inputParameters = new Dictionary<string, object>(3)
+            var inputParameters = new Dictionary<string, object>(3)
             {
                 { ActivityDelegate.Argument1Name, argument1 },
                 { ActivityDelegate.Argument2Name, argument2 },
@@ -717,7 +717,7 @@ namespace System.Activities
         {
             ThrowIfDisposed();
 
-            ActivityInstance parent = this.CurrentInstance;
+            var parent = this.CurrentInstance;
 
             if (activityAction == null)
             {
@@ -734,7 +734,7 @@ namespace System.Activities
                 throw FxTrace.Exception.Argument(nameof(onFaulted), SR.InvalidExecutionCallback(onFaulted, parent.Activity.ToString()));
             }
 
-            Dictionary<string, object> inputParameters = new Dictionary<string, object>(4)
+            var inputParameters = new Dictionary<string, object>(4)
             {
                 { ActivityDelegate.Argument1Name, argument1 },
                 { ActivityDelegate.Argument2Name, argument2 },
@@ -757,7 +757,7 @@ namespace System.Activities
         {
             ThrowIfDisposed();
 
-            ActivityInstance parent = this.CurrentInstance;
+            var parent = this.CurrentInstance;
 
             if (activityAction == null)
             {
@@ -774,7 +774,7 @@ namespace System.Activities
                 throw FxTrace.Exception.Argument(nameof(onFaulted), SR.InvalidExecutionCallback(onFaulted, parent.Activity.ToString()));
             }
 
-            Dictionary<string, object> inputParameters = new Dictionary<string, object>(5)
+            var inputParameters = new Dictionary<string, object>(5)
             {
                 { ActivityDelegate.Argument1Name, argument1 },
                 { ActivityDelegate.Argument2Name, argument2 },
@@ -798,7 +798,7 @@ namespace System.Activities
         {
             ThrowIfDisposed();
 
-            ActivityInstance parent = this.CurrentInstance;
+            var parent = this.CurrentInstance;
 
             if (activityAction == null)
             {
@@ -815,7 +815,7 @@ namespace System.Activities
                 throw FxTrace.Exception.Argument(nameof(onFaulted), SR.InvalidExecutionCallback(onFaulted, parent.Activity.ToString()));
             }
 
-            Dictionary<string, object> inputParameters = new Dictionary<string, object>(6)
+            var inputParameters = new Dictionary<string, object>(6)
             {
                 { ActivityDelegate.Argument1Name, argument1 },
                 { ActivityDelegate.Argument2Name, argument2 },
@@ -840,7 +840,7 @@ namespace System.Activities
         {
             ThrowIfDisposed();
 
-            ActivityInstance parent = this.CurrentInstance;
+            var parent = this.CurrentInstance;
 
             if (activityAction == null)
             {
@@ -857,7 +857,7 @@ namespace System.Activities
                 throw FxTrace.Exception.Argument(nameof(onFaulted), SR.InvalidExecutionCallback(onFaulted, parent.Activity.ToString()));
             }
 
-            Dictionary<string, object> inputParameters = new Dictionary<string, object>(7)
+            var inputParameters = new Dictionary<string, object>(7)
             {
                 { ActivityDelegate.Argument1Name, argument1 },
                 { ActivityDelegate.Argument2Name, argument2 },
@@ -883,7 +883,7 @@ namespace System.Activities
         {
             ThrowIfDisposed();
 
-            ActivityInstance parent = this.CurrentInstance;
+            var parent = this.CurrentInstance;
 
             if (activityAction == null)
             {
@@ -900,7 +900,7 @@ namespace System.Activities
                 throw FxTrace.Exception.Argument(nameof(onFaulted), SR.InvalidExecutionCallback(onFaulted, parent.Activity.ToString()));
             }
 
-            Dictionary<string, object> inputParameters = new Dictionary<string, object>(8)
+            var inputParameters = new Dictionary<string, object>(8)
             {
                 { ActivityDelegate.Argument1Name, argument1 },
                 { ActivityDelegate.Argument2Name, argument2 },
@@ -928,7 +928,7 @@ namespace System.Activities
         {
             ThrowIfDisposed();
 
-            ActivityInstance parent = this.CurrentInstance;
+            var parent = this.CurrentInstance;
 
             if (activityAction == null)
             {
@@ -945,7 +945,7 @@ namespace System.Activities
                 throw FxTrace.Exception.Argument(nameof(onFaulted), SR.InvalidExecutionCallback(onFaulted, parent.Activity.ToString()));
             }
 
-            Dictionary<string, object> inputParameters = new Dictionary<string, object>(9)
+            var inputParameters = new Dictionary<string, object>(9)
             {
                 { ActivityDelegate.Argument1Name, argument1 },
                 { ActivityDelegate.Argument2Name, argument2 },
@@ -974,7 +974,7 @@ namespace System.Activities
         {
             ThrowIfDisposed();
 
-            ActivityInstance parent = this.CurrentInstance;
+            var parent = this.CurrentInstance;
 
             if (activityAction == null)
             {
@@ -991,7 +991,7 @@ namespace System.Activities
                 throw FxTrace.Exception.Argument(nameof(onFaulted), SR.InvalidExecutionCallback(onFaulted, parent.Activity.ToString()));
             }
 
-            Dictionary<string, object> inputParameters = new Dictionary<string, object>(10)
+            var inputParameters = new Dictionary<string, object>(10)
             {
                 { ActivityDelegate.Argument1Name, argument1 },
                 { ActivityDelegate.Argument2Name, argument2 },
@@ -1021,7 +1021,7 @@ namespace System.Activities
         {
             ThrowIfDisposed();
 
-            ActivityInstance parent = this.CurrentInstance;
+            var parent = this.CurrentInstance;
 
             if (activityAction == null)
             {
@@ -1038,7 +1038,7 @@ namespace System.Activities
                 throw FxTrace.Exception.Argument(nameof(onFaulted), SR.InvalidExecutionCallback(onFaulted, parent.Activity.ToString()));
             }
 
-            Dictionary<string, object> inputParameters = new Dictionary<string, object>(11)
+            var inputParameters = new Dictionary<string, object>(11)
             {
                 { ActivityDelegate.Argument1Name, argument1 },
                 { ActivityDelegate.Argument2Name, argument2 },
@@ -1069,7 +1069,7 @@ namespace System.Activities
         {
             ThrowIfDisposed();
 
-            ActivityInstance parent = this.CurrentInstance;
+            var parent = this.CurrentInstance;
 
             if (activityAction == null)
             {
@@ -1086,7 +1086,7 @@ namespace System.Activities
                 throw FxTrace.Exception.Argument(nameof(onFaulted), SR.InvalidExecutionCallback(onFaulted, parent.Activity.ToString()));
             }
 
-            Dictionary<string, object> inputParameters = new Dictionary<string, object>(12)
+            var inputParameters = new Dictionary<string, object>(12)
             {
                 { ActivityDelegate.Argument1Name, argument1 },
                 { ActivityDelegate.Argument2Name, argument2 },
@@ -1118,7 +1118,7 @@ namespace System.Activities
         {
             ThrowIfDisposed();
 
-            ActivityInstance parent = this.CurrentInstance;
+            var parent = this.CurrentInstance;
 
             if (activityAction == null)
             {
@@ -1135,7 +1135,7 @@ namespace System.Activities
                 throw FxTrace.Exception.Argument(nameof(onFaulted), SR.InvalidExecutionCallback(onFaulted, parent.Activity.ToString()));
             }
 
-            Dictionary<string, object> inputParameters = new Dictionary<string, object>(13)
+            var inputParameters = new Dictionary<string, object>(13)
             {
                 { ActivityDelegate.Argument1Name, argument1 },
                 { ActivityDelegate.Argument2Name, argument2 },
@@ -1168,7 +1168,7 @@ namespace System.Activities
         {
             ThrowIfDisposed();
 
-            ActivityInstance parent = this.CurrentInstance;
+            var parent = this.CurrentInstance;
 
             if (activityAction == null)
             {
@@ -1185,7 +1185,7 @@ namespace System.Activities
                 throw FxTrace.Exception.Argument(nameof(onFaulted), SR.InvalidExecutionCallback(onFaulted, parent.Activity.ToString()));
             }
 
-            Dictionary<string, object> inputParameters = new Dictionary<string, object>(14)
+            var inputParameters = new Dictionary<string, object>(14)
             {
                 { ActivityDelegate.Argument1Name, argument1 },
                 { ActivityDelegate.Argument2Name, argument2 },
@@ -1219,7 +1219,7 @@ namespace System.Activities
         {
             ThrowIfDisposed();
 
-            ActivityInstance parent = this.CurrentInstance;
+            var parent = this.CurrentInstance;
 
             if (activityAction == null)
             {
@@ -1236,7 +1236,7 @@ namespace System.Activities
                 throw FxTrace.Exception.Argument(nameof(onFaulted), SR.InvalidExecutionCallback(onFaulted, parent.Activity.ToString()));
             }
 
-            Dictionary<string, object> inputParameters = new Dictionary<string, object>(15)
+            var inputParameters = new Dictionary<string, object>(15)
             {
                 { ActivityDelegate.Argument1Name, argument1 },
                 { ActivityDelegate.Argument2Name, argument2 },
@@ -1271,7 +1271,7 @@ namespace System.Activities
         {
             ThrowIfDisposed();
 
-            ActivityInstance parent = this.CurrentInstance;
+            var parent = this.CurrentInstance;
 
             if (activityAction == null)
             {
@@ -1288,7 +1288,7 @@ namespace System.Activities
                 throw FxTrace.Exception.Argument(nameof(onFaulted), SR.InvalidExecutionCallback(onFaulted, parent.Activity.ToString()));
             }
 
-            Dictionary<string, object> inputParameters = new Dictionary<string, object>(16)
+            var inputParameters = new Dictionary<string, object>(16)
             {
                 { ActivityDelegate.Argument1Name, argument1 },
                 { ActivityDelegate.Argument2Name, argument2 },
@@ -1320,7 +1320,7 @@ namespace System.Activities
         {
             ThrowIfDisposed();
 
-            ActivityInstance parent = this.CurrentInstance;
+            var parent = this.CurrentInstance;
 
             if (activity == null)
             {
@@ -1347,7 +1347,7 @@ namespace System.Activities
         {
             ThrowIfDisposed();
 
-            ActivityInstance parent = this.CurrentInstance;
+            var parent = this.CurrentInstance;
 
             if (activityFunc == null)
             {
@@ -1376,7 +1376,7 @@ namespace System.Activities
         {
             ThrowIfDisposed();
 
-            ActivityInstance parent = this.CurrentInstance;
+            var parent = this.CurrentInstance;
 
             if (activityFunc == null)
             {
@@ -1393,7 +1393,7 @@ namespace System.Activities
                 throw FxTrace.Exception.Argument(nameof(onFaulted), SR.InvalidExecutionCallback(onFaulted, parent.Activity.ToString()));
             }
 
-            Dictionary<string, object> inputParameters = new Dictionary<string, object>(1)
+            var inputParameters = new Dictionary<string, object>(1)
             {
                { ActivityDelegate.ArgumentName, argument }
             };
@@ -1411,7 +1411,7 @@ namespace System.Activities
         {
             ThrowIfDisposed();
 
-            ActivityInstance parent = this.CurrentInstance;
+            var parent = this.CurrentInstance;
 
             if (activityFunc == null)
             {
@@ -1428,7 +1428,7 @@ namespace System.Activities
                 throw FxTrace.Exception.Argument(nameof(onFaulted), SR.InvalidExecutionCallback(onFaulted, parent.Activity.ToString()));
             }
 
-            Dictionary<string, object> inputParameters = new Dictionary<string, object>(2)
+            var inputParameters = new Dictionary<string, object>(2)
             {
                 { ActivityDelegate.Argument1Name, argument1 },
                 { ActivityDelegate.Argument2Name, argument2 },
@@ -1447,7 +1447,7 @@ namespace System.Activities
         {
             ThrowIfDisposed();
 
-            ActivityInstance parent = this.CurrentInstance;
+            var parent = this.CurrentInstance;
 
             if (activityFunc == null)
             {
@@ -1464,7 +1464,7 @@ namespace System.Activities
                 throw FxTrace.Exception.Argument(nameof(onFaulted), SR.InvalidExecutionCallback(onFaulted, parent.Activity.ToString()));
             }
 
-            Dictionary<string, object> inputParameters = new Dictionary<string, object>(3)
+            var inputParameters = new Dictionary<string, object>(3)
             {
                 { ActivityDelegate.Argument1Name, argument1 },
                 { ActivityDelegate.Argument2Name, argument2 },
@@ -1484,7 +1484,7 @@ namespace System.Activities
         {
             ThrowIfDisposed();
 
-            ActivityInstance parent = this.CurrentInstance;
+            var parent = this.CurrentInstance;
 
             if (activityFunc == null)
             {
@@ -1501,7 +1501,7 @@ namespace System.Activities
                 throw FxTrace.Exception.Argument(nameof(onFaulted), SR.InvalidExecutionCallback(onFaulted, parent.Activity.ToString()));
             }
 
-            Dictionary<string, object> inputParameters = new Dictionary<string, object>(4)
+            var inputParameters = new Dictionary<string, object>(4)
             {
                 { ActivityDelegate.Argument1Name, argument1 },
                 { ActivityDelegate.Argument2Name, argument2 },
@@ -1524,7 +1524,7 @@ namespace System.Activities
         {
             ThrowIfDisposed();
 
-            ActivityInstance parent = this.CurrentInstance;
+            var parent = this.CurrentInstance;
 
             if (activityFunc == null)
             {
@@ -1541,7 +1541,7 @@ namespace System.Activities
                 throw FxTrace.Exception.Argument(nameof(onFaulted), SR.InvalidExecutionCallback(onFaulted, parent.Activity.ToString()));
             }
 
-            Dictionary<string, object> inputParameters = new Dictionary<string, object>(5)
+            var inputParameters = new Dictionary<string, object>(5)
             {
                 { ActivityDelegate.Argument1Name, argument1 },
                 { ActivityDelegate.Argument2Name, argument2 },
@@ -1565,7 +1565,7 @@ namespace System.Activities
         {
             ThrowIfDisposed();
 
-            ActivityInstance parent = this.CurrentInstance;
+            var parent = this.CurrentInstance;
 
             if (activityFunc == null)
             {
@@ -1582,7 +1582,7 @@ namespace System.Activities
                 throw FxTrace.Exception.Argument(nameof(onFaulted), SR.InvalidExecutionCallback(onFaulted, parent.Activity.ToString()));
             }
 
-            Dictionary<string, object> inputParameters = new Dictionary<string, object>(6)
+            var inputParameters = new Dictionary<string, object>(6)
             {
                 { ActivityDelegate.Argument1Name, argument1 },
                 { ActivityDelegate.Argument2Name, argument2 },
@@ -1607,7 +1607,7 @@ namespace System.Activities
         {
             ThrowIfDisposed();
 
-            ActivityInstance parent = this.CurrentInstance;
+            var parent = this.CurrentInstance;
 
             if (activityFunc == null)
             {
@@ -1624,7 +1624,7 @@ namespace System.Activities
                 throw FxTrace.Exception.Argument(nameof(onFaulted), SR.InvalidExecutionCallback(onFaulted, parent.Activity.ToString()));
             }
 
-            Dictionary<string, object> inputParameters = new Dictionary<string, object>(7)
+            var inputParameters = new Dictionary<string, object>(7)
             {
                 { ActivityDelegate.Argument1Name, argument1 },
                 { ActivityDelegate.Argument2Name, argument2 },
@@ -1650,7 +1650,7 @@ namespace System.Activities
         {
             ThrowIfDisposed();
 
-            ActivityInstance parent = this.CurrentInstance;
+            var parent = this.CurrentInstance;
 
             if (activityFunc == null)
             {
@@ -1667,7 +1667,7 @@ namespace System.Activities
                 throw FxTrace.Exception.Argument(nameof(onFaulted), SR.InvalidExecutionCallback(onFaulted, parent.Activity.ToString()));
             }
 
-            Dictionary<string, object> inputParameters = new Dictionary<string, object>(8)
+            var inputParameters = new Dictionary<string, object>(8)
             {
                 { ActivityDelegate.Argument1Name, argument1 },
                 { ActivityDelegate.Argument2Name, argument2 },
@@ -1695,7 +1695,7 @@ namespace System.Activities
         {
             ThrowIfDisposed();
 
-            ActivityInstance parent = this.CurrentInstance;
+            var parent = this.CurrentInstance;
 
             if (activityFunc == null)
             {
@@ -1712,7 +1712,7 @@ namespace System.Activities
                 throw FxTrace.Exception.Argument(nameof(onFaulted), SR.InvalidExecutionCallback(onFaulted, parent.Activity.ToString()));
             }
 
-            Dictionary<string, object> inputParameters = new Dictionary<string, object>(9)
+            var inputParameters = new Dictionary<string, object>(9)
             {
                 { ActivityDelegate.Argument1Name, argument1 },
                 { ActivityDelegate.Argument2Name, argument2 },
@@ -1741,7 +1741,7 @@ namespace System.Activities
         {
             ThrowIfDisposed();
 
-            ActivityInstance parent = this.CurrentInstance;
+            var parent = this.CurrentInstance;
 
             if (activityFunc == null)
             {
@@ -1758,7 +1758,7 @@ namespace System.Activities
                 throw FxTrace.Exception.Argument(nameof(onFaulted), SR.InvalidExecutionCallback(onFaulted, parent.Activity.ToString()));
             }
 
-            Dictionary<string, object> inputParameters = new Dictionary<string, object>(10)
+            var inputParameters = new Dictionary<string, object>(10)
             {
                 { ActivityDelegate.Argument1Name, argument1 },
                 { ActivityDelegate.Argument2Name, argument2 },
@@ -1788,7 +1788,7 @@ namespace System.Activities
         {
             ThrowIfDisposed();
 
-            ActivityInstance parent = this.CurrentInstance;
+            var parent = this.CurrentInstance;
 
             if (activityFunc == null)
             {
@@ -1805,7 +1805,7 @@ namespace System.Activities
                 throw FxTrace.Exception.Argument(nameof(onFaulted), SR.InvalidExecutionCallback(onFaulted, parent.Activity.ToString()));
             }
 
-            Dictionary<string, object> inputParameters = new Dictionary<string, object>(11)
+            var inputParameters = new Dictionary<string, object>(11)
             {
                 { ActivityDelegate.Argument1Name, argument1 },
                 { ActivityDelegate.Argument2Name, argument2 },
@@ -1836,7 +1836,7 @@ namespace System.Activities
         {
             ThrowIfDisposed();
 
-            ActivityInstance parent = this.CurrentInstance;
+            var parent = this.CurrentInstance;
 
             if (activityFunc == null)
             {
@@ -1853,7 +1853,7 @@ namespace System.Activities
                 throw FxTrace.Exception.Argument(nameof(onFaulted), SR.InvalidExecutionCallback(onFaulted, parent.Activity.ToString()));
             }
 
-            Dictionary<string, object> inputParameters = new Dictionary<string, object>(12)
+            var inputParameters = new Dictionary<string, object>(12)
             {
                 { ActivityDelegate.Argument1Name, argument1 },
                 { ActivityDelegate.Argument2Name, argument2 },
@@ -1885,7 +1885,7 @@ namespace System.Activities
         {
             ThrowIfDisposed();
 
-            ActivityInstance parent = this.CurrentInstance;
+            var parent = this.CurrentInstance;
 
             if (activityFunc == null)
             {
@@ -1902,7 +1902,7 @@ namespace System.Activities
                 throw FxTrace.Exception.Argument(nameof(onFaulted), SR.InvalidExecutionCallback(onFaulted, parent.Activity.ToString()));
             }
 
-            Dictionary<string, object> inputParameters = new Dictionary<string, object>(13)
+            var inputParameters = new Dictionary<string, object>(13)
             {
                 { ActivityDelegate.Argument1Name, argument1 },
                 { ActivityDelegate.Argument2Name, argument2 },
@@ -1935,7 +1935,7 @@ namespace System.Activities
         {
             ThrowIfDisposed();
 
-            ActivityInstance parent = this.CurrentInstance;
+            var parent = this.CurrentInstance;
 
             if (activityFunc == null)
             {
@@ -1952,7 +1952,7 @@ namespace System.Activities
                 throw FxTrace.Exception.Argument(nameof(onFaulted), SR.InvalidExecutionCallback(onFaulted, parent.Activity.ToString()));
             }
 
-            Dictionary<string, object> inputParameters = new Dictionary<string, object>(14)
+            var inputParameters = new Dictionary<string, object>(14)
             {
                 { ActivityDelegate.Argument1Name, argument1 },
                 { ActivityDelegate.Argument2Name, argument2 },
@@ -1986,7 +1986,7 @@ namespace System.Activities
         {
             ThrowIfDisposed();
 
-            ActivityInstance parent = this.CurrentInstance;
+            var parent = this.CurrentInstance;
 
             if (activityFunc == null)
             {
@@ -2003,7 +2003,7 @@ namespace System.Activities
                 throw FxTrace.Exception.Argument(nameof(onFaulted), SR.InvalidExecutionCallback(onFaulted, parent.Activity.ToString()));
             }
 
-            Dictionary<string, object> inputParameters = new Dictionary<string, object>(15)
+            var inputParameters = new Dictionary<string, object>(15)
             {
                 { ActivityDelegate.Argument1Name, argument1 },
                 { ActivityDelegate.Argument2Name, argument2 },
@@ -2038,7 +2038,7 @@ namespace System.Activities
         {
             ThrowIfDisposed();
 
-            ActivityInstance parent = this.CurrentInstance;
+            var parent = this.CurrentInstance;
 
             if (activityFunc == null)
             {
@@ -2055,7 +2055,7 @@ namespace System.Activities
                 throw FxTrace.Exception.Argument(nameof(onFaulted), SR.InvalidExecutionCallback(onFaulted, parent.Activity.ToString()));
             }
 
-            Dictionary<string, object> inputParameters = new Dictionary<string, object>(16)
+            var inputParameters = new Dictionary<string, object>(16)
             {
                 { ActivityDelegate.Argument1Name, argument1 },
                 { ActivityDelegate.Argument2Name, argument2 },
@@ -2086,7 +2086,7 @@ namespace System.Activities
         {
             ThrowIfDisposed();
 
-            ActivityInstance parent = this.CurrentInstance;
+            var parent = this.CurrentInstance;
 
             if (activityDelegate == null)
             {
@@ -2104,8 +2104,8 @@ namespace System.Activities
             }
 
             // Check if the inputParameters collection matches the expected inputs for activityDelegate
-            IEnumerable<RuntimeDelegateArgument> expectedParameters = activityDelegate.RuntimeDelegateArguments.Where(p => ArgumentDirectionHelper.IsIn(p.Direction));
-            int expectedParameterCount = expectedParameters.Count();
+            var expectedParameters = activityDelegate.RuntimeDelegateArguments.Where(p => ArgumentDirectionHelper.IsIn(p.Direction));
+            var expectedParameterCount = expectedParameters.Count();
             if ((inputParameters == null && expectedParameterCount > 0) ||
                 (inputParameters != null && inputParameters.Count != expectedParameterCount))
             {
@@ -2113,10 +2113,10 @@ namespace System.Activities
             }
             else if (expectedParameterCount > 0)
             {
-                foreach (RuntimeDelegateArgument expectedParameter in expectedParameters)
+                foreach (var expectedParameter in expectedParameters)
                 {
-                    string parameterName = expectedParameter.Name;
-                    if (inputParameters.TryGetValue(parameterName, out object inputParameterValue))
+                    var parameterName = expectedParameter.Name;
+                    if (inputParameters.TryGetValue(parameterName, out var inputParameterValue))
                     {
                         if (!TypeHelper.AreTypesCompatible(inputParameterValue, expectedParameter.Type))
                         {
@@ -2137,11 +2137,11 @@ namespace System.Activities
 
         private ActivityInstance InternalScheduleDelegate(ActivityDelegate activityDelegate, IDictionary<string, object> inputParameters, CompletionBookmark completionBookmark, FaultBookmark faultBookmark)
         {
-            ActivityInstance parent = this.CurrentInstance;
+            var parent = this.CurrentInstance;
 
             if (activityDelegate.Handler != null)
             {
-                Activity activity = activityDelegate.Handler;
+                var activity = activityDelegate.Handler;
 
                 if (!activity.IsMetadataCached || activity.CacheId != parent.Activity.CacheId)
                 {
@@ -2164,7 +2164,7 @@ namespace System.Activities
                 throw FxTrace.Exception.AsError(new InvalidOperationException(SR.CannotScheduleChildrenWhileEnteringIsolation));
             }
 
-            ActivityInstance declaringActivityInstance = this.FindDeclaringActivityInstance(this.CurrentInstance, activityDelegate.Owner);
+            var declaringActivityInstance = this.FindDeclaringActivityInstance(this.CurrentInstance, activityDelegate.Owner);
 
             if (parent.IsPerformingDefaultCancelation)
             {
@@ -2180,9 +2180,9 @@ namespace System.Activities
         {
             ThrowIfDisposed();
 
-            ExecutionProperties properties = GetExecutionProperties(handle);
+            var properties = GetExecutionProperties(handle);
 
-            NoPersistProperty property = (NoPersistProperty)properties.FindAtCurrentScope(NoPersistProperty.Name);
+            var property = (NoPersistProperty)properties.FindAtCurrentScope(NoPersistProperty.Name);
 
             if (property == null)
             {
@@ -2219,9 +2219,9 @@ namespace System.Activities
         {
             ThrowIfDisposed();
 
-            ExecutionProperties properties = GetExecutionProperties(handle);
+            var properties = GetExecutionProperties(handle);
 
-            NoPersistProperty property = (NoPersistProperty)properties.FindAtCurrentScope(NoPersistProperty.Name);
+            var property = (NoPersistProperty)properties.FindAtCurrentScope(NoPersistProperty.Name);
 
             if (property == null)
             {
@@ -2253,7 +2253,7 @@ namespace System.Activities
             Fx.Assert(!IsDisposed, "We shouldn't call this on a disposed object.");
             Fx.Assert(onPersistComplete != null, "We must have a persist complete callback.");
 
-            Bookmark onPersistBookmark = CreateBookmark(onPersistComplete);
+            var onPersistBookmark = CreateBookmark(onPersistComplete);
             this.executor.RequestPersist(onPersistBookmark, this.CurrentInstance);
         }
 
@@ -2261,7 +2261,7 @@ namespace System.Activities
         {
             Fx.Assert(startingInstance != null, "Starting instance should not be null.");
 
-            ActivityInstance currentActivityInstance = startingInstance;
+            var currentActivityInstance = startingInstance;
             while (currentActivityInstance != null)
             {
                 if (object.ReferenceEquals(currentActivityInstance.Activity, activityToMatch))
@@ -2279,7 +2279,7 @@ namespace System.Activities
 
         private void ThrowIfCanInduceIdleNotSet()
         {
-            Activity associatedActivity = this.Activity;
+            var associatedActivity = this.Activity;
             if (!associatedActivity.InternalCanInduceIdle)
             {
                 throw FxTrace.Exception.AsError(new InvalidOperationException(SR.CanInduceIdleNotSpecified(associatedActivity.GetType().FullName)));

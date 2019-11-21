@@ -95,7 +95,7 @@ namespace System.Activities.Statements
 
         protected override void CacheMetadata(NativeActivityMetadata metadata)
         {
-            RuntimeArgument conditionArgument = new RuntimeArgument("Condition", typeof(bool), ArgumentDirection.In, true);
+            var conditionArgument = new RuntimeArgument("Condition", typeof(bool), ArgumentDirection.In, true);
             metadata.Bind(this.Condition, conditionArgument);
             metadata.SetArgumentsCollection(new Collection<RuntimeArgument> { conditionArgument });
 

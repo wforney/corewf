@@ -46,7 +46,7 @@ namespace System.Activities.Runtime.DurableInstancing
                 }
                 else
                 {
-                    Dictionary<XName, InstanceValue> copy = new Dictionary<XName, InstanceValue>(metadata);
+                    var copy = new Dictionary<XName, InstanceValue>(metadata);
                     this.Metadata = new ReadOnlyDictionary<XName, InstanceValue>(copy);
                 }
             }

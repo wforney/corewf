@@ -67,10 +67,10 @@ namespace System.Activities.Runtime
         // always schedule a separate work item for expressions that aren't OldFastPath.
         internal bool CanExecuteUserCode()
         {
-            Activity activity = this.ActivityInstance.Activity;
-            for (int i = this.nextArgumentIndex; i < activity.RuntimeArguments.Count; i++)
+            var activity = this.ActivityInstance.Activity;
+            for (var i = this.nextArgumentIndex; i < activity.RuntimeArguments.Count; i++)
             {
-                RuntimeArgument argument = activity.RuntimeArguments[i];
+                var argument = activity.RuntimeArguments[i];
                 if (argument.IsBound && argument.BoundArgument.Expression != null)
                 {
                     return argument.BoundArgument.Expression.UseOldFastPath;

@@ -37,7 +37,7 @@ namespace System.Activities.Runtime
 
             if (owningInstance.HasChildren)
             {
-                ActivityInstance previousOwner = owningInstance.PropertyManager != null ? owningInstance.PropertyManager.owningInstance : null;
+                var previousOwner = owningInstance.PropertyManager != null ? owningInstance.PropertyManager.owningInstance : null;
 
                 // we're setting a handle property. Walk the children and associate the new property manager
                 // then walk our instance list, fixup parent references, and perform basic validation
@@ -127,11 +127,11 @@ namespace System.Activities.Runtime
                 return lastProperty;
             }
 
-            ExecutionPropertyManager currentManager = this;
+            var currentManager = this;
 
             while (currentManager != null)
             {
-                if (currentManager.properties.TryGetValue(name, out ExecutionProperty property))
+                if (currentManager.properties.TryGetValue(name, out var property))
                 {
                     if (!property.IsRemoved && (!property.HasRestrictedVisibility || property.Visibility == currentIdSpace))
                     {
@@ -151,7 +151,7 @@ namespace System.Activities.Runtime
 
         private void AddProperties(IDictionary<string, ExecutionProperty> properties, IDictionary<string, object> flattenedProperties, IdSpace currentIdSpace)
         {
-            foreach (KeyValuePair<string, ExecutionProperty> item in properties)
+            foreach (var item in properties)
             {
                 if (!item.Value.IsRemoved && !flattenedProperties.ContainsKey(item.Key) && (!item.Value.HasRestrictedVisibility || item.Value.Visibility == currentIdSpace))
                 {
@@ -162,8 +162,8 @@ namespace System.Activities.Runtime
 
         public IEnumerable<KeyValuePair<string, object>> GetFlattenedProperties(IdSpace currentIdSpace)
         {
-            ExecutionPropertyManager currentManager = this;
-            Dictionary<string, object> flattenedProperties = new Dictionary<string, object>();
+            var currentManager = this;
+            var flattenedProperties = new Dictionary<string, object>();
             while (currentManager != null)
             {
                 AddProperties(currentManager.Properties, flattenedProperties, currentIdSpace);
@@ -175,12 +175,12 @@ namespace System.Activities.Runtime
         //Currently this is only used for the exclusive scope processing
         internal List<T> FindAll<T>() where T : class
         {
-            ExecutionPropertyManager currentManager = this;
+            var currentManager = this;
             List<T> list = null;
 
             while (currentManager != null)
             {
-                foreach (ExecutionProperty property in currentManager.Properties.Values)
+                foreach (var property in currentManager.Properties.Values)
                 {
                     if (property.Property is T)
                     {
@@ -222,7 +222,7 @@ namespace System.Activities.Runtime
             Fx.Assert(!string.IsNullOrEmpty(name), "The name should be validated before calling this collection.");
             Fx.Assert(property != null, "The property should be validated before caling this collection.");
 
-            ExecutionProperty executionProperty = new ExecutionProperty(name, property, visibility);
+            var executionProperty = new ExecutionProperty(name, property, visibility);
             this.properties.Add(name, executionProperty);
 
             if (this.lastPropertyName == name)
@@ -247,7 +247,7 @@ namespace System.Activities.Runtime
         {
             Queue<HybridCollection<ActivityInstance>> toProcess = null;
 
-            HybridCollection<ActivityInstance> children = this.owningInstance.GetRawChildren();
+            var children = this.owningInstance.GetRawChildren();
 
             if (children != null && children.Count > 0)
             {
@@ -266,18 +266,18 @@ namespace System.Activities.Runtime
 
         private void ProcessChildrenForExclusiveHandles(HybridCollection<ActivityInstance> children, int amountToUpdate, ref Queue<HybridCollection<ActivityInstance>> toProcess)
         {
-            for (int i = 0; i < children.Count; i++)
+            for (var i = 0; i < children.Count; i++)
             {
-                ActivityInstance child = children[i];
+                var child = children[i];
 
-                ExecutionPropertyManager childManager = child.PropertyManager;
+                var childManager = child.PropertyManager;
 
                 if (childManager.IsOwner(child))
                 {
                     childManager.exclusiveHandleCount += amountToUpdate;
                 }
 
-                HybridCollection<ActivityInstance> tempChildren = child.GetRawChildren();
+                var tempChildren = child.GetRawChildren();
 
                 if (tempChildren != null && tempChildren.Count > 0)
                 {
@@ -293,7 +293,7 @@ namespace System.Activities.Runtime
 
         private void AddIExecutionProperty(ExecutionProperty property, bool isDeserializationFixup)
         {
-            bool willCleanupBeCalled = !isDeserializationFixup;
+            var willCleanupBeCalled = !isDeserializationFixup;
 
             if (this.threadProperties == null)
             {
@@ -302,14 +302,14 @@ namespace System.Activities.Runtime
             }
             else if (!this.ownsThreadPropertiesList)
             {
-                List<ExecutionProperty> updatedProperties = new List<ExecutionProperty>(this.threadProperties.Count);
+                var updatedProperties = new List<ExecutionProperty>(this.threadProperties.Count);
 
                 // We need to copy all properties to our new list and we
                 // need to mark hidden properties as "to be removed" (or just
                 // not copy them on the deserialization path)
-                for (int i = 0; i < this.threadProperties.Count; i++)
+                for (var i = 0; i < this.threadProperties.Count; i++)
                 {
-                    ExecutionProperty currentProperty = this.threadProperties[i];
+                    var currentProperty = this.threadProperties[i];
 
                     if (currentProperty.Name == property.Name)
                     {
@@ -334,9 +334,9 @@ namespace System.Activities.Runtime
             }
             else
             {
-                for (int i = this.threadProperties.Count - 1; i >= 0; i--)
+                for (var i = this.threadProperties.Count - 1; i >= 0; i--)
                 {
-                    ExecutionProperty currentProperty = this.threadProperties[i];
+                    var currentProperty = this.threadProperties[i];
 
                     if (currentProperty.Name == property.Name)
                     {
@@ -364,7 +364,7 @@ namespace System.Activities.Runtime
         {
             Fx.Assert(!string.IsNullOrEmpty(name), "This should have been validated by the caller.");
 
-            ExecutionProperty executionProperty = this.properties[name];
+            var executionProperty = this.properties[name];
 
             Fx.Assert(executionProperty != null, "This should only be called if we know the property exists");
 
@@ -398,7 +398,7 @@ namespace System.Activities.Runtime
         {
             Fx.Assert(!string.IsNullOrEmpty(name), "This should be validated elsewhere");
 
-            if (this.properties.TryGetValue(name, out ExecutionProperty property))
+            if (this.properties.TryGetValue(name, out var property))
             {
                 return property.Property;
             }
@@ -421,11 +421,11 @@ namespace System.Activities.Runtime
         {
             if (this.threadProperties != null)
             {
-                for (int i = 0; i < this.threadProperties.Count; i++)
+                for (var i = 0; i < this.threadProperties.Count; i++)
                 {
-                    ExecutionProperty executionProperty = this.threadProperties[i];
+                    var executionProperty = this.threadProperties[i];
                     executionProperty.ShouldSkipNextCleanup = false;
-                    IExecutionProperty property = (IExecutionProperty)executionProperty.Property;
+                    var property = (IExecutionProperty)executionProperty.Property;
 
                     property.SetupWorkflowThread();
                 }
@@ -437,9 +437,9 @@ namespace System.Activities.Runtime
         {
             if (this.threadProperties != null)
             {
-                for (int i = this.threadProperties.Count - 1; i >= 0; i--)
+                for (var i = this.threadProperties.Count - 1; i >= 0; i--)
                 {
-                    ExecutionProperty current = this.threadProperties[i];
+                    var current = this.threadProperties[i];
 
                     if (current.ShouldSkipNextCleanup)
                     {
@@ -447,7 +447,7 @@ namespace System.Activities.Runtime
                     }
                     else
                     {
-                        IExecutionProperty property = (IExecutionProperty)current.Property;
+                        var property = (IExecutionProperty)current.Property;
 
                         try
                         {
@@ -482,9 +482,9 @@ namespace System.Activities.Runtime
         {
             if (IsOwner(completedInstance))
             {
-                RegistrationContext registrationContext = new RegistrationContext(this, currentIdSpace);
+                var registrationContext = new RegistrationContext(this, currentIdSpace);
 
-                foreach (ExecutionProperty property in this.properties.Values)
+                foreach (var property in this.properties.Values)
                 {
                     // We do a soft removal because we're about to throw away this dictionary
                     // and we don't want to mess up our enumerator
@@ -542,7 +542,7 @@ namespace System.Activities.Runtime
                 this.rootPropertyManager = executor.RootPropertyManager;
             }
 
-            foreach (ExecutionProperty property in this.properties.Values)
+            foreach (var property in this.properties.Values)
             {
                 if (property.Property is IExecutionProperty)
                 {

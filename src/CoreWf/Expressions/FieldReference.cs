@@ -34,7 +34,7 @@ namespace System.Activities.Expressions
 
         protected override void CacheMetadata(CodeActivityMetadata metadata)
         {
-            bool isRequired = false;
+            var isRequired = false;
             if (typeof(TOperand).IsEnum)
             {
                 metadata.AddValidationError(SR.TargetTypeCannotBeEnum(this.GetType().Name, this.DisplayName));
@@ -50,7 +50,7 @@ namespace System.Activities.Expressions
             }
             else
             {
-                Type operandType = typeof(TOperand);
+                var operandType = typeof(TOperand);
                 this.fieldInfo = operandType.GetField(this.FieldName);
 
                 if (this.fieldInfo == null)

@@ -12,13 +12,13 @@ namespace System.Activities.XamlIntegration
     {
         public static Func<object> CreateFunc(XamlReader reader, Type returnType)
         {
-            FuncFactory factory = CreateFactory(null, reader, returnType);
+            var factory = CreateFactory(null, reader, returnType);
             return factory.GetFunc();
         }
 
         public static Func<T> CreateFunc<T>(XamlReader reader) where T : class
         {
-            FuncFactory<T> factory = new FuncFactory<T>(null, reader);
+            var factory = new FuncFactory<T>(null, reader);
             return factory.GetTypedFunc();
         }
 
@@ -52,14 +52,14 @@ namespace System.Activities.XamlIntegration
             //
             // IProvideValueTarget.TargetProperty can return DP, Attached Property or MemberInfo for clr property
             // In this case it should always be a regular clr property here - we are always targeting Activity.Body.
-            PropertyInfo propertyInfo = provideValueService.TargetProperty as PropertyInfo;
+            var propertyInfo = provideValueService.TargetProperty as PropertyInfo;
 
             if (propertyInfo != null)
             {
                 propertyType = propertyInfo.PropertyType;
             }
 
-            FuncFactory funcFactory = CreateFactory(objectWriterFactory, xamlReader, propertyType.GetGenericArguments());
+            var funcFactory = CreateFactory(objectWriterFactory, xamlReader, propertyType.GetGenericArguments());
             return funcFactory;
         }
 
@@ -68,7 +68,7 @@ namespace System.Activities.XamlIntegration
         // were multiple values. To preserve the same exception, we allow passing in an array here.
         private static FuncFactory CreateFactory(IXamlObjectWriterFactory objectWriterFactory, XamlReader xamlReader, params Type[] returnType)
         {
-            Type closedType = typeof(FuncFactory<>).MakeGenericType(returnType);
+            var closedType = typeof(FuncFactory<>).MakeGenericType(returnType);
             return (FuncFactory)Activator.CreateInstance(closedType, objectWriterFactory, xamlReader);
         }
     }
@@ -86,7 +86,7 @@ namespace System.Activities.XamlIntegration
 
         internal T Evaluate()
         {
-            XamlObjectWriter writer = GetWriter();
+            var writer = GetWriter();
             XamlServices.Transform(this.Nodes.GetReader(), writer);
             return (T)writer.Result;
         }
@@ -119,7 +119,7 @@ namespace System.Activities.XamlIntegration
             {
                 return new XamlObjectWriterSettings();
             }
-            XamlObjectWriterSettings result = new XamlObjectWriterSettings(this.objectWriterFactory.GetParentSettings())
+            var result = new XamlObjectWriterSettings(this.objectWriterFactory.GetParentSettings())
             {
                 // The delegate settings are already stripped by XOW. Some other settings don't make sense to copy.
                 ExternalNameScope = null,

@@ -86,7 +86,7 @@ namespace System.Activities.DurableInstancing
 
             if (this.keysToAssociate != null)
             {
-                foreach (KeyValuePair<Guid, IDictionary<XName, InstanceValue>> key in this.keysToAssociate)
+                foreach (var key in this.keysToAssociate)
                 {
                     InstancePersistence.ValidatePropertyBag(key.Value);
                 }

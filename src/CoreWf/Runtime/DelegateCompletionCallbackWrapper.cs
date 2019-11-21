@@ -32,18 +32,18 @@ namespace System.Activities.Runtime
         {
             if (completedInstance.Activity.HandlerOf != null)
             {
-                IList<RuntimeDelegateArgument> runtimeArguments = completedInstance.Activity.HandlerOf.RuntimeDelegateArguments;
-                LocationEnvironment environment = completedInstance.Environment;
+                var runtimeArguments = completedInstance.Activity.HandlerOf.RuntimeDelegateArguments;
+                var environment = completedInstance.Environment;
 
-                for (int i = 0; i < runtimeArguments.Count; i++)
+                for (var i = 0; i < runtimeArguments.Count; i++)
                 {
-                    RuntimeDelegateArgument runtimeArgument = runtimeArguments[i];
+                    var runtimeArgument = runtimeArguments[i];
 
                     if (runtimeArgument.BoundArgument != null)
                     {
                         if (ArgumentDirectionHelper.IsOut(runtimeArgument.Direction))
                         {
-                            Location parameterLocation = environment.GetSpecificLocation(runtimeArgument.BoundArgument.Id);
+                            var parameterLocation = environment.GetSpecificLocation(runtimeArgument.BoundArgument.Id);
 
                             if (parameterLocation != null)
                             {
@@ -66,7 +66,7 @@ namespace System.Activities.Runtime
         protected internal override void Invoke(NativeActivityContext context, ActivityInstance completedInstance)
         {
             EnsureCallback(callbackType, callbackParameterTypes);
-            DelegateCompletionCallback completionCallback = (DelegateCompletionCallback)this.Callback;
+            var completionCallback = (DelegateCompletionCallback)this.Callback;
 
             IDictionary<string, object> returnValue = this.results;
 

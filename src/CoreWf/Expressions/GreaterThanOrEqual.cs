@@ -38,7 +38,7 @@ namespace System.Activities.Expressions
 
             if (operationFunction == null)
             {
-                if (!BinaryExpressionHelper.TryGenerateLinqDelegate(ExpressionType.GreaterThanOrEqual, out operationFunction, out ValidationError validationError))
+                if (!BinaryExpressionHelper.TryGenerateLinqDelegate(ExpressionType.GreaterThanOrEqual, out operationFunction, out var validationError))
                 {
                     metadata.AddValidationError(validationError);
                 }
@@ -48,8 +48,8 @@ namespace System.Activities.Expressions
         protected override TResult Execute(CodeActivityContext context)
         {
             Fx.Assert(operationFunction != null, "OperationFunction must exist.");
-            TLeft leftValue = this.Left.Get(context);
-            TRight rightValue = this.Right.Get(context);
+            var leftValue = this.Left.Get(context);
+            var rightValue = this.Right.Get(context);
             return operationFunction(leftValue, rightValue);
         }
     }

@@ -11,7 +11,7 @@ namespace System.Activities.XamlIntegration
     {
         public override object Load(XamlReader xamlReader, IServiceProvider context)
         {
-            FuncFactory factory = FuncFactory.CreateFactory(xamlReader, context);
+            var factory = FuncFactory.CreateFactory(xamlReader, context);
             factory.IgnoreParentSettings = true;
             return factory.GetFunc();
         }

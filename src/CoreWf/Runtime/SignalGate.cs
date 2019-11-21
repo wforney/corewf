@@ -36,7 +36,7 @@ namespace System.Activities.Runtime.DurableInstancing
         //               Unlocked -> Signaled
         public bool Signal()
         {
-            int lastState = this.state;
+            var lastState = this.state;
             if (lastState == GateState.Locked)
             {
                 lastState = Interlocked.CompareExchange(ref this.state, GateState.SignalPending, GateState.Locked);
@@ -60,7 +60,7 @@ namespace System.Activities.Runtime.DurableInstancing
         //               Locked -> Unlocked
         public bool Unlock()
         {
-            int lastState = this.state;
+            var lastState = this.state;
             if (lastState == GateState.Locked)
             {
                 lastState = Interlocked.CompareExchange(ref this.state, GateState.Unlocked, GateState.Locked);

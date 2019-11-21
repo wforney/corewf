@@ -63,7 +63,7 @@ namespace System.Activities.Hosting
 
         public override object ProvideValue()
         {
-            T value = this.providerFunction();
+            var value = this.providerFunction();
             if (!this.hasGeneratedValue)
             {
                 base.GeneratedTypeMatchesDeclaredType = object.ReferenceEquals(value.GetType(), this.Type);

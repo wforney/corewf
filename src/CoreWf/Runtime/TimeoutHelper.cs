@@ -52,7 +52,7 @@ namespace System.Activities.Runtime
             }
             else
             {
-                long ticks = Ticks.FromTimeSpan(timeout);
+                var ticks = Ticks.FromTimeSpan(timeout);
                 if (ticks / TimeSpan.TicksPerMillisecond > int.MaxValue)
                 {
                     return int.MaxValue;
@@ -119,7 +119,7 @@ namespace System.Activities.Runtime
             }
             else
             {
-                TimeSpan remaining = _deadline - DateTime.UtcNow;
+                var remaining = _deadline - DateTime.UtcNow;
                 if (remaining <= TimeSpan.Zero)
                 {
                     return TimeSpan.Zero;

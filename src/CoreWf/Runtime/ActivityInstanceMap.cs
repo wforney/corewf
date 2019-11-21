@@ -38,9 +38,9 @@ using System.Activities.DynamicUpdate;
                 }
                 else
                 {
-                    InstanceList[] lists = new InstanceList[this.instanceMapping.Count];
-                    int index = 0;
-                    foreach (KeyValuePair<Activity, InstanceList> entry in this.instanceMapping)
+                    var lists = new InstanceList[this.instanceMapping.Count];
+                    var index = 0;
+                    foreach (var entry in this.instanceMapping)
                     {
                         entry.Value.ActivityId = entry.Key.QualifiedId.AsByteArray();
                         lists[index] = entry.Value;
@@ -563,9 +563,9 @@ using System.Activities.DynamicUpdate;
 #endif
         public void AddEntry(IActivityReference reference, bool skipIfDuplicate)
         {
-            Activity activity = reference.Activity;
+            var activity = reference.Activity;
 
-            if (this.InstanceMapping.TryGetValue(activity, out InstanceList mappedInstances))
+            if (this.InstanceMapping.TryGetValue(activity, out var mappedInstances))
             {
                 mappedInstances.Add(reference, skipIfDuplicate);
             }
@@ -586,10 +586,10 @@ using System.Activities.DynamicUpdate;
 
             this.instanceMapping = new Dictionary<Activity, InstanceList>(this.rawDeserializedLists.Length);
 
-            for (int i = 0; i < this.rawDeserializedLists.Length; i++)
+            for (var i = 0; i < this.rawDeserializedLists.Length; i++)
             {
-                InstanceList list = this.rawDeserializedLists[i];
-                if (!QualifiedId.TryGetElementFromRoot(rootActivity, list.ActivityId, out Activity activity))
+                var list = this.rawDeserializedLists[i];
+                if (!QualifiedId.TryGetElementFromRoot(rootActivity, list.ActivityId, out var activity))
                 {
                     throw FxTrace.Exception.AsError(new InvalidOperationException(SR.ActivityInstanceFixupFailed));
                 }
@@ -602,14 +602,14 @@ using System.Activities.DynamicUpdate;
             this.rawDeserializedLists = null;
 
             // then walk our instance list, fixup parent references, and perform basic validation
-            Func<ActivityInstance, ActivityExecutor, bool> processInstanceCallback = new Func<ActivityInstance, ActivityExecutor, bool>(OnActivityInstanceLoaded);
+            var processInstanceCallback = new Func<ActivityInstance, ActivityExecutor, bool>(OnActivityInstanceLoaded);
 
             rootInstance.FixupInstance(null, this, executor);
             ActivityUtilities.ProcessActivityInstanceTree(rootInstance, executor, processInstanceCallback);
 
             if (secondaryRootInstances != null)
             {
-                foreach (ActivityInstance instance in secondaryRootInstances)
+                foreach (var instance in secondaryRootInstances)
                 {
                     instance.FixupInstance(null, this, executor);
                     ActivityUtilities.ProcessActivityInstanceTree(instance, executor, processInstanceCallback);
@@ -629,9 +629,9 @@ using System.Activities.DynamicUpdate;
                 return false;
             }
 
-            Activity activity = reference.Activity;
+            var activity = reference.Activity;
 
-            if (!this.InstanceMapping.TryGetValue(activity, out InstanceList mappedInstances))
+            if (!this.InstanceMapping.TryGetValue(activity, out var mappedInstances))
             {
                 return false;
             }
@@ -708,7 +708,7 @@ using System.Activities.DynamicUpdate;
                 }
                 else
                 {
-                    for (int i = 0; i < base.MultipleItems.Count; i++)
+                    for (var i = 0; i < base.MultipleItems.Count; i++)
                     {
                         base.MultipleItems[i].Load(activity, instanceMap);
                     }

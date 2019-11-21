@@ -134,7 +134,7 @@ namespace System.Activities
             {
                 if (this.Owner != null)
                 {
-                    ValidationError validationError = new ValidationError(SR.VariableAlreadyInUseOnActivity(this.Name, parent.DisplayName, this.Owner.DisplayName), false, this.Name, parent);
+                    var validationError = new ValidationError(SR.VariableAlreadyInUseOnActivity(this.Name, parent.DisplayName, this.Owner.DisplayName), false, this.Name, parent);
                     ActivityUtilities.Add(ref validationErrors, validationError);
 
                     // Get out early since we've already initialized this variable.
@@ -148,7 +148,7 @@ namespace System.Activities
 
             if (this.Default != null)
             {
-                ActivityWithResult expression = this.Default;
+                var expression = this.Default;
 
                 if (expression is Argument.IExpressionWrapper)
                 {
@@ -252,7 +252,7 @@ namespace System.Activities
         {
             Fx.Assert(this.IsInTree, "Variable must be opened");
 
-            if (!environment.TryGetLocation(this.Id, this.Owner, out Location location))
+            if (!environment.TryGetLocation(this.Id, this.Owner, out var location))
             {
                 throw FxTrace.Exception.AsError(new InvalidOperationException(SR.VariableDoesNotExist(this.Name)));
             }
@@ -398,14 +398,14 @@ namespace System.Activities
 
         internal override Location DeclareLocation(ActivityExecutor executor, ActivityInstance instance)
         {
-            VariableLocation variableLocation = new VariableLocation(Modifiers, this.IsHandle);
+            var variableLocation = new VariableLocation(Modifiers, this.IsHandle);
 
             if (this.IsHandle)
             {
                 Fx.Assert(this.Default == null, "Default should be null");
                 instance.Environment.DeclareHandle(this, variableLocation, instance);
 
-                HandleInitializationContext context = new HandleInitializationContext(executor, instance);
+                var context = new HandleInitializationContext(executor, instance);
                 try
                 {
                     variableLocation.SetInitialValue((T)context.CreateAndInitializeHandle(typeof(T)));
@@ -426,9 +426,9 @@ namespace System.Activities
         internal override void PopulateDefault(ActivityExecutor executor, ActivityInstance parentInstance, Location location)
         {
             Fx.Assert(this.Default.UseOldFastPath, "Should only be called for OldFastPath");
-            VariableLocation variableLocation = (VariableLocation)location;
+            var variableLocation = (VariableLocation)location;
 
-            T value = executor.ExecuteInResolutionContext<T>(parentInstance, Default);
+            var value = executor.ExecuteInResolutionContext<T>(parentInstance, Default);
             variableLocation.SetInitialValue(value);
         }
 
@@ -602,7 +602,7 @@ namespace System.Activities
 
             private void NotifyValuePropertyChanged(object sender, PropertyChangedEventArgs e)
             {
-                PropertyChangedEventHandler handler = this.propertyChanged;
+                var handler = this.propertyChanged;
                 if (handler != null)
                 {
                     handler(this, e);
@@ -611,7 +611,7 @@ namespace System.Activities
 
             private void NotifyPropertyChanged()
             {
-                PropertyChangedEventHandler handler = this.propertyChanged;
+                var handler = this.propertyChanged;
                 if (handler != null)
                 {
                     handler(this, ActivityUtilities.ValuePropertyChangedEventArgs);

@@ -41,10 +41,10 @@ namespace System.Activities.Expressions
 
         protected override void CacheMetadata(CodeActivityMetadata metadata)
         {
-            CodeActivityPublicEnvironmentAccessor publicAccessor = CodeActivityPublicEnvironmentAccessor.Create(metadata);
+            var publicAccessor = CodeActivityPublicEnvironmentAccessor.Create(metadata);
 
             // We need to rewrite the tree.
-            if (ExpressionUtilities.TryRewriteLambdaExpression(this.lambdaValue, out Expression newTree, publicAccessor))
+            if (ExpressionUtilities.TryRewriteLambdaExpression(this.lambdaValue, out var newTree, publicAccessor))
             {
                 this.rewrittenTree = (Expression<Func<ActivityContext, TResult>>)newTree;
             }

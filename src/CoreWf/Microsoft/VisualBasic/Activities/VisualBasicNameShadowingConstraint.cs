@@ -9,18 +9,18 @@ namespace Microsoft.VisualBasic.Activities
     using System.Activities.Expressions;
     using System.Activities.Validation;
     using System.Globalization;
-    using System.Reflection;     
+    using System.Reflection;
 
-    sealed class VisualBasicNameShadowingConstraint : Constraint
+    internal sealed class VisualBasicNameShadowingConstraint : Constraint
     {
         protected override void OnExecute(NativeActivityContext context, object objectToValidate, ValidationContext objectToValidateContext)
         {
             bool foundMultiple;
             ActivityWithResult boundExpression;
             LocationReference locationReference;
-            ActivityWithResult activity = (ActivityWithResult)objectToValidate;
+            var activity = (ActivityWithResult)objectToValidate;
 
-            foreach (RuntimeArgument runtimeArgument in activity.RuntimeArguments)
+            foreach (var runtimeArgument in activity.RuntimeArguments)
             {
                 boundExpression = runtimeArgument.BoundArgument.Expression;
 
@@ -40,16 +40,16 @@ namespace Microsoft.VisualBasic.Activities
             }
         }
 
-        static bool FindLocationReferencesFromEnvironment(LocationReferenceEnvironment environment, string targetName)
+        private static bool FindLocationReferencesFromEnvironment(LocationReferenceEnvironment environment, string targetName)
         {
             LocationReference foundLocationReference = null;            
             LocationReferenceEnvironment currentEnvironment;
-            bool foundMultiple = false;
+            var foundMultiple = false;
 
             currentEnvironment = environment;            
             while (currentEnvironment != null)
             {
-                foreach (LocationReference reference in currentEnvironment.GetLocationReferences())
+                foreach (var reference in currentEnvironment.GetLocationReferences())
                 {
                     if (string.Equals(reference.Name, targetName, StringComparison.OrdinalIgnoreCase))
                     {

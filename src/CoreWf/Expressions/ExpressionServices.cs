@@ -29,7 +29,7 @@ namespace System.Activities.Expressions
             {
                 throw FxTrace.Exception.AsError(new ArgumentNullException(nameof(expression), SR.ExpressionRequiredForConversion));
             }
-            TryConvert<TResult>(expression.Body, true, out Activity<TResult> result);
+            TryConvert<TResult>(expression.Body, true, out var result);
             return result;
         }
 
@@ -50,14 +50,14 @@ namespace System.Activities.Expressions
             result = null;
             if (body is UnaryExpression unaryExpressionBody)
             {
-                Type operandType = unaryExpressionBody.Operand.Type;
-                Type resultType = typeof(TResult);
+                var operandType = unaryExpressionBody.Operand.Type;
+                var resultType = typeof(TResult);
                 return TryConvertUnaryExpression<TResult>(unaryExpressionBody, operandType, throwOnError, out result);
             }
             if (body is BinaryExpression binaryExpressionBody)
             {
-                Type leftType = binaryExpressionBody.Left.Type;
-                Type rightType = binaryExpressionBody.Right.Type;
+                var leftType = binaryExpressionBody.Left.Type;
+                var rightType = binaryExpressionBody.Right.Type;
                 if (binaryExpressionBody.NodeType == ExpressionType.ArrayIndex)
                 {
                     return TryConvertArrayItemValue<TResult>(binaryExpressionBody, leftType, rightType, throwOnError, out result);
@@ -66,14 +66,14 @@ namespace System.Activities.Expressions
             }
             if (body is MemberExpression memberExpressionBody)
             {
-                Type memberType = memberExpressionBody.Expression == null ? memberExpressionBody.Member.DeclaringType : memberExpressionBody.Expression.Type;
+                var memberType = memberExpressionBody.Expression == null ? memberExpressionBody.Member.DeclaringType : memberExpressionBody.Expression.Type;
                 return TryConvertMemberExpression<TResult>(memberExpressionBody, memberType, throwOnError, out result);
             }
             if (body is MethodCallExpression methodCallExpressionBody)
             {
-                MethodInfo calledMethod = methodCallExpressionBody.Method;
-                Type declaringType = calledMethod.DeclaringType;
-                ParameterInfo[] parameters = calledMethod.GetParameters();
+                var calledMethod = methodCallExpressionBody.Method;
+                var declaringType = calledMethod.DeclaringType;
+                var parameters = calledMethod.GetParameters();
                 if (TypeHelper.AreTypesCompatible(declaringType, typeof(Variable)) && calledMethod.Name == "Get" && parameters.Length == 1 && TypeHelper.AreTypesCompatible(parameters[0].ParameterType, typeof(ActivityContext)))
                 {
                     return TryConvertVariableValue<TResult>(methodCallExpressionBody, throwOnError, out result);
@@ -91,7 +91,7 @@ namespace System.Activities.Expressions
                 else if (TypeHelper.AreTypesCompatible(declaringType, typeof(ActivityContext)) && calledMethod.Name == "GetValue" && parameters.Length == 1 &&
                 (TypeHelper.AreTypesCompatible(parameters[0].ParameterType, typeof(Argument)) || TypeHelper.AreTypesCompatible(parameters[0].ParameterType, typeof(RuntimeArgument))))
                 {
-                    MemberExpression memberExpression = methodCallExpressionBody.Arguments[0] as MemberExpression;
+                    var memberExpression = methodCallExpressionBody.Arguments[0] as MemberExpression;
                     return TryConvertArgumentValue<TResult>(memberExpression, throwOnError, out result);
                 }
                 else if (TypeHelper.AreTypesCompatible(declaringType, typeof(ActivityContext)) && calledMethod.Name == "GetValue" && parameters.Length == 1 &&
@@ -141,7 +141,7 @@ namespace System.Activities.Expressions
                 throw FxTrace.Exception.AsError(new ArgumentNullException(nameof(expression), SR.ExpressionRequiredForConversion));
             }
 
-            TryConvertReference<TResult>(expression.Body, true, out Activity<Location<TResult>> result);
+            TryConvertReference<TResult>(expression.Body, true, out var result);
             return result;
         }
 
@@ -162,13 +162,13 @@ namespace System.Activities.Expressions
             result = null;
             if (body is MemberExpression memberExpressionBody)
             {
-                Type memberType = memberExpressionBody.Expression == null ? memberExpressionBody.Member.DeclaringType : memberExpressionBody.Expression.Type;
+                var memberType = memberExpressionBody.Expression == null ? memberExpressionBody.Member.DeclaringType : memberExpressionBody.Expression.Type;
                 return TryConvertReferenceMemberExpression<TResult>(memberExpressionBody, memberType, throwOnError, out result);
             }
             if (body is BinaryExpression binaryExpressionBody)
             {
-                Type leftType = binaryExpressionBody.Left.Type;
-                Type rightType = binaryExpressionBody.Right.Type;
+                var leftType = binaryExpressionBody.Left.Type;
+                var rightType = binaryExpressionBody.Right.Type;
                 if (binaryExpressionBody.NodeType == ExpressionType.ArrayIndex)
                 {
                     return TryConvertArrayItemReference<TResult>(binaryExpressionBody, leftType, rightType, throwOnError, out result);
@@ -176,8 +176,8 @@ namespace System.Activities.Expressions
             }
             if (body is MethodCallExpression methodCallExpressionBody)
             {
-                Type declaringType = methodCallExpressionBody.Method.DeclaringType;
-                MethodInfo calledMethod = methodCallExpressionBody.Method;
+                var declaringType = methodCallExpressionBody.Method.DeclaringType;
+                var calledMethod = methodCallExpressionBody.Method;
                 if (declaringType.IsArray && calledMethod.Name == "Get")
                 {
                     return TryConvertMultiDimensionalArrayItemReference<TResult>(methodCallExpressionBody, throwOnError, out result);
@@ -188,7 +188,7 @@ namespace System.Activities.Expressions
                     return TryConvertIndexerReference(methodCallExpressionBody, throwOnError, out result);
                 }
 
-                ParameterInfo[] parameters = calledMethod.GetParameters();
+                var parameters = calledMethod.GetParameters();
                 if (TypeHelper.AreTypesCompatible(declaringType, typeof(Variable)) && calledMethod.Name == "Get" && parameters.Length == 1 && TypeHelper.AreTypesCompatible(parameters[0].ParameterType, typeof(ActivityContext)))
                 {
                     return TryConvertVariableReference<TResult>(methodCallExpressionBody, throwOnError, out result);
@@ -235,9 +235,9 @@ namespace System.Activities.Expressions
                         return SR.InstanceMethodCallRequiresTargetObject;
                     }
                 }
-                MethodInfo specializedHandle = TryConvertIndexerReferenceHandle.MakeGenericMethod(methodCallExpressionBody.Object.Type, typeof(TResult));
-                object[] parameters = new object[] { methodCallExpressionBody, throwOnError, null };
-                string errorString = specializedHandle.Invoke(null, parameters) as string;
+                var specializedHandle = TryConvertIndexerReferenceHandle.MakeGenericMethod(methodCallExpressionBody.Object.Type, typeof(TResult));
+                var parameters = new object[] { methodCallExpressionBody, throwOnError, null };
+                var errorString = specializedHandle.Invoke(null, parameters) as string;
                 result = parameters[2] as Activity<Location<TResult>>;
                 return errorString;
             }
@@ -253,16 +253,16 @@ namespace System.Activities.Expressions
             Fx.Assert(methodCallExpressionBody.Object != null, "Indexer must have a target object");
             if (!typeof(TOperand).IsValueType)
             {
-                string operandError = TryConvert<TOperand>(methodCallExpressionBody.Object, throwOnError, out Activity<TOperand> operand);
+                var operandError = TryConvert<TOperand>(methodCallExpressionBody.Object, throwOnError, out var operand);
                 if (operandError != null)
                 {
                     return operandError;
                 }
-                IndexerReference<TOperand, TResult> indexerReference = new IndexerReference<TOperand, TResult>
+                var indexerReference = new IndexerReference<TOperand, TResult>
                 {
                     Operand = new InArgument<TOperand>(operand) { EvaluationOrder = 0 },
                 };
-                string argumentError = TryConvertArguments(methodCallExpressionBody.Arguments, indexerReference.Indices, methodCallExpressionBody.GetType(), 1, null, throwOnError);
+                var argumentError = TryConvertArguments(methodCallExpressionBody.Arguments, indexerReference.Indices, methodCallExpressionBody.GetType(), 1, null, throwOnError);
                 if (argumentError != null)
                 {
                     return argumentError;
@@ -272,16 +272,16 @@ namespace System.Activities.Expressions
             }
             else
             {
-                string operandError = TryConvertReference<TOperand>(methodCallExpressionBody.Object, throwOnError, out Activity<Location<TOperand>> operandReference);
+                var operandError = TryConvertReference<TOperand>(methodCallExpressionBody.Object, throwOnError, out var operandReference);
                 if (operandError != null)
                 {
                     return operandError;
                 }
-                ValueTypeIndexerReference<TOperand, TResult> indexerReference = new ValueTypeIndexerReference<TOperand, TResult>
+                var indexerReference = new ValueTypeIndexerReference<TOperand, TResult>
                 {
                     OperandLocation = new InOutArgument<TOperand>(operandReference) { EvaluationOrder = 0 },
                 };
-                string argumentError = TryConvertArguments(methodCallExpressionBody.Arguments, indexerReference.Indices, methodCallExpressionBody.GetType(), 1, null, throwOnError);
+                var argumentError = TryConvertArguments(methodCallExpressionBody.Arguments, indexerReference.Indices, methodCallExpressionBody.GetType(), 1, null, throwOnError);
                 if (argumentError != null)
                 {
                     return argumentError;
@@ -305,19 +305,19 @@ namespace System.Activities.Expressions
                     return SR.InstanceMethodCallRequiresTargetObject;
                 }
             }
-            string errorString = TryConvert<Array>(methodCallExpression.Object, throwOnError, out Activity<Array> operand);
+            var errorString = TryConvert<Array>(methodCallExpression.Object, throwOnError, out var operand);
             if (errorString != null)
             {
                 return errorString;
             }
 
-            MultidimensionalArrayItemReference<TResult> reference = new MultidimensionalArrayItemReference<TResult>
+            var reference = new MultidimensionalArrayItemReference<TResult>
             {
                 Array = new InArgument<Array>(operand) { EvaluationOrder = 0 },
             };
 
-            Collection<InArgument<int>> arguments = reference.Indices;
-            string argumentError = TryConvertArguments(methodCallExpression.Arguments, reference.Indices, methodCallExpression.GetType(), 1, null, throwOnError);
+            var arguments = reference.Indices;
+            var argumentError = TryConvertArguments(methodCallExpression.Arguments, reference.Indices, methodCallExpression.GetType(), 1, null, throwOnError);
             if (argumentError != null)
             {
                 return argumentError;
@@ -344,13 +344,13 @@ namespace System.Activities.Expressions
 
             if (methodCallExpression.Object is MemberExpression)
             {
-                MemberExpression member = methodCallExpression.Object as MemberExpression;
+                var member = methodCallExpression.Object as MemberExpression;
                 if (member.Expression is ConstantExpression)
                 {
-                    ConstantExpression memberExpression = member.Expression as ConstantExpression;
+                    var memberExpression = member.Expression as ConstantExpression;
                     if (member.Member is FieldInfo)
                     {
-                        FieldInfo field = member.Member as FieldInfo;
+                        var field = member.Member as FieldInfo;
                         variableObject = field.GetValue(memberExpression.Value) as Variable;
                         Fx.Assert(variableObject != null, "Linq generated expression tree should be correct");
                         result = new VariableReference<TResult> { Variable = variableObject };
@@ -387,8 +387,8 @@ namespace System.Activities.Expressions
             // The reason is that "Program.static_X = new Variable<string> { Default = "World" }" happens after conversion.
             try
             {
-                Expression<Func<Variable>> funcExpression = Expression.Lambda<Func<Variable>>(methodCallExpression.Object);
-                Func<Variable> func = funcExpression.Compile();
+                var funcExpression = Expression.Lambda<Func<Variable>>(methodCallExpression.Object);
+                var func = funcExpression.Compile();
                 variableObject = func();
             }
             catch (Exception e)
@@ -452,13 +452,13 @@ namespace System.Activities.Expressions
                 }
             }
 
-            string arrayError = TryConvert<TResult[]>(binaryExpression.Left, throwOnError, out Activity<TResult[]> array);
+            var arrayError = TryConvert<TResult[]>(binaryExpression.Left, throwOnError, out var array);
             if (arrayError != null)
             {
                 return arrayError;
             }
 
-            string indexError = TryConvert<int>(binaryExpression.Right, throwOnError, out Activity<int> index);
+            var indexError = TryConvert<int>(binaryExpression.Right, throwOnError, out var index);
             if (indexError != null)
             {
                 return indexError;
@@ -489,13 +489,13 @@ namespace System.Activities.Expressions
 
             if (methodCallExpression.Object is MemberExpression)
             {
-                MemberExpression member = methodCallExpression.Object as MemberExpression;
+                var member = methodCallExpression.Object as MemberExpression;
                 if (member.Expression is ConstantExpression)
                 {
-                    ConstantExpression memberExpression = member.Expression as ConstantExpression;
+                    var memberExpression = member.Expression as ConstantExpression;
                     if (member.Member is FieldInfo)
                     {
-                        FieldInfo field = member.Member as FieldInfo;
+                        var field = member.Member as FieldInfo;
                         variableObject = field.GetValue(memberExpression.Value) as Variable;
                         result = new VariableValue<TResult> { Variable = variableObject };
                         return null;
@@ -527,8 +527,8 @@ namespace System.Activities.Expressions
 
             try
             {
-                Expression<Func<Variable>> funcExpression = Expression.Lambda<Func<Variable>>(methodCallExpression.Object);
-                Func<Variable> func = funcExpression.Compile();
+                var funcExpression = Expression.Lambda<Func<Variable>>(methodCallExpression.Object);
+                var func = funcExpression.Compile();
                 variableObject = func();
             }
             catch (Exception e)
@@ -582,8 +582,8 @@ namespace System.Activities.Expressions
 
             try
             {
-                Expression<Func<DelegateArgument>> funcExpression = Expression.Lambda<Func<DelegateArgument>>(methodCallExpression.Object);
-                Func<DelegateArgument> func = funcExpression.Compile();
+                var funcExpression = Expression.Lambda<Func<DelegateArgument>>(methodCallExpression.Object);
+                var func = funcExpression.Compile();
                 delegateArgument = func();
             }
             catch (Exception e)
@@ -637,8 +637,8 @@ namespace System.Activities.Expressions
 
             try
             {
-                Expression<Func<DelegateArgument>> funcExpression = Expression.Lambda<Func<DelegateArgument>>(methodCallExpression.Object);
-                Func<DelegateArgument> func = funcExpression.Compile();
+                var funcExpression = Expression.Lambda<Func<DelegateArgument>>(methodCallExpression.Object);
+                var func = funcExpression.Compile();
                 delegateArgument = func();
             }
             catch (Exception e)
@@ -669,8 +669,8 @@ namespace System.Activities.Expressions
                 RuntimeArgument ra = null;
                 try
                 {
-                    Expression<Func<RuntimeArgument>> expr = Expression.Lambda<Func<RuntimeArgument>>(memberExpression, null);
-                    Func<RuntimeArgument> func = expr.Compile();
+                    var expr = Expression.Lambda<Func<RuntimeArgument>>(memberExpression, null);
+                    var func = expr.Compile();
                     ra = func();
                 }
                 catch (Exception e)
@@ -709,7 +709,7 @@ namespace System.Activities.Expressions
                 //Assumption: Arguments must be properties of Activity object. Otherwise, it cannot be found by runtime via ArgumentValue.
                 if (memberExpression != null && memberExpression.Member is PropertyInfo)
                 {
-                    PropertyInfo property = memberExpression.Member as PropertyInfo;
+                    var property = memberExpression.Member as PropertyInfo;
                     result = new ArgumentValue<TResult> { ArgumentName = property.Name };
                     return null;
                 }
@@ -730,10 +730,10 @@ namespace System.Activities.Expressions
             //Assumption: Arguments must be properties of Activity object. Otherwise, it cannot be found by runtime via ArgumentReference.
             if (methodCallExpression.Object is MemberExpression)
             {
-                MemberExpression member = methodCallExpression.Object as MemberExpression;
+                var member = methodCallExpression.Object as MemberExpression;
                 if (member.Member is PropertyInfo)
                 {
-                    PropertyInfo property = member.Member as PropertyInfo;
+                    var property = member.Member as PropertyInfo;
                     result = new ArgumentReference<TResult> { ArgumentName = property.Name };
                     return null;
                 }
@@ -752,9 +752,9 @@ namespace System.Activities.Expressions
         {
             try
             {
-                MethodInfo specializedHandle = TryConvertBinaryExpressionHandle.MakeGenericMethod(leftType, rightType, typeof(TResult));
-                object[] parameters = new object[] { binaryExpressionBody, throwOnError, null };
-                string errorString = specializedHandle.Invoke(null, parameters) as string;
+                var specializedHandle = TryConvertBinaryExpressionHandle.MakeGenericMethod(leftType, rightType, typeof(TResult));
+                var parameters = new object[] { binaryExpressionBody, throwOnError, null };
+                var errorString = specializedHandle.Invoke(null, parameters) as string;
                 result = parameters[2] as Activity<TResult>;
                 return errorString;
             }
@@ -804,13 +804,13 @@ namespace System.Activities.Expressions
                 }
             }
 
-            string arrayError = TryConvert<TResult[]>(binaryExpression.Left, throwOnError, out Activity<TResult[]> array);
+            var arrayError = TryConvert<TResult[]>(binaryExpression.Left, throwOnError, out var array);
             if (arrayError != null)
             {
                 return arrayError;
             }
 
-            string indexError = TryConvert<int>(binaryExpression.Right, throwOnError, out Activity<int> index);
+            var indexError = TryConvert<int>(binaryExpression.Right, throwOnError, out var index);
             if (indexError != null)
             {
                 return indexError;
@@ -828,12 +828,12 @@ namespace System.Activities.Expressions
         {
             result = null;
 
-            string leftError = TryConvert<TLeft>(binaryExpressionBody.Left, throwOnError, out Activity<TLeft> left);
+            var leftError = TryConvert<TLeft>(binaryExpressionBody.Left, throwOnError, out var left);
             if (leftError != null)
             {
                 return leftError;
             }
-            string rightError = TryConvert<TRight>(binaryExpressionBody.Right, throwOnError, out Activity<TRight> right);
+            var rightError = TryConvert<TRight>(binaryExpressionBody.Right, throwOnError, out var right);
             if (rightError != null)
             {
                 return rightError;
@@ -844,8 +844,8 @@ namespace System.Activities.Expressions
                 return TryConvertOverloadingBinaryOperator<TLeft, TRight, TResult>(binaryExpressionBody, left, right, throwOnError, out result);
             }
 
-            InArgument<TLeft> leftArgument = new InArgument<TLeft>(left) { EvaluationOrder = 0 };
-            InArgument<TRight> rightArgument = new InArgument<TRight>(right) { EvaluationOrder = 1 };
+            var leftArgument = new InArgument<TLeft>(left) { EvaluationOrder = 0 };
+            var rightArgument = new InArgument<TRight>(right) { EvaluationOrder = 1 };
 
             switch (binaryExpressionBody.NodeType)
             {
@@ -932,9 +932,9 @@ namespace System.Activities.Expressions
         {
             try
             {
-                MethodInfo specializedHandle = TryConvertUnaryExpressionHandle.MakeGenericMethod(operandType, typeof(TResult));
-                object[] parameters = new object[] { unaryExpressionBody, throwOnError, null };
-                string errorString = specializedHandle.Invoke(null, parameters) as string;
+                var specializedHandle = TryConvertUnaryExpressionHandle.MakeGenericMethod(operandType, typeof(TResult));
+                var parameters = new object[] { unaryExpressionBody, throwOnError, null };
+                var errorString = specializedHandle.Invoke(null, parameters) as string;
                 result = parameters[2] as Activity<TResult>;
                 return errorString;
             }
@@ -948,7 +948,7 @@ namespace System.Activities.Expressions
         {
             result = null;
 
-            string operandError = TryConvert<TOperand>(unaryExpressionBody.Operand, throwOnError, out Activity<TOperand> operand);
+            var operandError = TryConvert<TOperand>(unaryExpressionBody.Operand, throwOnError, out var operand);
             if (operandError != null)
             {
                 return operandError;
@@ -991,9 +991,9 @@ namespace System.Activities.Expressions
         {
             try
             {
-                MethodInfo specializedHandle = TryConvertMemberExpressionHandle.MakeGenericMethod(operandType, typeof(TResult));
-                object[] parameters = new object[] { memberExpressionBody, throwOnError, null };
-                string errorString = specializedHandle.Invoke(null, parameters) as string;
+                var specializedHandle = TryConvertMemberExpressionHandle.MakeGenericMethod(operandType, typeof(TResult));
+                var parameters = new object[] { memberExpressionBody, throwOnError, null };
+                var errorString = specializedHandle.Invoke(null, parameters) as string;
                 result = parameters[2] as Activity<TResult>;
                 return errorString;
             }
@@ -1010,7 +1010,7 @@ namespace System.Activities.Expressions
             if (memberExpressionBody.Expression != null)
             {
                 // Static property might not have any expressions.
-                string operandError = TryConvert<TOperand>(memberExpressionBody.Expression, throwOnError, out operand);
+                var operandError = TryConvert<TOperand>(memberExpressionBody.Expression, throwOnError, out operand);
                 if (operandError != null)
                 {
                     return operandError;
@@ -1054,9 +1054,9 @@ namespace System.Activities.Expressions
         {
             try
             {
-                MethodInfo specializedHandle = TryConvertReferenceMemberExpressionHandle.MakeGenericMethod(operandType, typeof(TResult));
-                object[] parameters = new object[] { memberExpressionBody, throwOnError, null };
-                string errorString = specializedHandle.Invoke(null, parameters) as string;
+                var specializedHandle = TryConvertReferenceMemberExpressionHandle.MakeGenericMethod(operandType, typeof(TResult));
+                var parameters = new object[] { memberExpressionBody, throwOnError, null };
+                var errorString = specializedHandle.Invoke(null, parameters) as string;
                 result = parameters[2] as Activity<Location<TResult>>;
                 return errorString;
             }
@@ -1071,13 +1071,13 @@ namespace System.Activities.Expressions
             result = null;
             Activity<TOperand> operand = null;
             Activity<Location<TOperand>> operandReference = null;
-            bool isValueType = typeof(TOperand).IsValueType;
+            var isValueType = typeof(TOperand).IsValueType;
             if (memberExpressionBody.Expression != null)
             {
                 // Static property might not have any expressions.
                 if (!isValueType)
                 {
-                    string operandError = TryConvert<TOperand>(memberExpressionBody.Expression, throwOnError, out operand);
+                    var operandError = TryConvert<TOperand>(memberExpressionBody.Expression, throwOnError, out operand);
                     if (operandError != null)
                     {
                         return operandError;
@@ -1085,7 +1085,7 @@ namespace System.Activities.Expressions
                 }
                 else
                 {
-                    string operandError = TryConvertReference<TOperand>(memberExpressionBody.Expression, throwOnError, out operandReference);
+                    var operandError = TryConvertReference<TOperand>(memberExpressionBody.Expression, throwOnError, out operandReference);
                     if (operandError != null)
                     {
                         return operandError;
@@ -1207,7 +1207,7 @@ namespace System.Activities.Expressions
         private static string TryConvertMethodCallExpression<TResult>(MethodCallExpression methodCallExpression, bool throwOnError, out Activity<TResult> result)
         {
             result = null;
-            MethodInfo methodInfo = methodCallExpression.Method;
+            var methodInfo = methodCallExpression.Method;
 
             if (methodInfo == null)
             {
@@ -1231,12 +1231,12 @@ namespace System.Activities.Expressions
                     return SR.MethodNameRequired(methodInfo.GetType().Name);
                 }
             }
-            InvokeMethod<TResult> invokeMethod = new InvokeMethod<TResult>
+            var invokeMethod = new InvokeMethod<TResult>
             {
                 MethodName = methodInfo.Name,
             };
 
-            ParameterInfo[] parameterInfoArray = methodInfo.GetParameters();
+            var parameterInfoArray = methodInfo.GetParameters();
             if (methodCallExpression.Arguments.Count != parameterInfoArray.Length)//no optional argument call for LINQ expression
             {
                 if (throwOnError)
@@ -1249,13 +1249,13 @@ namespace System.Activities.Expressions
                 }
             }
 
-            string error = TryConvertArguments(methodCallExpression.Arguments, invokeMethod.Parameters, methodCallExpression.GetType(), 1, parameterInfoArray, throwOnError);
+            var error = TryConvertArguments(methodCallExpression.Arguments, invokeMethod.Parameters, methodCallExpression.GetType(), 1, parameterInfoArray, throwOnError);
             if (error != null)
             {
                 return error;
             }
 
-            foreach (Type type in methodInfo.GetGenericArguments())
+            foreach (var type in methodInfo.GetGenericArguments())
             {
                 if (type == null)
                 {
@@ -1287,13 +1287,13 @@ namespace System.Activities.Expressions
                         return SR.InstanceMethodCallRequiresTargetObject;
                     }
                 }
-                object[] parameters = new object[] { methodCallExpression.Object, false, throwOnError, null };
+                var parameters = new object[] { methodCallExpression.Object, false, throwOnError, null };
                 error = TryConvertArgumentExpressionHandle.MakeGenericMethod(methodCallExpression.Object.Type).Invoke(null, parameters) as string;
                 if (error != null)
                 {
                     return error;
                 }
-                InArgument argument = (InArgument)parameters[3];
+                var argument = (InArgument)parameters[3];
                 argument.EvaluationOrder = 0;
                 invokeMethod.TargetObject = argument;
             }
@@ -1315,16 +1315,16 @@ namespace System.Activities.Expressions
                     return SR.InvalidExpressionProperty(invocationExpression.GetType().Name);
                 }
             }
-            InvokeMethod<TResult> invokeMethod = new InvokeMethod<TResult>
+            var invokeMethod = new InvokeMethod<TResult>
             {
                 MethodName = "Invoke",
             };
-            object[] parameters = new object[] { invocationExpression.Expression, false, throwOnError, null };
+            var parameters = new object[] { invocationExpression.Expression, false, throwOnError, null };
             if (TryConvertArgumentExpressionHandle.MakeGenericMethod(invocationExpression.Expression.Type).Invoke(null, parameters) is string error)
             {
                 return error;
             }
-            InArgument argument = (InArgument)parameters[3];
+            var argument = (InArgument)parameters[3];
             argument.EvaluationOrder = 0;
             invokeMethod.TargetObject = argument;
 
@@ -1348,7 +1348,7 @@ namespace System.Activities.Expressions
 
             if (isByRef)
             {
-                error = TryConvertReference<TArgument>(expression, throwOnError, out Activity<Location<TArgument>> argument);
+                error = TryConvertReference<TArgument>(expression, throwOnError, out var argument);
                 if (error == null)
                 {
                     result = new InOutArgument<TArgument>
@@ -1359,7 +1359,7 @@ namespace System.Activities.Expressions
             }
             else
             {
-                error = TryConvert<TArgument>(expression, throwOnError, out Activity<TArgument> argument);
+                error = TryConvert<TArgument>(expression, throwOnError, out var argument);
                 if (error == null)
                 {
                     result = new InArgument<TArgument>
@@ -1374,7 +1374,7 @@ namespace System.Activities.Expressions
         private static string TryConvertNewExpression<TResult>(NewExpression newExpression, bool throwOnError, out Activity<TResult> result)
         {
             result = null;
-            New<TResult> newActivity = new New<TResult>();
+            var newActivity = new New<TResult>();
             ParameterInfo[] parameterInfoArray = null;
             if (newExpression.Constructor != null)
             {
@@ -1392,7 +1392,7 @@ namespace System.Activities.Expressions
                 }
             }
 
-            string error = TryConvertArguments(newExpression.Arguments, newActivity.Arguments, newExpression.GetType(), 0, parameterInfoArray, throwOnError);
+            var error = TryConvertArguments(newExpression.Arguments, newActivity.Arguments, newExpression.GetType(), 0, parameterInfoArray, throwOnError);
             if (error != null)
             {
                 return error;
@@ -1404,8 +1404,8 @@ namespace System.Activities.Expressions
         private static string TryConvertNewArrayExpression<TResult>(NewArrayExpression newArrayExpression, bool throwOnError, out Activity<TResult> result)
         {
             result = null;
-            NewArray<TResult> newArrayActivity = new NewArray<TResult>();
-            string error = TryConvertArguments(newArrayExpression.Expressions, newArrayActivity.Bounds, newArrayExpression.GetType(), 0, null, throwOnError);
+            var newArrayActivity = new NewArray<TResult>();
+            var error = TryConvertArguments(newArrayExpression.Expressions, newArrayActivity.Bounds, newArrayExpression.GetType(), 0, null, throwOnError);
             if (error != null)
             {
                 return error;
@@ -1418,13 +1418,13 @@ namespace System.Activities.Expressions
         private static string TryConvertArguments(ReadOnlyCollection<Expression> source, IList target, Type expressionType, int baseEvaluationOrder, ParameterInfo[] parameterInfoArray, bool throwOnError)
         {
             object[] parameters;
-            for (int i = 0; i < source.Count; i++)
+            for (var i = 0; i < source.Count; i++)
             {
-                bool isByRef = false;
-                Expression expression = source[i];
+                var isByRef = false;
+                var expression = source[i];
                 if (parameterInfoArray != null)
                 {
-                    ParameterInfo parameterInfo = parameterInfoArray[i];
+                    var parameterInfo = parameterInfoArray[i];
 
                     if (parameterInfo == null || parameterInfo.ParameterType == null)
                     {
@@ -1444,7 +1444,7 @@ namespace System.Activities.Expressions
                 {
                     return error;
                 }
-                Argument argument = (Argument)parameters[3];
+                var argument = (Argument)parameters[3];
                 argument.EvaluationOrder = i + baseEvaluationOrder;
                 target.Add(argument);
             }
@@ -1455,7 +1455,7 @@ namespace System.Activities.Expressions
         {
             result = null;
 
-            Expression expression = methodCallExpression.Arguments[0];
+            var expression = methodCallExpression.Arguments[0];
             if (expression.NodeType != ExpressionType.Constant)
             {
                 if (throwOnError)
@@ -1469,12 +1469,12 @@ namespace System.Activities.Expressions
                 }
             }
 
-            object value = ((ConstantExpression)expression).Value;
-            Type valueType = value.GetType();
+            var value = ((ConstantExpression)expression).Value;
+            var valueType = value.GetType();
 
             if (typeof(RuntimeArgument).IsAssignableFrom(valueType))
             {
-                RuntimeArgument runtimeArgument = (RuntimeArgument)value;
+                var runtimeArgument = (RuntimeArgument)value;
                 result = new ArgumentValue<TResult>
                 {
                     ArgumentName = runtimeArgument.Name,
@@ -1482,12 +1482,12 @@ namespace System.Activities.Expressions
             }
             else if (typeof(Variable).IsAssignableFrom(valueType))
             {
-                Variable variable = (Variable)value;
+                var variable = (Variable)value;
                 result = new VariableValue<TResult> { Variable = variable };
             }
             else if (typeof(DelegateArgument).IsAssignableFrom(valueType))
             {
-                DelegateArgument delegateArgument = (DelegateArgument)value;
+                var delegateArgument = (DelegateArgument)value;
                 result = new DelegateArgumentValue<TResult>
                 {
                     DelegateArgument = delegateArgument
@@ -1513,7 +1513,7 @@ namespace System.Activities.Expressions
         {
             result = null;
 
-            Expression expression = methodCallExpression.Arguments[0];
+            var expression = methodCallExpression.Arguments[0];
             if (expression.NodeType != ExpressionType.Constant)
             {
                 if (throwOnError)
@@ -1527,12 +1527,12 @@ namespace System.Activities.Expressions
                 }
             }
 
-            object value = ((ConstantExpression)expression).Value;
-            Type valueType = value.GetType();
+            var value = ((ConstantExpression)expression).Value;
+            var valueType = value.GetType();
 
             if (typeof(RuntimeArgument).IsAssignableFrom(valueType))
             {
-                RuntimeArgument runtimeArgument = (RuntimeArgument)value;
+                var runtimeArgument = (RuntimeArgument)value;
                 result = new ArgumentReference<TResult>
                 {
                     ArgumentName = runtimeArgument.Name,
@@ -1540,12 +1540,12 @@ namespace System.Activities.Expressions
             }
             else if (typeof(Variable).IsAssignableFrom(valueType))
             {
-                Variable variable = (Variable)value;
+                var variable = (Variable)value;
                 result = new VariableReference<TResult> { Variable = variable };
             }
             else if (typeof(DelegateArgument).IsAssignableFrom(valueType))
             {
-                DelegateArgument delegateArgument = (DelegateArgument)value;
+                var delegateArgument = (DelegateArgument)value;
                 result = new DelegateArgumentReference<TResult>
                 {
                     DelegateArgument = delegateArgument

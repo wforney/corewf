@@ -15,7 +15,7 @@ namespace System.Activities.XamlIntegration
 
         public override object Load(XamlReader xamlReader, IServiceProvider context)
         {
-            FuncFactory factory = FuncFactory.CreateFactory(xamlReader, context);
+            var factory = FuncFactory.CreateFactory(xamlReader, context);
             if (context.GetService(typeof(IXamlNamespaceResolver)) is IXamlNamespaceResolver nsResolver)
             {
                 factory.ParentNamespaces = nsResolver.GetNamespacePrefixes().ToList();
@@ -25,12 +25,12 @@ namespace System.Activities.XamlIntegration
 
         public override XamlReader Save(object value, IServiceProvider serviceProvider)
         {
-            FuncFactory factory = GetFactory(value as Delegate);
+            var factory = GetFactory(value as Delegate);
             if (factory == null)
             {
                 throw FxTrace.Exception.AsError(new InvalidOperationException(SR.SavingFuncToXamlNotSupported));
             }
-            XamlReader result = factory.Nodes.GetReader();
+            var result = factory.Nodes.GetReader();
             if (factory.ParentNamespaces != null)
             {
                 result = InsertNamespaces(result, factory.ParentNamespaces);
@@ -49,14 +49,14 @@ namespace System.Activities.XamlIntegration
         // This can potentially cause namespace bloat, but the alternative is emitting unloadable XAML.
         private static XamlReader InsertNamespaces(XamlReader reader, IEnumerable<NamespaceDeclaration> parentNamespaces)
         {
-            XamlNodeQueue namespaceNodes = new XamlNodeQueue(reader.SchemaContext);
-            HashSet<string> childPrefixes = new HashSet<string>();
+            var namespaceNodes = new XamlNodeQueue(reader.SchemaContext);
+            var childPrefixes = new HashSet<string>();
             while (reader.Read() && reader.NodeType == XamlNodeType.NamespaceDeclaration)
             {
                 childPrefixes.Add(reader.Namespace.Prefix);
                 namespaceNodes.Writer.WriteNode(reader);
             }
-            foreach (NamespaceDeclaration parentNamespace in parentNamespaces)
+            foreach (var parentNamespace in parentNamespaces)
             {
                 if (!childPrefixes.Contains(parentNamespace.Prefix) &&
                     !IsXmlNamespace(parentNamespace))

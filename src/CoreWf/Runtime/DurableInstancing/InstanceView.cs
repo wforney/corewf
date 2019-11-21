@@ -77,7 +77,7 @@ namespace System.Activities.Runtime.DurableInstancing
             if (source.InstanceKeys.Count > 0)
             {
                 keys = new Dictionary<Guid, InstanceKeyView>(source.InstanceKeys.Count);
-                foreach (KeyValuePair<Guid, InstanceKeyView> key in source.InstanceKeys)
+                foreach (var key in source.InstanceKeys)
                 {
                     keys.Add(key.Key, key.Value.Clone());
                 }
@@ -219,7 +219,7 @@ namespace System.Activities.Runtime.DurableInstancing
                 else
                 {
                     _queryResultsBackingCollection = new Collection<InstanceStoreQueryResult>();
-                    foreach (InstanceStoreQueryResult queryResult in value)
+                    foreach (var queryResult in value)
                     {
                         _queryResultsBackingCollection.Add(queryResult);
                     }
@@ -306,7 +306,7 @@ namespace System.Activities.Runtime.DurableInstancing
             Fx.Assert(IsBoundToInstanceOwner, "Must be bound to owner, checked in StartBindLock.");
             Fx.Assert(IsBoundToInstance, "Must be bound to instance, checked in StartBindLock.");
 
-            long result = Interlocked.CompareExchange(ref _instanceVersion, instanceVersion, -instanceVersion - 2);
+            var result = Interlocked.CompareExchange(ref _instanceVersion, instanceVersion, -instanceVersion - 2);
             Fx.AssertAndThrow(result == -instanceVersion - 2, "FinishBindLock called with mismatched instance version.");
         }
 

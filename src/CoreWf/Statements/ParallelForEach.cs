@@ -55,7 +55,7 @@ using System.Activities.DynamicUpdate;
 
         protected override void CacheMetadata(NativeActivityMetadata metadata)
         {
-            RuntimeArgument valuesArgument = new RuntimeArgument("Values", typeof(IEnumerable<T>), ArgumentDirection.In, true);
+            var valuesArgument = new RuntimeArgument("Values", typeof(IEnumerable<T>), ArgumentDirection.In, true);
             metadata.Bind(this.Values, valuesArgument);
             metadata.SetArgumentsCollection(new Collection<RuntimeArgument> { valuesArgument });
 
@@ -81,15 +81,15 @@ using System.Activities.DynamicUpdate;
 
         protected override void Execute(NativeActivityContext context)
         {
-            IEnumerable<T> values = this.Values.Get(context);
+            var values = this.Values.Get(context);
             if (values == null)
             {
                 throw FxTrace.Exception.AsError(new InvalidOperationException(SR.ParallelForEachRequiresNonNullValues(this.DisplayName)));
             }
 
-            IEnumerator<T> valueEnumerator = values.GetEnumerator();
+            var valueEnumerator = values.GetEnumerator();
 
-            CompletionCallback onBodyComplete = new CompletionCallback(OnBodyComplete);
+            var onBodyComplete = new CompletionCallback(OnBodyComplete);
             while (valueEnumerator.MoveNext())
             {
                 if (this.Body != null)

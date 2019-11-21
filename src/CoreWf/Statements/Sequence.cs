@@ -99,7 +99,7 @@ namespace System.Activities.Statements
         {
             if (this.activities != null && this.Activities.Count > 0)
             {
-                Activity nextChild = this.Activities[0];
+                var nextChild = this.Activities[0];
 
                 context.ScheduleActivity(nextChild, this.onChildComplete);
             }
@@ -107,21 +107,21 @@ namespace System.Activities.Statements
 
         private void InternalExecute(NativeActivityContext context, ActivityInstance completedInstance)
         {
-            int completedInstanceIndex = this.lastIndexHint.Get(context);
+            var completedInstanceIndex = this.lastIndexHint.Get(context);
 
             if (completedInstanceIndex >= this.Activities.Count || this.Activities[completedInstanceIndex] != completedInstance.Activity)
             {
                 completedInstanceIndex = this.Activities.IndexOf(completedInstance.Activity);
             }
 
-            int nextChildIndex = completedInstanceIndex + 1;
+            var nextChildIndex = completedInstanceIndex + 1;
 
             if (nextChildIndex == this.Activities.Count)
             {
                 return;
             }
 
-            Activity nextChild = this.Activities[nextChildIndex];
+            var nextChild = this.Activities[nextChildIndex];
 
             context.ScheduleActivity(nextChild, this.onChildComplete);
 

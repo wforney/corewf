@@ -137,7 +137,7 @@ namespace System.Activities.Runtime
         public static Exception AssertAndFailFast(string description)
         {
             Fx.Assert(description);
-            string failFastMessage = SR.FailFastMessage(description);
+            var failFastMessage = SR.FailFastMessage(description);
 
             // The catch is here to force the finally to run, as finallys don't run until the stack walk gets to a catch.  
             // The catch makes sure that the finally will run before the stack-walk leaves the frame, but the code inside is impossible to reach.
@@ -184,8 +184,8 @@ namespace System.Activities.Runtime
                     // AggregateExceptions have a collection of inner exceptions, which may themselves be other
                     // wrapping exceptions (including nested AggregateExceptions).  Recursively walk this
                     // hierarchy.  The (singular) InnerException is included in the collection.
-                    ReadOnlyCollection<Exception> innerExceptions = ((AggregateException)exception).InnerExceptions;
-                    foreach (Exception innerException in innerExceptions)
+                    var innerExceptions = ((AggregateException)exception).InnerExceptions;
+                    foreach (var innerException in innerExceptions)
                     {
                         if (IsFatal(innerException))
                         {
@@ -221,12 +221,12 @@ namespace System.Activities.Runtime
 #if DEBUG
                 if (!Fx.s_breakOnExceptionTypesRetrieved)
                 {
-                    if (TryGetDebugSwitch(Fx.BreakOnExceptionTypesName, out object value))
+                    if (TryGetDebugSwitch(Fx.BreakOnExceptionTypesName, out var value))
                     {
                         if (value is string[] typeNames && typeNames.Length > 0)
                         {
-                            List<Type> types = new List<Type>(typeNames.Length);
-                            for (int i = 0; i < typeNames.Length; i++)
+                            var types = new List<Type>(typeNames.Length);
+                            for (var i = 0; i < typeNames.Length; i++)
                             {
                                 types.Add(Type.GetType(typeNames[i], false));
                             }
@@ -276,8 +276,8 @@ namespace System.Activities.Runtime
         //    Justification = "These are the core methods that should be used for all other Guid(string) calls.")]
         public static Guid CreateGuid(string guidString)
         {
-            bool success = false;
-            Guid result = Guid.Empty;
+            var success = false;
+            var result = Guid.Empty;
 
             try
             {
@@ -299,7 +299,7 @@ namespace System.Activities.Runtime
         //    Justification = "These are the core methods that should be used for all other Guid(string) calls.")]
         public static bool TryCreateGuid(string guidString, out Guid result)
         {
-            bool success = false;
+            var success = false;
             result = Guid.Empty;
 
             try
@@ -388,7 +388,7 @@ namespace System.Activities.Runtime
 
             try
             {
-                ExceptionHandler handler = Fx.AsynchronousThreadExceptionHandler;
+                var handler = Fx.AsynchronousThreadExceptionHandler;
                 return handler == null ? false : handler.HandleException(exception);
             }
             catch (Exception secondException)

@@ -95,14 +95,14 @@ using System.Activities.DynamicUpdate;
                 this.branchBodies.Clear();
             }
 
-            foreach (PickBranch branch in this.Branches)
+            foreach (var branch in this.Branches)
             {
                 if (branch.Trigger == null)
                 {
                     metadata.AddValidationError(new ValidationError(SR.PickBranchRequiresTrigger(branch.DisplayName), false, null, branch));
                 }
                 
-                PickBranchBody pickBranchBody = new PickBranchBody
+                var pickBranchBody = new PickBranchBody
                 {
                     Action = branch.Action,
                     DisplayName = branch.DisplayName,
@@ -125,17 +125,17 @@ using System.Activities.DynamicUpdate;
                  return;
             }
 
-            PickState pickState = new PickState();
+            var pickState = new PickState();
             this.pickStateVariable.Set(context, pickState);
 
             pickState.TriggerCompletionBookmark = context.CreateBookmark(new BookmarkCallback(OnTriggerComplete));
 
             context.Properties.Add(pickStateProperty, pickState);
 
-            CompletionCallback onBranchCompleteCallback = new CompletionCallback(OnBranchComplete);
+            var onBranchCompleteCallback = new CompletionCallback(OnBranchComplete);
 
             //schedule every branch to only run trigger
-            for (int i = this.branchBodies.Count - 1; i >= 0; i--)
+            for (var i = this.branchBodies.Count - 1; i >= 0; i--)
             {
                 context.ScheduleActivity(this.branchBodies[i], onBranchCompleteCallback);
             }
@@ -148,8 +148,8 @@ using System.Activities.DynamicUpdate;
 
         private void OnBranchComplete(NativeActivityContext context, ActivityInstance completedInstance)
         {
-            PickState pickState = this.pickStateVariable.Get(context);
-            ReadOnlyCollection<ActivityInstance> executingChildren = context.GetChildren();
+            var pickState = this.pickStateVariable.Get(context);
+            var executingChildren = context.GetChildren();
 
             switch (completedInstance.State)
             {
@@ -180,17 +180,17 @@ using System.Activities.DynamicUpdate;
 
         private void OnTriggerComplete(NativeActivityContext context, Bookmark bookmark, object state)
         {
-            PickState pickState = this.pickStateVariable.Get(context);
+            var pickState = this.pickStateVariable.Get(context);
 
-            string winningBranch = (string)state;
+            var winningBranch = (string)state;
 
-            ReadOnlyCollection<ActivityInstance> children = context.GetChildren();
+            var children = context.GetChildren();
 
-            bool resumeAction = true;
+            var resumeAction = true;
 
-            for (int i = 0; i < children.Count; i++)
+            for (var i = 0; i < children.Count; i++)
             {
-                ActivityInstance child = children[i];
+                var child = children[i];
 
                 if (child.Id != winningBranch)
                 {
@@ -311,7 +311,7 @@ using System.Activities.DynamicUpdate;
 
             private void OnTriggerCompleted(NativeActivityContext context, ActivityInstance completedInstance)
             {
-                PickState pickState = (PickState)context.Properties.Find(pickStateProperty);
+                var pickState = (PickState)context.Properties.Find(pickStateProperty);
 
                 if (completedInstance.State == ActivityInstanceState.Closed && pickState.TriggerCompletionBookmark != null)
                 {

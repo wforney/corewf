@@ -316,7 +316,7 @@ namespace System.Activities
                 throw FxTrace.Exception.AsError(new InvalidOperationException(SR.UnInitializedRuntimeTransactionHandle));
             }
 
-            RuntimeTransactionHandle handle = (RuntimeTransactionHandle)context.FindProperty(typeof(RuntimeTransactionHandle).FullName);
+            var handle = (RuntimeTransactionHandle)context.FindProperty(typeof(RuntimeTransactionHandle).FullName);
             if (handle != null)
             {
                 if (handle.SuppressTransaction)

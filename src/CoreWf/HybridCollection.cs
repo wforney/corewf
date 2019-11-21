@@ -127,7 +127,7 @@ namespace System.Activities
             }
             else
             {
-                return new ReadOnlyCollection<T>(new T[0]);
+                return new ReadOnlyCollection<T>(Array.Empty<T>());
             }
         }
 
@@ -156,7 +156,7 @@ namespace System.Activities
             else
             {
                 Fx.Assert(this.multipleItems != null && this.multipleItems.Contains(item), "The given item should be in this list. Something is wrong in our housekeeping.");
-                int position = (searchingFromEnd) ? this.multipleItems.LastIndexOf(item) : this.multipleItems.IndexOf(item);
+                var position = (searchingFromEnd) ? this.multipleItems.LastIndexOf(item) : this.multipleItems.IndexOf(item);
                 if (position != -1)
                 {
                     this.multipleItems.RemoveAt(position);

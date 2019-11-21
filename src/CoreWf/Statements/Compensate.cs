@@ -66,7 +66,7 @@ namespace System.Activities.Statements
 
         protected override void CacheMetadata(NativeActivityMetadata metadata)
         {
-            RuntimeArgument targetArgument = new RuntimeArgument("Target", typeof(CompensationToken), ArgumentDirection.In);
+            var targetArgument = new RuntimeArgument("Target", typeof(CompensationToken), ArgumentDirection.In);
             metadata.Bind(this.Target, targetArgument);
             metadata.SetArgumentsCollection(new Collection<RuntimeArgument> { targetArgument });
 
@@ -89,11 +89,11 @@ namespace System.Activities.Statements
 
         private static Constraint CompensateWithNoTarget()
         {
-            DelegateInArgument<Compensate> element = new DelegateInArgument<Compensate> { Name = "element" };
-            DelegateInArgument<ValidationContext> validationContext = new DelegateInArgument<ValidationContext> { Name = "validationContext" };
-            Variable<bool> assertFlag = new Variable<bool> { Name = "assertFlag" };
-            Variable<IEnumerable<Activity>> elements = new Variable<IEnumerable<Activity>>() { Name = "elements" };
-            Variable<int> index = new Variable<int>() { Name = "index" };
+            var element = new DelegateInArgument<Compensate> { Name = "element" };
+            var validationContext = new DelegateInArgument<ValidationContext> { Name = "validationContext" };
+            var assertFlag = new Variable<bool> { Name = "assertFlag" };
+            var elements = new Variable<IEnumerable<Activity>>() { Name = "elements" };
+            var index = new Variable<int>() { Name = "index" };
 
             return new Constraint<Compensate>
             {
@@ -169,7 +169,7 @@ namespace System.Activities.Statements
 
         protected override void Execute(NativeActivityContext context)
         {
-            CompensationExtension compensationExtension = context.GetExtension<CompensationExtension>();
+            var compensationExtension = context.GetExtension<CompensationExtension>();
             if (compensationExtension == null)
             {
                 throw FxTrace.Exception.AsError(new InvalidOperationException(SR.CompensateWithoutCompensableActivity(this.DisplayName)));
@@ -177,8 +177,8 @@ namespace System.Activities.Statements
 
             if (Target.IsEmpty)
             {
-                CompensationToken ambientCompensationToken = (CompensationToken)context.Properties.Find(CompensationToken.PropertyName);
-                CompensationTokenData ambientTokenData = ambientCompensationToken == null ? null : compensationExtension.Get(ambientCompensationToken.CompensationId);
+                var ambientCompensationToken = (CompensationToken)context.Properties.Find(CompensationToken.PropertyName);
+                var ambientTokenData = ambientCompensationToken == null ? null : compensationExtension.Get(ambientCompensationToken.CompensationId);
 
                 if (ambientTokenData != null && ambientTokenData.IsTokenValidInSecondaryRoot)
                 {
@@ -195,8 +195,8 @@ namespace System.Activities.Statements
             }
             else
             {
-                CompensationToken compensationToken = Target.Get(context);
-                CompensationTokenData tokenData = compensationToken == null ? null : compensationExtension.Get(compensationToken.CompensationId);
+                var compensationToken = Target.Get(context);
+                var tokenData = compensationToken == null ? null : compensationExtension.Get(compensationToken.CompensationId);
 
                 if (compensationToken == null)
                 {

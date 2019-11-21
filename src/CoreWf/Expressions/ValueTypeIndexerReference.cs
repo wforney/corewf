@@ -60,8 +60,8 @@ namespace System.Activities.Expressions
 
         protected override void CacheMetadata(CodeActivityMetadata metadata)
         {
-            MethodInfo oldGetMethod = this.getMethod;
-            MethodInfo oldSetMethod = this.setMethod;
+            var oldGetMethod = this.getMethod;
+            var oldSetMethod = this.setMethod;
             if (!typeof(TOperand).IsValueType)
             {
                 metadata.AddValidationError(SR.TypeMustbeValueType(typeof(TOperand).Name));
@@ -79,7 +79,7 @@ namespace System.Activities.Expressions
                 }
             }
 
-            RuntimeArgument operandArgument = new RuntimeArgument("OperandLocation", typeof(TOperand), ArgumentDirection.InOut, true);
+            var operandArgument = new RuntimeArgument("OperandLocation", typeof(TOperand), ArgumentDirection.InOut, true);
             metadata.Bind(this.OperandLocation, operandArgument);
             metadata.AddArgument(operandArgument);
 
@@ -97,12 +97,12 @@ namespace System.Activities.Expressions
 
         protected override Location<TItem> Execute(CodeActivityContext context)
         {
-            object[] indicesValue = new object[this.Indices.Count];
-            for (int i = 0; i < this.Indices.Count; i++)
+            var indicesValue = new object[this.Indices.Count];
+            for (var i = 0; i < this.Indices.Count; i++)
             {
                 indicesValue[i] = this.Indices[i].Get(context);
             }
-            Location<TOperand> operandLocationValue = this.OperandLocation.GetLocation(context);
+            var operandLocationValue = this.OperandLocation.GetLocation(context);
             Fx.Assert(operandLocationValue != null, "OperandLocation must not be null");
             return new IndexerLocation(operandLocationValue, indicesValue, getMethod, setMethod, this.getFunc, this.setFunc);
         }
@@ -155,7 +155,7 @@ namespace System.Activities.Expressions
                     if (this.parameters == null)
                     {
                         this.parameters = new object[this.indices.Length + 1];
-                        for (int i = 0; i < this.indices.Length; i++)
+                        for (var i = 0; i < this.indices.Length; i++)
                         {
                             parameters[i] = this.indices[i];
                         }

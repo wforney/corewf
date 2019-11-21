@@ -26,10 +26,10 @@ namespace System.Activities.XamlIntegration
         {
             if (!string.IsNullOrEmpty(this.PropertyName))
             {
-                object targetObject = ActivityWithResultConverter.GetRootTemplatedActivity(serviceProvider);
+                var targetObject = ActivityWithResultConverter.GetRootTemplatedActivity(serviceProvider);
                 if (targetObject != null)
                 {
-                    PropertyDescriptor property = TypeDescriptor.GetProperties(targetObject)[PropertyName];
+                    var property = TypeDescriptor.GetProperties(targetObject)[PropertyName];
 
                     if (property != null)
                     {

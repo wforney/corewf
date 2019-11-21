@@ -3,11 +3,8 @@
 
 namespace System.Activities.DynamicUpdate
 {
-    using System;
     using System.Activities.Internals;
-    using System.Activities.Validation;
     using System.Collections.Generic;
-    using System.Linq;
 
     public class NativeActivityUpdateMapMetadata : UpdateMapMetadata
     {
@@ -20,11 +17,10 @@ namespace System.Activities.DynamicUpdate
         public void SaveOriginalValue(Activity updatedChildActivity, object originalValue)
         {
             this.ThrowIfDisposed();
-            bool isReferencedChild;
-            ValidateOriginalValueAccess(this.TargetActivity, updatedChildActivity, "updatedChildActivity", out isReferencedChild);
-            if (GetMatch(updatedChildActivity) == null)
+            ValidateOriginalValueAccess(this.TargetActivity, updatedChildActivity, nameof(updatedChildActivity), out var isReferencedChild);
+            if (this.GetMatch(updatedChildActivity) == null)
             {
-                throw FxTrace.Exception.Argument("updatedChildActivity", SR.CannotSaveOriginalValueForNewActivity(updatedChildActivity));
+                throw FxTrace.Exception.Argument(nameof(updatedChildActivity), SR.CannotSaveOriginalValueForNewActivity(updatedChildActivity));
             }
 
             this.Finalizer.SetOriginalValue(updatedChildActivity, originalValue, isReferencedChild);
@@ -35,7 +31,7 @@ namespace System.Activities.DynamicUpdate
             this.ThrowIfDisposed();
             if (propertyName == null)
             {
-                throw FxTrace.Exception.ArgumentNull("propertyName");
+                throw FxTrace.Exception.ArgumentNull(nameof(propertyName));
             }
 
             if (this.Finalizer.SavedOriginalValuesForCurrentActivity == null)
@@ -58,7 +54,7 @@ namespace System.Activities.DynamicUpdate
             }
         }
 
-        static bool IsPublicOrImportedDelegateOrChild(Activity parent, Activity child, out bool isReferencedChild)
+        private static bool IsPublicOrImportedDelegateOrChild(Activity parent, Activity child, out bool isReferencedChild)
         {
             isReferencedChild = false;
             if (child.Parent == parent)
@@ -77,8 +73,7 @@ namespace System.Activities.DynamicUpdate
             else if (parent.MemberOf != child.MemberOf)
             {
                 isReferencedChild = true;
-                bool isImport;
-                return IsChild(parent, child, out isImport);
+                return IsChild(parent, child, out _);
             }
             else
             {

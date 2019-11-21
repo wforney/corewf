@@ -19,12 +19,12 @@ namespace System.Activities.Expressions
         {
             if (methodInfo != null)
             {
-                ParameterInfo[] parameterInfos = methodInfo.GetParameters();
+                var parameterInfos = methodInfo.GetParameters();
 
-                for (int i = 0; i < parameterInfos.Length; i++)
+                for (var i = 0; i < parameterInfos.Length; i++)
                 {
-                    Type parameterType = parameterInfos[i].ParameterType;
-                    ParameterExpression variable = Expression.Parameter(parameterType.IsByRef ? parameterType.GetElementType() : parameterType, "arg" + i);
+                    var parameterType = parameterInfos[i].ParameterType;
+                    var variable = Expression.Parameter(parameterType.IsByRef ? parameterType.GetElementType() : parameterType, "arg" + i);
                     // If variable.Type is NOT a Nullable<T>, we include the call to Convert.ChangeType on the actual parameter.
                     if (variable.Type.IsValueType && Nullable.GetUnderlyingType(variable.Type) == null)
                     {
@@ -100,13 +100,13 @@ namespace System.Activities.Expressions
         private static Expression ComposeBlockExpression(Collection<ParameterExpression> variables, Collection<Expression> assignVariables, Expression callExpression,
             Collection<Expression> assignVariablesBack, Type returnType, bool isConstructor, bool valueTypeReference)
         {
-            Collection<Expression> expressions = new Collection<Expression>();
-            foreach (Expression expression in assignVariables)
+            var expressions = new Collection<Expression>();
+            foreach (var expression in assignVariables)
             {
                 expressions.Add(expression);
             }
 
-            ParameterExpression result = Expression.Parameter(isConstructor ? returnType : typeof(object), "result");
+            var result = Expression.Parameter(isConstructor ? returnType : typeof(object), "result");
             variables.Add(result);
             if (returnType != typeof(void))
             {
@@ -126,7 +126,7 @@ namespace System.Activities.Expressions
             {
                 expressions.Add(callExpression);
             }
-            foreach (Expression expression in assignVariablesBack)
+            foreach (var expression in assignVariablesBack)
             {
                 expressions.Add(expression);
             }
@@ -142,9 +142,9 @@ namespace System.Activities.Expressions
 
         private static Expression ComposeLinqExpression(MethodInfo methodInfo, ParameterExpression targetInstance, ParameterExpression objectArray, Type returnType, bool valueTypeReference)
         {
-            Collection<Expression> assignVariablesExpressions = new Collection<Expression>();
-            Collection<Expression> assignVariablesBackExpressions = new Collection<Expression>();
-            Collection<ParameterExpression> variables = new Collection<ParameterExpression>();
+            var assignVariablesExpressions = new Collection<Expression>();
+            var assignVariablesBackExpressions = new Collection<Expression>();
+            var variables = new Collection<ParameterExpression>();
 
             PrepareForVariables(methodInfo, objectArray, variables, assignVariablesExpressions, assignVariablesBackExpressions);
 
@@ -171,9 +171,9 @@ namespace System.Activities.Expressions
 
         private static Expression ComposeLinqExpression<TResult>(ConstructorInfo constructorInfo, ParameterExpression objectArray)
         {
-            Collection<Expression> assignVariablesExpressions = new Collection<Expression>();
-            Collection<Expression> assignVariablesBackExpressions = new Collection<Expression>();
-            Collection<ParameterExpression> variables = new Collection<ParameterExpression>();
+            var assignVariablesExpressions = new Collection<Expression>();
+            var assignVariablesBackExpressions = new Collection<Expression>();
+            var variables = new Collection<ParameterExpression>();
 
             PrepareForVariables(constructorInfo, objectArray, variables, assignVariablesExpressions, assignVariablesBackExpressions);
 
@@ -193,10 +193,10 @@ namespace System.Activities.Expressions
         {
             try
             {
-                ParameterExpression targetInstance = Expression.Parameter(typeof(object), "targetInstance");
-                ParameterExpression objectArray = Expression.Parameter(typeof(object[]), "arguments");
-                Expression block = ComposeLinqExpression(methodInfo, targetInstance, objectArray, methodInfo.ReturnType, valueTypeReference);
-                Expression<Func<object, object[], object>> lambdaExpression = Expression.Lambda<Func<object, object[], object>>(block, targetInstance, objectArray);
+                var targetInstance = Expression.Parameter(typeof(object), "targetInstance");
+                var objectArray = Expression.Parameter(typeof(object[]), "arguments");
+                var block = ComposeLinqExpression(methodInfo, targetInstance, objectArray, methodInfo.ReturnType, valueTypeReference);
+                var lambdaExpression = Expression.Lambda<Func<object, object[], object>>(block, targetInstance, objectArray);
                 return lambdaExpression.Compile();
             }
             catch (Exception e)
@@ -215,9 +215,9 @@ namespace System.Activities.Expressions
         {
             try
             {
-                ParameterExpression objectArray = Expression.Parameter(typeof(object[]), "arguments");
-                Expression block = ComposeLinqExpression<TResult>(constructorInfo, objectArray);
-                Expression<Func<object[], TResult>> lambdaExpression = Expression.Lambda<Func<object[], TResult>>(block, objectArray);
+                var objectArray = Expression.Parameter(typeof(object[]), "arguments");
+                var block = ComposeLinqExpression<TResult>(constructorInfo, objectArray);
+                var lambdaExpression = Expression.Lambda<Func<object[], TResult>>(block, objectArray);
                 return lambdaExpression.Compile();
             }
             catch (Exception e)
@@ -265,7 +265,7 @@ namespace System.Activities.Expressions
                 try
                 {
                     //MruCache has on ContainsKey(), so we use TryGetValue()
-                    if (!cache.TryGetValue(methodInfo, out Func<object, object[], object> result))
+                    if (!cache.TryGetValue(methodInfo, out var result))
                     {
                         cache.Add(methodInfo, func);
                     }
@@ -307,7 +307,7 @@ namespace System.Activities.Expressions
                     try
                     {
                         //MruCache has on ContainsKey(), so we use TryGetValue()
-                        if (!cache.TryGetValue(constructorInfo, out Func<object[], TResult> result))
+                        if (!cache.TryGetValue(constructorInfo, out var result))
                         {
                             cache.Add(constructorInfo, func);
                         }

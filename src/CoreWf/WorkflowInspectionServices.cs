@@ -60,9 +60,9 @@ namespace System.Activities
                 ActivityValidationServices.ThrowIfViolationsExist(validationErrors);
             }
 
-            QualifiedId parsedId = QualifiedId.Parse(id);
+            var parsedId = QualifiedId.Parse(id);
 
-            if (!QualifiedId.TryGetElementFromRoot(root, parsedId, out Activity result))
+            if (!QualifiedId.TryGetElementFromRoot(root, parsedId, out var result))
             {
                 throw FxTrace.Exception.Argument(nameof(id), SR.IdNotFoundInWorkflow(id));
             }
@@ -86,10 +86,10 @@ namespace System.Activities
                 ActivityValidationServices.ThrowIfViolationsExist(validationErrors);
             }
             
-            int i = 0;
+            var i = 0;
             for (; i < activity.RuntimeArguments.Count; i++)
             {
-                RuntimeArgument argument = activity.RuntimeArguments[i];
+                var argument = activity.RuntimeArguments[i];
 
                 if (argument.BoundArgument != null && argument.BoundArgument.Expression != null)
                 {
@@ -99,7 +99,7 @@ namespace System.Activities
 
             for (i = 0; i < activity.RuntimeVariables.Count; i++)
             {
-                Variable variable = activity.RuntimeVariables[i];
+                var variable = activity.RuntimeVariables[i];
 
                 if (variable.Default != null)
                 {
@@ -109,7 +109,7 @@ namespace System.Activities
 
             for (i = 0; i < activity.ImplementationVariables.Count; i++)
             {
-                Variable variable = activity.ImplementationVariables[i];
+                var variable = activity.ImplementationVariables[i];
 
                 if (variable.Default != null)
                 {
@@ -134,7 +134,7 @@ namespace System.Activities
 
             for (i = 0; i < activity.Delegates.Count; i++)
             {
-                ActivityDelegate activityDelegate = activity.Delegates[i];
+                var activityDelegate = activity.Delegates[i];
 
                 if (activityDelegate.Handler != null)
                 {
@@ -144,7 +144,7 @@ namespace System.Activities
 
             for (i = 0; i < activity.ImportedDelegates.Count; i++)
             {
-                ActivityDelegate activityDelegate = activity.ImportedDelegates[i];
+                var activityDelegate = activity.ImportedDelegates[i];
 
                 if (activityDelegate.Handler != null)
                 {
@@ -154,7 +154,7 @@ namespace System.Activities
 
             for (i = 0; i < activity.ImplementationDelegates.Count; i++)
             {
-                ActivityDelegate activityDelegate = activity.ImplementationDelegates[i];
+                var activityDelegate = activity.ImplementationDelegates[i];
 
                 if (activityDelegate.Handler != null)
                 {

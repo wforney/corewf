@@ -132,7 +132,7 @@ namespace System.Activities.Statements
         {
             lock (this.ThisLock)
             {
-                if (readWriteValues != null && readWriteValues.TryGetValue(timerTableName, out object timerTable))
+                if (readWriteValues != null && readWriteValues.TryGetValue(timerTableName, out var timerTable))
                 {
                     this.registeredTimers = timerTable as TimerTable;
                     Fx.Assert(this.RegisteredTimers != null, "Timer Table cannot be null");
@@ -143,16 +143,16 @@ namespace System.Activities.Statements
 
         private void OnTimerFired(object state)
         {
-            Bookmark timerBookmark = state as Bookmark;
+            var timerBookmark = state as Bookmark;
 
-            WorkflowInstanceProxy targetInstance = this.instance;
+            var targetInstance = this.instance;
             // it's possible that we've been unloaded while the timer was in the process of firing, in
             // which case targetInstance will be null
             if (targetInstance != null)
             {
                 BookmarkResumptionResult resumptionResult;
                 IAsyncResult result = null;
-                bool completed = false;
+                var completed = false;
 
                 result = targetInstance.BeginResumeBookmark(timerBookmark, null, TimeSpan.MaxValue,
                     onResumeBookmarkComplete, new BookmarkResumptionState(timerBookmark, this, targetInstance));
@@ -180,9 +180,9 @@ namespace System.Activities.Statements
                 return;
             }
 
-            BookmarkResumptionState state = (BookmarkResumptionState)result.AsyncState;
+            var state = (BookmarkResumptionState)result.AsyncState;
 
-            BookmarkResumptionResult resumptionResult = state.Instance.EndResumeBookmark(result);
+            var resumptionResult = state.Instance.EndResumeBookmark(result);
             state.TimerExtension.ProcessBookmarkResumptionResult(state.TimerBookmark, resumptionResult);
         }
 

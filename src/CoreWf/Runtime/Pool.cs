@@ -37,7 +37,7 @@ namespace System.Activities.Runtime
             if (this.count > 0)
             {
                 this.count--;
-                T item = this.items[this.count];
+                var item = this.items[this.count];
 
                 return item;
             }

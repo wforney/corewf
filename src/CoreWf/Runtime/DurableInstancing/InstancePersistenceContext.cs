@@ -31,7 +31,7 @@ namespace System.Activities.Runtime.DurableInstancing
             InstanceHandle = handle;
 
             // Fork a copy of the current view to be the new working view. It starts with no query results.
-            InstanceView newView = handle.View.Clone();
+            var newView = handle.View.Clone();
             newView.InstanceStoreQueryResults = null;
             InstanceView = newView;
 
@@ -126,7 +126,7 @@ namespace System.Activities.Runtime.DurableInstancing
             }
             ThrowIfNotActive("BindInstanceOwner");
 
-            InstanceOwner owner = InstanceHandle.Store.GetOrCreateOwner(instanceOwnerId, lockToken);
+            var owner = InstanceHandle.Store.GetOrCreateOwner(instanceOwnerId, lockToken);
 
             InstanceView.BindOwner(owner);
             IsHandleDoomedByRollback = true;
@@ -182,7 +182,7 @@ namespace System.Activities.Runtime.DurableInstancing
 
         public void BindReclaimedLock(long instanceVersion, TimeSpan timeout)
         {
-            AsyncWaitHandle wait = InitiateBindReclaimedLockHelper("BindReclaimedLock", instanceVersion, timeout);
+            var wait = InitiateBindReclaimedLockHelper("BindReclaimedLock", instanceVersion, timeout);
             if (!wait.Wait(timeout))
             {
                 InstanceHandle.CancelReclaim(new TimeoutException(SR.TimedOutWaitingForLockResolution));
@@ -192,7 +192,7 @@ namespace System.Activities.Runtime.DurableInstancing
 
         public IAsyncResult BeginBindReclaimedLock(long instanceVersion, TimeSpan timeout, AsyncCallback callback, object state)
         {
-            AsyncWaitHandle wait = InitiateBindReclaimedLockHelper("BeginBindReclaimedLock", instanceVersion, timeout);
+            var wait = InitiateBindReclaimedLockHelper("BeginBindReclaimedLock", instanceVersion, timeout);
             return new BindReclaimedLockAsyncResult(this, wait, timeout, callback, state);
         }
 
@@ -203,7 +203,7 @@ namespace System.Activities.Runtime.DurableInstancing
 
         public Exception CreateBindReclaimedLockException(long instanceVersion)
         {
-            AsyncWaitHandle wait = InitiateBindReclaimedLockHelper("CreateBindReclaimedLockException", instanceVersion, TimeSpan.MaxValue);
+            var wait = InitiateBindReclaimedLockHelper("CreateBindReclaimedLockException", instanceVersion, TimeSpan.MaxValue);
             return new BindReclaimedLockException(wait);
         }
 
@@ -220,7 +220,7 @@ namespace System.Activities.Runtime.DurableInstancing
             InstanceView.StartBindLock(instanceVersion);
             IsHandleDoomedByRollback = true;
 
-            AsyncWaitHandle wait = InstanceHandle.StartReclaim(instanceVersion);
+            var wait = InstanceHandle.StartReclaim(instanceVersion);
             if (wait == null)
             {
                 InstanceHandle.Free();
@@ -286,22 +286,22 @@ namespace System.Activities.Runtime.DurableInstancing
             ThrowIfNoInstance();
             ThrowIfNotActive("PersistedInstance");
 
-            InstanceValueConsistency consistency = InstanceView.IsBoundToLock || state == InstanceState.Completed ? InstanceValueConsistency.None : InstanceValueConsistency.InDoubt;
+            var consistency = InstanceView.IsBoundToLock || state == InstanceState.Completed ? InstanceValueConsistency.None : InstanceValueConsistency.InDoubt;
 
-            ReadOnlyDictionary<XName, InstanceValue> instanceDataCopy = instanceData.ReadOnlyCopy(false);
-            ReadOnlyDictionary<XName, InstanceValue> instanceMetadataCopy = instanceMetadata.ReadOnlyCopy(false);
+            var instanceDataCopy = instanceData.ReadOnlyCopy(false);
+            var instanceMetadataCopy = instanceMetadata.ReadOnlyCopy(false);
 
             Dictionary<Guid, InstanceKeyView> keysCopy = null;
-            int totalKeys = (associatedInstanceKeyMetadata != null ? associatedInstanceKeyMetadata.Count : 0) + (completedInstanceKeyMetadata != null ? completedInstanceKeyMetadata.Count : 0);
+            var totalKeys = (associatedInstanceKeyMetadata != null ? associatedInstanceKeyMetadata.Count : 0) + (completedInstanceKeyMetadata != null ? completedInstanceKeyMetadata.Count : 0);
             if (totalKeys > 0)
             {
                 keysCopy = new Dictionary<Guid, InstanceKeyView>(totalKeys);
             }
             if (associatedInstanceKeyMetadata != null && associatedInstanceKeyMetadata.Count > 0)
             {
-                foreach (KeyValuePair<Guid, IDictionary<XName, InstanceValue>> keyMetadata in associatedInstanceKeyMetadata)
+                foreach (var keyMetadata in associatedInstanceKeyMetadata)
                 {
-                    InstanceKeyView view = new InstanceKeyView(keyMetadata.Key)
+                    var view = new InstanceKeyView(keyMetadata.Key)
                     {
                         InstanceKeyState = InstanceKeyState.Associated,
                         InstanceKeyMetadata = keyMetadata.Value.ReadOnlyCopy(false),
@@ -313,9 +313,9 @@ namespace System.Activities.Runtime.DurableInstancing
 
             if (completedInstanceKeyMetadata != null && completedInstanceKeyMetadata.Count > 0)
             {
-                foreach (KeyValuePair<Guid, IDictionary<XName, InstanceValue>> keyMetadata in completedInstanceKeyMetadata)
+                foreach (var keyMetadata in completedInstanceKeyMetadata)
                 {
-                    InstanceKeyView view = new InstanceKeyView(keyMetadata.Key)
+                    var view = new InstanceKeyView(keyMetadata.Key)
                     {
                         InstanceKeyState = InstanceKeyState.Completed,
                         InstanceKeyMetadata = keyMetadata.Value.ReadOnlyCopy(false),
@@ -344,7 +344,7 @@ namespace System.Activities.Runtime.DurableInstancing
             ThrowIfCompleted();
             if ((InstanceView.InstanceKeysConsistency & InstanceValueConsistency.InDoubt) == 0)
             {
-                foreach (KeyValuePair<Guid, InstanceKeyView> key in InstanceView.InstanceKeys)
+                foreach (var key in InstanceView.InstanceKeys)
                 {
                     if (key.Value.InstanceKeyState == InstanceKeyState.Associated)
                     {
@@ -412,12 +412,12 @@ namespace System.Activities.Runtime.DurableInstancing
             ThrowIfCompleted();
             ThrowIfNotTransactional("AssociatedInstanceKey");
 
-            Dictionary<Guid, InstanceKeyView> copy = new Dictionary<Guid, InstanceKeyView>(InstanceView.InstanceKeys);
+            var copy = new Dictionary<Guid, InstanceKeyView>(InstanceView.InstanceKeys);
             if ((InstanceView.InstanceKeysConsistency & InstanceValueConsistency.InDoubt) == 0 && copy.ContainsKey(key))
             {
                 throw Fx.Exception.AsError(new InvalidOperationException(SR.KeyAlreadyAssociated));
             }
-            InstanceKeyView keyView = new InstanceKeyView(key)
+            var keyView = new InstanceKeyView(key)
             {
                 InstanceKeyState = InstanceKeyState.Associated,
                 InstanceKeyMetadataConsistency = InstanceValueConsistency.None
@@ -436,7 +436,7 @@ namespace System.Activities.Runtime.DurableInstancing
             ThrowIfCompleted();
             ThrowIfNotTransactional("CompletedInstanceKey");
 
-            InstanceView.InstanceKeys.TryGetValue(key, out InstanceKeyView existingKeyView);
+            InstanceView.InstanceKeys.TryGetValue(key, out var existingKeyView);
             if ((InstanceView.InstanceKeysConsistency & InstanceValueConsistency.InDoubt) == 0)
             {
                 if (existingKeyView != null)
@@ -458,8 +458,8 @@ namespace System.Activities.Runtime.DurableInstancing
             }
             else
             {
-                Dictionary<Guid, InstanceKeyView> copy = new Dictionary<Guid, InstanceKeyView>(InstanceView.InstanceKeys);
-                InstanceKeyView keyView = new InstanceKeyView(key)
+                var copy = new Dictionary<Guid, InstanceKeyView>(InstanceView.InstanceKeys);
+                var keyView = new InstanceKeyView(key)
                 {
                     InstanceKeyState = InstanceKeyState.Completed,
                     InstanceKeyMetadataConsistency = InstanceValueConsistency.Partial
@@ -479,7 +479,7 @@ namespace System.Activities.Runtime.DurableInstancing
             ThrowIfCompleted();
             ThrowIfNotTransactional("UnassociatedInstanceKey");
 
-            InstanceView.InstanceKeys.TryGetValue(key, out InstanceKeyView existingKeyView);
+            InstanceView.InstanceKeys.TryGetValue(key, out var existingKeyView);
             if ((InstanceView.InstanceKeysConsistency & InstanceValueConsistency.InDoubt) == 0)
             {
                 if (existingKeyView != null)
@@ -497,7 +497,7 @@ namespace System.Activities.Runtime.DurableInstancing
 
             if (existingKeyView != null)
             {
-                Dictionary<Guid, InstanceKeyView> copy = new Dictionary<Guid, InstanceKeyView>(InstanceView.InstanceKeys);
+                var copy = new Dictionary<Guid, InstanceKeyView>(InstanceView.InstanceKeys);
                 copy.Remove(key);
                 InstanceView.InstanceKeys = new ReadOnlyDictionary<Guid, InstanceKeyView>(copy);
             }
@@ -512,14 +512,14 @@ namespace System.Activities.Runtime.DurableInstancing
             ThrowIfNoInstance();
             ThrowIfNotActive("ReadInstanceKeyMetadata");
 
-            if (!InstanceView.InstanceKeys.TryGetValue(key, out InstanceKeyView keyView))
+            if (!InstanceView.InstanceKeys.TryGetValue(key, out var keyView))
             {
                 if (InstanceView.InstanceKeysConsistency == InstanceValueConsistency.None)
                 {
                     throw Fx.Exception.AsError(new InvalidOperationException(SR.KeyNotAssociated));
                 }
 
-                Dictionary<Guid, InstanceKeyView> copy = new Dictionary<Guid, InstanceKeyView>(InstanceView.InstanceKeys);
+                var copy = new Dictionary<Guid, InstanceKeyView>(InstanceView.InstanceKeys);
                 keyView = new InstanceKeyView(key);
                 if (complete)
                 {
@@ -585,7 +585,7 @@ namespace System.Activities.Runtime.DurableInstancing
             ThrowIfCompleted();
             ThrowIfNotTransactional("WroteInstanceKeyMetadataValue");
 
-            if (!InstanceView.InstanceKeys.TryGetValue(key, out InstanceKeyView keyView))
+            if (!InstanceView.InstanceKeys.TryGetValue(key, out var keyView))
             {
                 if (InstanceView.InstanceKeysConsistency == InstanceValueConsistency.None)
                 {
@@ -594,7 +594,7 @@ namespace System.Activities.Runtime.DurableInstancing
 
                 if (!value.IsWriteOnly() && !value.IsDeletedValue)
                 {
-                    Dictionary<Guid, InstanceKeyView> copy = new Dictionary<Guid, InstanceKeyView>(InstanceView.InstanceKeys);
+                    var copy = new Dictionary<Guid, InstanceKeyView>(InstanceView.InstanceKeys);
                     keyView = new InstanceKeyView(key);
                     keyView.AccumulatedMetadataWrites.Add(name, value);
                     keyView.InstanceKeyMetadataConsistency = InstanceValueConsistency.Partial;
@@ -729,8 +729,8 @@ namespace System.Activities.Runtime.DurableInstancing
         internal void NotifyHandleFree()
         {
             CancelRequested = true;
-            ExecuteAsyncResult lastAsyncResult = LastAsyncResult;
-            Action<InstancePersistenceContext> onCancel = lastAsyncResult == null ? null : lastAsyncResult.CancellationHandler;
+            var lastAsyncResult = LastAsyncResult;
+            var onCancel = lastAsyncResult == null ? null : lastAsyncResult.CancellationHandler;
             if (onCancel != null)
             {
                 try
@@ -791,7 +791,7 @@ namespace System.Activities.Runtime.DurableInstancing
         [Fx.Tag.Blocking(CancelMethod = "NotifyHandleFree", Conditional = "!result.IsCompleted")]
         internal static InstanceView EndOuterExecute(IAsyncResult result)
         {
-            InstanceView finalState = ExecuteAsyncResult.End(result);
+            var finalState = ExecuteAsyncResult.End(result);
             if (finalState == null)
             {
                 throw Fx.Exception.Argument(nameof(result), SR.InvalidAsyncResult);
@@ -881,11 +881,11 @@ namespace System.Activities.Runtime.DurableInstancing
 
                 OnCompleting = new Action<AsyncResult, Exception>(SimpleCleanup);
 
-                IAsyncResult result = _initialInstanceHandle.BeginAcquireExecutionContext(_timeoutHelper.RemainingTime(), PrepareAsyncCompletion(ExecuteAsyncResult.s_onAcquireContext), this);
+                var result = _initialInstanceHandle.BeginAcquireExecutionContext(_timeoutHelper.RemainingTime(), PrepareAsyncCompletion(ExecuteAsyncResult.s_onAcquireContext), this);
                 if (result.CompletedSynchronously)
                 {
                     // After this stage, must complete explicitly in order to get Cleanup to run correctly.
-                    bool completeSelf = false;
+                    var completeSelf = false;
                     Exception completionException = null;
                     try
                     {
@@ -918,8 +918,8 @@ namespace System.Activities.Runtime.DurableInstancing
 
                 OnCompleting = new Action<AsyncResult, Exception>(SimpleCleanup);
 
-                bool completeSelf = false;
-                bool success = false;
+                var completeSelf = false;
+                var success = false;
                 try
                 {
                     _context.LastAsyncResult = this;
@@ -982,7 +982,7 @@ namespace System.Activities.Runtime.DurableInstancing
                 Fx.Assert(_priorAsyncResult != null, "The LastAsyncResult should already have been checked.");
                 _priorAsyncResult._executeCalledByCurrentCommand = true;
 
-                bool success = false;
+                var success = false;
                 try
                 {
                     _context.LastAsyncResult = this;
@@ -1015,8 +1015,8 @@ namespace System.Activities.Runtime.DurableInstancing
             {
                 get
                 {
-                    Action<InstancePersistenceContext> handler = _cancellationHandler;
-                    ExecuteAsyncResult current = this;
+                    var handler = _cancellationHandler;
+                    var current = this;
                     while (handler == null)
                     {
                         current = current._priorAsyncResult;
@@ -1038,14 +1038,14 @@ namespace System.Activities.Runtime.DurableInstancing
             [Fx.Tag.Blocking(CancelMethod = "NotifyHandleFree", CancelDeclaringType = typeof(InstancePersistenceContext), Conditional = "!result.IsCOmpleted")]
             public static InstanceView End(IAsyncResult result)
             {
-                ExecuteAsyncResult thisPtr = AsyncResult.End<ExecuteAsyncResult>(result);
+                var thisPtr = AsyncResult.End<ExecuteAsyncResult>(result);
                 Fx.Assert((thisPtr._finalState == null) == (thisPtr._initialInstanceHandle == null), "Should have thrown an exception if this is null on the outer result.");
                 return thisPtr._finalState;
             }
 
             private static bool OnAcquireContext(IAsyncResult result)
             {
-                ExecuteAsyncResult thisPtr = (ExecuteAsyncResult)result.AsyncState;
+                var thisPtr = (ExecuteAsyncResult)result.AsyncState;
                 thisPtr._context = thisPtr._initialInstanceHandle.EndAcquireExecutionContext(result);
                 thisPtr._context.RootAsyncResult = thisPtr;
                 thisPtr._context.LastAsyncResult = thisPtr;
@@ -1060,7 +1060,7 @@ namespace System.Activities.Runtime.DurableInstancing
                 {
                     if (_currentExecution.MoveNext())
                     {
-                        bool isFirstCommand = CurrentCommand == null;
+                        var isFirstCommand = CurrentCommand == null;
                         _executeCalledByCurrentCommand = false;
                         CurrentCommand = _currentExecution.Current;
 
@@ -1085,7 +1085,7 @@ namespace System.Activities.Runtime.DurableInstancing
                         //}
 
                         // Intentionally calling MayBindLockToInstanceHandle prior to Validate.  This is a publically visible order.
-                        bool mayBindLockToInstanceHandle = CurrentCommand.AutomaticallyAcquiringLock;
+                        var mayBindLockToInstanceHandle = CurrentCommand.AutomaticallyAcquiringLock;
                         CurrentCommand.Validate(_context.InstanceView);
 
                         if (mayBindLockToInstanceHandle)
@@ -1203,7 +1203,7 @@ namespace System.Activities.Runtime.DurableInstancing
 
             private static bool OnTryCommand(IAsyncResult result)
             {
-                ExecuteAsyncResult thisPtr = (ExecuteAsyncResult)result.AsyncState;
+                var thisPtr = (ExecuteAsyncResult)result.AsyncState;
                 return thisPtr.DoEndCommand(result) && thisPtr.RunLoop();
             }
             [Fx.Tag.GuaranteeNonBlocking]
@@ -1245,7 +1245,7 @@ namespace System.Activities.Runtime.DurableInstancing
                     {
                         throw Fx.Exception.AsError(new InvalidOperationException(SR.TryCommandCannotExecuteSubCommandsAndReduce));
                     }
-                    IEnumerable<InstancePersistenceCommand> reduction = CurrentCommand.Reduce(_context.InstanceView);
+                    var reduction = CurrentCommand.Reduce(_context.InstanceView);
                     if (reduction == null)
                     {
                         throw Fx.Exception.AsError(new NotSupportedException(SR.ProviderDoesNotSupportCommand(CurrentCommand.Name)));
@@ -1257,7 +1257,7 @@ namespace System.Activities.Runtime.DurableInstancing
 
             private static void OnBindReclaimed(object state, TimeoutException timeoutException)
             {
-                ExecuteAsyncResult thisPtr = (ExecuteAsyncResult)state;
+                var thisPtr = (ExecuteAsyncResult)state;
 
                 bool completeSelf;
                 Exception completionException = null;
@@ -1377,7 +1377,7 @@ namespace System.Activities.Runtime.DurableInstancing
 
             private static void OnWaitComplete(object state, TimeoutException timeoutException)
             {
-                BindReclaimedLockAsyncResult thisPtr = (BindReclaimedLockAsyncResult)state;
+                var thisPtr = (BindReclaimedLockAsyncResult)state;
 
                 Exception completionException = null;
                 try

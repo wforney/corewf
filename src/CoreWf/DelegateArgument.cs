@@ -87,7 +87,7 @@ namespace System.Activities
             if (this.cacheId == parent.CacheId)
             {
                 Fx.Assert(this.Owner != null, "must have an owner here");
-                ValidationError validationError = new ValidationError(SR.DelegateArgumentAlreadyInUseOnActivity(this.Name, parent.DisplayName, this.Owner.DisplayName), this.Owner);
+                var validationError = new ValidationError(SR.DelegateArgumentAlreadyInUseOnActivity(this.Name, parent.DisplayName, this.Owner.DisplayName), this.Owner);
                 ActivityUtilities.Add(ref validationErrors, validationError);
 
                 // Get out early since we've already initialized this argument.
@@ -127,7 +127,7 @@ namespace System.Activities
                 throw FxTrace.Exception.AsError(new InvalidOperationException(SR.DelegateArgumentDoesNotExist(this.runtimeArgument.Name)));
             }
 
-            if (!context.Environment.TryGetLocation(this.Id, this.Owner, out Location location))
+            if (!context.Environment.TryGetLocation(this.Id, this.Owner, out var location))
             {
                 throw FxTrace.Exception.AsError(new InvalidOperationException(SR.DelegateArgumentDoesNotExist(this.runtimeArgument.Name)));
             }
@@ -140,7 +140,7 @@ namespace System.Activities
         {
             Fx.Assert(this.IsInTree, "DelegateArgument must be opened");
 
-            if (!environment.TryGetLocation(this.Id, this.Owner, out Location location))
+            if (!environment.TryGetLocation(this.Id, this.Owner, out var location))
             {
                 throw FxTrace.Exception.AsError(new InvalidOperationException(SR.DelegateArgumentDoesNotExist(this.runtimeArgument.Name)));
             }

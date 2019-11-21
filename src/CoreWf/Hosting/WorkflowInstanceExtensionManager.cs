@@ -149,11 +149,11 @@ namespace System.Activities.Hosting
         internal void AddAllExtensionTypes(HashSet<Type> extensionTypes)
         {
             Fx.Assert(this.isReadonly, "should be read only at this point");
-            for (int i = 0; i < this.SingletonExtensions.Count; i++)
+            for (var i = 0; i < this.SingletonExtensions.Count; i++)
             {
                 extensionTypes.Add(this.SingletonExtensions[i].GetType());
             }
-            for (int i = 0; i < this.ExtensionProviders.Count; i++)
+            for (var i = 0; i < this.ExtensionProviders.Count; i++)
             {
                 extensionTypes.Add(this.ExtensionProviders[i].Key);
             }
@@ -193,10 +193,10 @@ namespace System.Activities.Hosting
 
             while (currentInstanceExtension != null)
             {
-                IEnumerable<object> additionalExtensions = currentInstanceExtension.GetAdditionalExtensions();
+                var additionalExtensions = currentInstanceExtension.GetAdditionalExtensions();
                 if (additionalExtensions != null)
                 {
-                    foreach (object additionalExtension in additionalExtensions)
+                    foreach (var additionalExtension in additionalExtensions)
                     {
                         targetCollection.Add(additionalExtension);
                         if (additionalExtension is IWorkflowInstanceExtension)
@@ -239,16 +239,16 @@ namespace System.Activities.Hosting
                 {
                     if (HasSingletonIWorkflowInstanceExtensions)
                     {
-                        foreach (IWorkflowInstanceExtension additionalExtensionProvider in this.SingletonExtensions.OfType<IWorkflowInstanceExtension>())
+                        foreach (var additionalExtensionProvider in this.SingletonExtensions.OfType<IWorkflowInstanceExtension>())
                         {
                             AddExtensionClosure(additionalExtensionProvider, ref this.additionalSingletonExtensions, ref this.hasSingletonTrackingParticipant, ref this.hasSingletonPersistenceModule);
                         }
 
                         if (this.AdditionalSingletonExtensions != null)
                         {
-                            for (int i = 0; i < this.AdditionalSingletonExtensions.Count; i++)
+                            for (var i = 0; i < this.AdditionalSingletonExtensions.Count; i++)
                             {
-                                object extension = this.AdditionalSingletonExtensions[i];
+                                var extension = this.AdditionalSingletonExtensions[i];
                                 if (extension is IWorkflowInstanceExtension)
                                 {
                                     HasAdditionalSingletonIWorkflowInstanceExtensions = true;

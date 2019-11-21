@@ -51,7 +51,7 @@ using System.Activities.DynamicUpdate;
 
         sealed internal override void InternalExecute(ActivityInstance instance, ActivityExecutor executor, BookmarkManager bookmarkManager)
         {
-            CodeActivityContext context = executor.CodeActivityContextPool.Acquire();
+            var context = executor.CodeActivityContextPool.Acquire();
             try
             {
                 context.Initialize(instance, executor);
@@ -76,7 +76,7 @@ using System.Activities.DynamicUpdate;
 
         sealed internal override void OnInternalCacheMetadata(bool createEmptyBindings)
         {
-            CodeActivityMetadata metadata = new CodeActivityMetadata(this, this.GetParentEnvironment(), createEmptyBindings);
+            var metadata = new CodeActivityMetadata(this, this.GetParentEnvironment(), createEmptyBindings);
             CacheMetadata(metadata);
             metadata.Dispose(); 
             if (this.RuntimeArguments == null || this.RuntimeArguments.Count == 0)
@@ -151,11 +151,11 @@ using System.Activities.DynamicUpdate;
 
         sealed internal override void InternalExecute(ActivityInstance instance, ActivityExecutor executor, BookmarkManager bookmarkManager)
         {
-            CodeActivityContext context = executor.CodeActivityContextPool.Acquire();
+            var context = executor.CodeActivityContextPool.Acquire();
             try
             {
                 context.Initialize(instance, executor);
-                TResult executeResult = Execute(context);
+                var executeResult = Execute(context);
                 this.Result.Set(context, executeResult);
             }
             finally
@@ -177,7 +177,7 @@ using System.Activities.DynamicUpdate;
 
         sealed internal override void OnInternalCacheMetadataExceptResult(bool createEmptyBindings)
         {
-            CodeActivityMetadata metadata = new CodeActivityMetadata(this, this.GetParentEnvironment(), createEmptyBindings);
+            var metadata = new CodeActivityMetadata(this, this.GetParentEnvironment(), createEmptyBindings);
             CacheMetadata(metadata);
             metadata.Dispose();
             if (this.RuntimeArguments == null || this.RuntimeArguments.Count == 0 ||

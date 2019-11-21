@@ -84,7 +84,7 @@ using System.Activities.DynamicUpdate;
                     this.currentCompensationToken,
                 });
 
-            Collection<Activity> children = new Collection<Activity>();
+            var children = new Collection<Activity>();
 
             if (this.CompensationHandler != null)
             {
@@ -103,7 +103,7 @@ using System.Activities.DynamicUpdate;
 
             metadata.SetChildrenCollection(children);
 
-            Collection<Activity> implementationChildren = new Collection<Activity>();
+            var implementationChildren = new Collection<Activity>();
             Fx.Assert(DefaultCompensation != null, "DefaultCompensation must be valid");
             implementationChildren.Add(DefaultCompensation);
 
@@ -112,23 +112,23 @@ using System.Activities.DynamicUpdate;
 
             metadata.SetImplementationChildrenCollection(implementationChildren);
 
-            RuntimeArgument compensationIdArgument = new RuntimeArgument("CompensationId", typeof(long), ArgumentDirection.In);
+            var compensationIdArgument = new RuntimeArgument("CompensationId", typeof(long), ArgumentDirection.In);
             metadata.Bind(this.compensationId, compensationIdArgument);
             metadata.AddArgument(compensationIdArgument);
         }
 
         protected override void Execute(NativeActivityContext context)
         {
-            CompensationExtension compensationExtension = context.GetExtension<CompensationExtension>();
+            var compensationExtension = context.GetExtension<CompensationExtension>();
             Fx.Assert(compensationExtension != null, "CompensationExtension must be valid");
 
-            long compensationId = this.compensationId.Get(context);
+            var compensationId = this.compensationId.Get(context);
             Fx.Assert(compensationId != CompensationToken.RootCompensationId, "CompensationId passed to the SecondaryRoot must be valid");
 
-            CompensationTokenData compensationToken = compensationExtension.Get(compensationId);
+            var compensationToken = compensationExtension.Get(compensationId);
             Fx.Assert(compensationToken != null, "CompensationTokenData must be valid");
 
-            CompensationToken token = new CompensationToken(compensationToken);
+            var token = new CompensationToken(compensationToken);
             this.currentCompensationToken.Set(context, token);
 
             compensationToken.IsTokenValidInSecondaryRoot = true;
@@ -143,7 +143,7 @@ using System.Activities.DynamicUpdate;
             Fx.Assert(compensationToken.BookmarkTable[CompensationBookmarkName.OnCancellation] == null, "Bookmark should not be already initialized in the bookmark table.");
             compensationToken.BookmarkTable[CompensationBookmarkName.OnCancellation] = context.CreateBookmark(new BookmarkCallback(OnCancellation));
 
-            Bookmark onSecondaryRootScheduled = compensationToken.BookmarkTable[CompensationBookmarkName.OnSecondaryRootScheduled];
+            var onSecondaryRootScheduled = compensationToken.BookmarkTable[CompensationBookmarkName.OnSecondaryRootScheduled];
             Fx.Assert(onSecondaryRootScheduled != null, "onSecondaryRootScheduled bookmark must be already registered.");
 
             compensationToken.BookmarkTable[CompensationBookmarkName.OnSecondaryRootScheduled] = null;
@@ -153,13 +153,13 @@ using System.Activities.DynamicUpdate;
 
         private void OnConfirmation(NativeActivityContext context, Bookmark bookmark, object value)
         {
-            CompensationExtension compensationExtension = context.GetExtension<CompensationExtension>();
+            var compensationExtension = context.GetExtension<CompensationExtension>();
             Fx.Assert(compensationExtension != null, "CompensationExtension must be valid");
 
-            long compensationId = (long)value;
+            var compensationId = (long)value;
             Fx.Assert(compensationId != CompensationToken.RootCompensationId, "CompensationId must be passed when resuming the Completed bookmark");
 
-            CompensationTokenData compensationToken = compensationExtension.Get(compensationId);
+            var compensationToken = compensationExtension.Get(compensationId);
             Fx.Assert(compensationToken != null, "CompensationTokenData must be valid");
 
             Fx.Assert(compensationToken.CompensationState == CompensationState.Confirming, "CompensationState should be in Confirming state");
@@ -195,10 +195,10 @@ using System.Activities.DynamicUpdate;
             Fx.Assert(context != null, "context must be valid");
             Fx.Assert(completedInstance != null, "completedInstance must be valid");
 
-            CompensationExtension compensationExtension = context.GetExtension<CompensationExtension>();
+            var compensationExtension = context.GetExtension<CompensationExtension>();
             Fx.Assert(compensationExtension != null, "CompensationExtension must be valid");
 
-            CompensationTokenData compensationToken = compensationExtension.Get(this.compensationId.Get(context));
+            var compensationToken = compensationExtension.Get(this.compensationId.Get(context));
             Fx.Assert(compensationToken != null, "CompensationTokenData must be valid");
 
             if (completedInstance.State == ActivityInstanceState.Closed)
@@ -222,10 +222,10 @@ using System.Activities.DynamicUpdate;
             Fx.Assert(context != null, "context must be valid");
             Fx.Assert(completedInstance != null, "completedInstance must be valid");
 
-            CompensationExtension compensationExtension = context.GetExtension<CompensationExtension>();
+            var compensationExtension = context.GetExtension<CompensationExtension>();
             Fx.Assert(compensationExtension != null, "CompensationExtension must be valid");
 
-            CompensationTokenData compensationToken = compensationExtension.Get(this.compensationId.Get(context));
+            var compensationToken = compensationExtension.Get(this.compensationId.Get(context));
             Fx.Assert(compensationToken != null, "CompensationTokenData must be valid");
 
             if (completedInstance.State == ActivityInstanceState.Closed)
@@ -236,13 +236,13 @@ using System.Activities.DynamicUpdate;
 
         private void OnCompensation(NativeActivityContext context, Bookmark bookmark, object value)
         {
-            CompensationExtension compensationExtension = context.GetExtension<CompensationExtension>();
+            var compensationExtension = context.GetExtension<CompensationExtension>();
             Fx.Assert(compensationExtension != null, "CompensationExtension must be valid");
 
-            long compensationId = (long)value;
+            var compensationId = (long)value;
             Fx.Assert(compensationId != CompensationToken.RootCompensationId, "CompensationId must be passed when resuming the Completed bookmark");
 
-            CompensationTokenData compensationToken = compensationExtension.Get(compensationId);
+            var compensationToken = compensationExtension.Get(compensationId);
             Fx.Assert(compensationToken != null, "CompensationTokenData must be valid");
 
             Fx.Assert(compensationToken.CompensationState == CompensationState.Compensating, "CompensationState should be in Compensating state");
@@ -279,10 +279,10 @@ using System.Activities.DynamicUpdate;
             Fx.Assert(context != null, "context must be valid");
             Fx.Assert(completedInstance != null, "completedInstance must be valid");
 
-            CompensationExtension compensationExtension = context.GetExtension<CompensationExtension>();
+            var compensationExtension = context.GetExtension<CompensationExtension>();
             Fx.Assert(compensationExtension != null, "CompensationExtension must be valid");
 
-            CompensationTokenData compensationToken = compensationExtension.Get(this.compensationId.Get(context));
+            var compensationToken = compensationExtension.Get(this.compensationId.Get(context));
             Fx.Assert(compensationToken != null, "CompensationTokenData must be valid");
 
             if (completedInstance.State == ActivityInstanceState.Closed)
@@ -303,13 +303,13 @@ using System.Activities.DynamicUpdate;
 
         private void OnCancellation(NativeActivityContext context, Bookmark bookmark, object value)
         {
-            CompensationExtension compensationExtension = context.GetExtension<CompensationExtension>();
+            var compensationExtension = context.GetExtension<CompensationExtension>();
             Fx.Assert(compensationExtension != null, "CompensationExtension must be valid");
 
-            long compensationId = (long)value;
+            var compensationId = (long)value;
             Fx.Assert(compensationId != CompensationToken.RootCompensationId, "CompensationId must be passed when resuming the Completed bookmark");
 
-            CompensationTokenData compensationToken = compensationExtension.Get(compensationId);
+            var compensationToken = compensationExtension.Get(compensationId);
             Fx.Assert(compensationToken != null, "CompensationTokenData must be valid");
 
             Fx.Assert(compensationToken.CompensationState == CompensationState.Canceling, "CompensationState should be in Canceling state");
@@ -343,10 +343,10 @@ using System.Activities.DynamicUpdate;
 
         private void OnCancellationHandlerComplete(NativeActivityContext context, ActivityInstance completedInstance)
         {
-            CompensationExtension compensationExtension = context.GetExtension<CompensationExtension>();
+            var compensationExtension = context.GetExtension<CompensationExtension>();
             Fx.Assert(compensationExtension != null, "CompensationExtension must be valid");
 
-            CompensationTokenData compensationToken = compensationExtension.Get(this.compensationId.Get(context));
+            var compensationToken = compensationExtension.Get(this.compensationId.Get(context));
             Fx.Assert(compensationToken != null, "CompensationTokenData must be valid");
 
             if (completedInstance.State == ActivityInstanceState.Closed)
@@ -367,10 +367,10 @@ using System.Activities.DynamicUpdate;
 
         private void OnCompensationComplete(NativeActivityContext context, ActivityInstance completedInstance)
         {
-            CompensationExtension compensationExtension = context.GetExtension<CompensationExtension>();
+            var compensationExtension = context.GetExtension<CompensationExtension>();
             Fx.Assert(compensationExtension != null, "CompensationExtension must be valid");
 
-            CompensationTokenData compensationToken = compensationExtension.Get(this.compensationId.Get(context));
+            var compensationToken = compensationExtension.Get(this.compensationId.Get(context));
             Fx.Assert(compensationToken != null, "CompensationTokenData must be valid");
 
             InternalOnCompensationComplete(context, compensationExtension, compensationToken);
@@ -394,10 +394,10 @@ using System.Activities.DynamicUpdate;
 
         private void OnExceptionFromHandler(NativeActivityFaultContext context, Exception propagatedException, ActivityInstance propagatedFrom)
         {
-            CompensationExtension compensationExtension = context.GetExtension<CompensationExtension>();
+            var compensationExtension = context.GetExtension<CompensationExtension>();
             Fx.Assert(compensationExtension != null, "CompensationExtension must be valid");
 
-            CompensationTokenData compensationToken = compensationExtension.Get(this.compensationId.Get(context));
+            var compensationToken = compensationExtension.Get(this.compensationId.Get(context));
             Fx.Assert(compensationToken != null, "CompensationTokenData must be valid");
 
             InvalidOperationException exception = null;

@@ -160,7 +160,7 @@ namespace System.Activities
             }
             else if (this.dictionary != null)
             {
-                bool ret = this.dictionary.Remove(key);
+                var ret = this.dictionary.Remove(key);
 
                 if (this.dictionary.Count == 0)
                 {
@@ -240,7 +240,7 @@ namespace System.Activities
             }
             else if (this.dictionary != null)
             {
-                foreach (KeyValuePair<TKey, TValue> kvp in this.dictionary)
+                foreach (var kvp in this.dictionary)
                 {
                     yield return kvp;
                 }

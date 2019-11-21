@@ -48,8 +48,8 @@ namespace System.Activities.Statements
             // It can't be racing with the persistence thread. 
             // So the table MUST be mutable when this method is called
             Fx.Assert(!_isImmutable, "Add timer is called when table is immutable");
-            DateTime dueTime = TimeoutHelper.Add(DateTime.UtcNow, timeout);
-            TimerData timerData = new TimerData(bookmark, dueTime)
+            var dueTime = TimeoutHelper.Add(DateTime.UtcNow, timeout);
+            var timerData = new TimerData(bookmark, dueTime)
             {
                 //timerData.IOThreadTimer = new IOThreadTimer(this.timerExtension.OnTimerFiredCallback, bookmark, false, 0);
                 //timerData.IOThreadTimer.Set(timeout);
@@ -69,7 +69,7 @@ namespace System.Activities.Statements
             // We don't want to remove 
             if (!_isImmutable)
             {
-                if (_sortedTimerList.TryGetValue(bookmark, out TimerData expirationTimeData))
+                if (_sortedTimerList.TryGetValue(bookmark, out var expirationTimeData))
                 {
                     _sortedTimerList.Remove(bookmark);
                     //expirationTimeData.IOThreadTimer.Cancel();
@@ -144,7 +144,7 @@ namespace System.Activities.Statements
             _timerExtension = timerExtension;
             _sortedTimerList.OnLoad();
 
-            foreach (TimerData timerData in _sortedTimerList.Timers)
+            foreach (var timerData in _sortedTimerList.Timers)
             {
                 //timerData.IOThreadTimer = new IOThreadTimer(this.timerExtension.OnTimerFiredCallback, timerData.Bookmark, false, 0);
                 if (timerData.ExpirationTime <= DateTime.UtcNow)
@@ -169,7 +169,7 @@ namespace System.Activities.Statements
         {
             if (_isImmutable)
             {
-                int index = 0;
+                var index = 0;
                 _isImmutable = false;
 
                 if (_pendingRemoveBookmark != null)
@@ -195,7 +195,7 @@ namespace System.Activities.Statements
         public void Dispose()
         {
             // Cancel the active timer so we stop retrying
-            foreach (TimerData timerData in _sortedTimerList.Timers)
+            foreach (var timerData in _sortedTimerList.Timers)
             {
                 //timerData.IOThreadTimer.Cancel();
                 timerData.DelayTimer.Cancel();
@@ -317,7 +317,7 @@ namespace System.Activities.Statements
 
             public void Add(TimerData timerData)
             {
-                int index = _list.BinarySearch(timerData, TimerComparer.Instance);
+                var index = _list.BinarySearch(timerData, TimerComparer.Instance);
                 if (index < 0)
                 {
                     _list.Insert(~index, timerData);
@@ -336,7 +336,7 @@ namespace System.Activities.Statements
                 if (_dictionary == null)
                 {
                     _dictionary = new Dictionary<Bookmark, TimerData>();
-                    for (int i = 0; i < _list.Count; i++)
+                    for (var i = 0; i < _list.Count; i++)
                     {
                         _dictionary.Add(_list[i].Bookmark, _list[i]);
                     }
@@ -345,9 +345,9 @@ namespace System.Activities.Statements
 
             public void Remove(Bookmark bookmark)
             {
-                if (_dictionary.TryGetValue(bookmark, out TimerData timerData))
+                if (_dictionary.TryGetValue(bookmark, out var timerData))
                 {
-                    int index = _list.BinarySearch(timerData, TimerComparer.Instance);
+                    var index = _list.BinarySearch(timerData, TimerComparer.Instance);
                     _list.RemoveAt(index);
                     _dictionary.Remove(bookmark);
                 }

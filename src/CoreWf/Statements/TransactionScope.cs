@@ -125,7 +125,7 @@ namespace System.Activities.Statements
 
         protected override void CacheMetadata(NativeActivityMetadata metadata)
         {
-            RuntimeArgument timeoutArgument = new RuntimeArgument("Timeout", typeof(TimeSpan), ArgumentDirection.In, false);
+            var timeoutArgument = new RuntimeArgument("Timeout", typeof(TimeSpan), ArgumentDirection.In, false);
             metadata.Bind(this.Timeout, timeoutArgument);
             metadata.SetArgumentsCollection(new Collection<RuntimeArgument> { timeoutArgument });
             metadata.AddImplementationChild(this.NestedScopeTimeoutWorkflow);
@@ -143,9 +143,9 @@ namespace System.Activities.Statements
 
         private Constraint ProcessParentChainConstraints()
         {
-            DelegateInArgument<TransactionScope> element = new DelegateInArgument<TransactionScope> { Name = "element" };
-            DelegateInArgument<ValidationContext> validationContext = new DelegateInArgument<ValidationContext> { Name = "validationContext" };
-            DelegateInArgument<Activity> parent = new DelegateInArgument<Activity> { Name = "parent" };
+            var element = new DelegateInArgument<TransactionScope> { Name = "element" };
+            var validationContext = new DelegateInArgument<ValidationContext> { Name = "validationContext" };
+            var parent = new DelegateInArgument<Activity> { Name = "parent" };
 
             return new Constraint<TransactionScope>
             {
@@ -229,10 +229,10 @@ namespace System.Activities.Statements
 
         private Constraint ProcessChildSubtreeConstraints()
         {
-            DelegateInArgument<TransactionScope> element = new DelegateInArgument<TransactionScope> { Name = "element" };
-            DelegateInArgument<ValidationContext> validationContext = new DelegateInArgument<ValidationContext> { Name = "validationContext" };
-            DelegateInArgument<Activity> child = new DelegateInArgument<Activity> { Name = "child" };
-            Variable<bool> nestedCompensableActivity = new Variable<bool>();
+            var element = new DelegateInArgument<TransactionScope> { Name = "element" };
+            var validationContext = new DelegateInArgument<ValidationContext> { Name = "validationContext" };
+            var child = new DelegateInArgument<Activity> { Name = "child" };
+            var nestedCompensableActivity = new Variable<bool>();
 
             return new Constraint<TransactionScope>
             {
@@ -292,7 +292,7 @@ namespace System.Activities.Statements
 
         protected override void Execute(NativeActivityContext context)
         {
-            RuntimeTransactionHandle transactionHandle = this.runtimeTransactionHandle.Get(context);
+            var transactionHandle = this.runtimeTransactionHandle.Get(context);
             Fx.Assert(transactionHandle != null, "RuntimeTransactionHandle is null");
 
             if (!(context.Properties.Find(runtimeTransactionHandlePropertyName) is RuntimeTransactionHandle foundHandle))
@@ -319,7 +319,7 @@ namespace System.Activities.Statements
                 transactionHandle = foundHandle;
             }
 
-            Transaction transaction = transactionHandle.GetCurrentTransaction(context);
+            var transaction = transactionHandle.GetCurrentTransaction(context);
             //Check if there is already a transaction (Requires Semantics)
             if (transaction == null)
             {
@@ -337,7 +337,7 @@ namespace System.Activities.Statements
                 //Check if the nested TSA had a timeout specified explicitly
                 if (this.isTimeoutSetExplicitly)
                 {
-                    TimeSpan timeout = this.Timeout.Get(context);
+                    var timeout = this.Timeout.Get(context);
                     this.delayWasScheduled.Set(context, true);
                     this.nestedScopeTimeout.Set(context, timeout);
 
@@ -353,8 +353,8 @@ namespace System.Activities.Statements
         {
             Fx.Assert(context != null, "ActivityTransactionContext was null");
 
-            TimeSpan transactionTimeout = this.Timeout.Get(context);
-            TransactionOptions transactionOptions = new TransactionOptions()
+            var transactionTimeout = this.Timeout.Get(context);
+            var transactionOptions = new TransactionOptions()
             {
                 IsolationLevel = this.IsolationLevel,
                 Timeout = transactionTimeout
@@ -375,7 +375,7 @@ namespace System.Activities.Statements
 
         private void OnCompletion(NativeActivityContext context, ActivityInstance instance)
         {
-            RuntimeTransactionHandle transactionHandle = this.runtimeTransactionHandle.Get(context);
+            var transactionHandle = this.runtimeTransactionHandle.Get(context);
             Fx.Assert(transactionHandle != null, "RuntimeTransactionHandle is null");
 
             if (this.delayWasScheduled.Get(context))
@@ -392,7 +392,7 @@ namespace System.Activities.Statements
         {
             if (instance.State == ActivityInstanceState.Closed)
             {
-                RuntimeTransactionHandle handle = context.Properties.Find(runtimeTransactionHandlePropertyName) as RuntimeTransactionHandle;
+                var handle = context.Properties.Find(runtimeTransactionHandlePropertyName) as RuntimeTransactionHandle;
                 Fx.Assert(handle != null, "Internal error.. If we are here, there ought to be an ambient transaction handle");
                 handle.GetCurrentTransaction(context).Rollback();
             }
@@ -401,7 +401,7 @@ namespace System.Activities.Statements
         private void OnTransactionComplete(NativeActivityContext context, Bookmark bookmark, object state)
         {
             Fx.Assert(this.delayWasScheduled.Get(context), "Internal error..Delay should have been scheduled if we are here");
-            ActivityInstance delayActivityInstance = this.nestedScopeTimeoutActivityInstance.Get(context);
+            var delayActivityInstance = this.nestedScopeTimeoutActivityInstance.Get(context);
             if (delayActivityInstance != null)
             {
                 context.CancelChild(delayActivityInstance);
@@ -423,14 +423,14 @@ namespace System.Activities.Statements
 
             protected override void CacheMetadata(CodeActivityMetadata metadata)
             {
-                RuntimeArgument inputArgument = new RuntimeArgument("Input", typeof(Activity), ArgumentDirection.In);
+                var inputArgument = new RuntimeArgument("Input", typeof(Activity), ArgumentDirection.In);
                 if (this.Input == null)
                 {
                     this.Input = new InArgument<Activity>();
                 }
                 metadata.Bind(this.Input, inputArgument);
 
-                RuntimeArgument resultArgument = new RuntimeArgument("Result", typeof(Type), ArgumentDirection.Out);
+                var resultArgument = new RuntimeArgument("Result", typeof(Type), ArgumentDirection.Out);
                 if (this.Result == null)
                 {
                     this.Result = new OutArgument<Type>();
@@ -461,14 +461,14 @@ namespace System.Activities.Statements
 
             protected override void CacheMetadata(CodeActivityMetadata metadata)
             {
-                RuntimeArgument scopeArgument = new RuntimeArgument("Scope", typeof(TransactionScope), ArgumentDirection.In);
+                var scopeArgument = new RuntimeArgument("Scope", typeof(TransactionScope), ArgumentDirection.In);
                 if (this.Scope == null)
                 {
                     this.Scope = new InArgument<TransactionScope>();
                 }
                 metadata.Bind(this.Scope, scopeArgument);
 
-                RuntimeArgument resultArgument = new RuntimeArgument("Result", typeof(IsolationLevel), ArgumentDirection.Out);
+                var resultArgument = new RuntimeArgument("Result", typeof(IsolationLevel), ArgumentDirection.Out);
                 if (this.Result == null)
                 {
                     this.Result = new OutArgument<IsolationLevel>();
@@ -505,21 +505,21 @@ namespace System.Activities.Statements
 
             protected override void CacheMetadata(CodeActivityMetadata metadata)
             {
-                RuntimeArgument parentActivityArgument = new RuntimeArgument("ParentActivity", typeof(Activity), ArgumentDirection.In);
+                var parentActivityArgument = new RuntimeArgument("ParentActivity", typeof(Activity), ArgumentDirection.In);
                 if (this.ParentActivity == null)
                 {
                     this.ParentActivity = new InArgument<Activity>();
                 }
                 metadata.Bind(this.ParentActivity, parentActivityArgument);
 
-                RuntimeArgument isoLevelArgument = new RuntimeArgument("CurrentIsolationLevel", typeof(IsolationLevel), ArgumentDirection.In);
+                var isoLevelArgument = new RuntimeArgument("CurrentIsolationLevel", typeof(IsolationLevel), ArgumentDirection.In);
                 if (this.CurrentIsolationLevel == null)
                 {
                     this.CurrentIsolationLevel = new InArgument<IsolationLevel>();
                 }
                 metadata.Bind(this.CurrentIsolationLevel, isoLevelArgument);
 
-                RuntimeArgument resultArgument = new RuntimeArgument("Result", typeof(bool), ArgumentDirection.Out);
+                var resultArgument = new RuntimeArgument("Result", typeof(bool), ArgumentDirection.Out);
                 if (this.Result == null)
                 {
                     this.Result = new OutArgument<bool>();
@@ -537,11 +537,11 @@ namespace System.Activities.Statements
 
             protected override bool Execute(CodeActivityContext context)
             {
-                Activity parent = this.ParentActivity.Get(context);
+                var parent = this.ParentActivity.Get(context);
 
                 if (parent != null)
                 {
-                    TransactionScope transactionScope = parent as TransactionScope;
+                    var transactionScope = parent as TransactionScope;
                     Fx.Assert(transactionScope != null, "ParentActivity was not of expected type");
 
                     if (transactionScope.IsolationLevel != this.CurrentIsolationLevel.Get(context))
@@ -576,21 +576,21 @@ namespace System.Activities.Statements
 
             protected override void CacheMetadata(CodeActivityMetadata metadata)
             {
-                RuntimeArgument parentActivityArgument = new RuntimeArgument("ParentActivity", typeof(Activity), ArgumentDirection.In);
+                var parentActivityArgument = new RuntimeArgument("ParentActivity", typeof(Activity), ArgumentDirection.In);
                 if (this.ParentActivity == null)
                 {
                     this.ParentActivity = new InArgument<Activity>();
                 }
                 metadata.Bind(this.ParentActivity, parentActivityArgument);
 
-                RuntimeArgument txScopeArgument = new RuntimeArgument("TransactionScope", typeof(TransactionScope), ArgumentDirection.In);
+                var txScopeArgument = new RuntimeArgument("TransactionScope", typeof(TransactionScope), ArgumentDirection.In);
                 if (this.TransactionScope == null)
                 {
                     this.TransactionScope = new InArgument<TransactionScope>();
                 }
                 metadata.Bind(this.TransactionScope, txScopeArgument);
 
-                RuntimeArgument resultArgument = new RuntimeArgument("Result", typeof(bool), ArgumentDirection.Out);
+                var resultArgument = new RuntimeArgument("Result", typeof(bool), ArgumentDirection.Out);
                 if (this.Result == null)
                 {
                     this.Result = new OutArgument<bool>();
@@ -608,13 +608,13 @@ namespace System.Activities.Statements
 
             protected override bool Execute(CodeActivityContext context)
             {
-                Activity parent = this.ParentActivity.Get(context);
+                var parent = this.ParentActivity.Get(context);
 
                 if (parent != null)
                 {
-                    TransactionScope parentTransactionScope = parent as TransactionScope;
+                    var parentTransactionScope = parent as TransactionScope;
                     Fx.Assert(parentTransactionScope != null, "ParentActivity was not of expected type");
-                    TransactionScope currentTransactionScope = this.TransactionScope.Get(context);
+                    var currentTransactionScope = this.TransactionScope.Get(context);
 
                     if (parentTransactionScope.AbortInstanceOnTransactionFailure != currentTransactionScope.AbortInstanceOnTransactionFailure)
                     {

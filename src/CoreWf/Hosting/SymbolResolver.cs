@@ -39,9 +39,9 @@ namespace System.Activities.Hosting
         {
             get
             {
-                List<object> values = new List<object>(this.symbols.Count);
+                var values = new List<object>(this.symbols.Count);
 
-                foreach (ExternalLocationReference reference in this.symbols.Values)
+                foreach (var reference in this.symbols.Values)
                 {
                     values.Add(reference.Value);
                 }
@@ -100,7 +100,7 @@ namespace System.Activities.Hosting
 
         private ExternalLocationReference CreateReference(string name, object value)
         {
-            Type valueType = TypeHelper.ObjectType;
+            var valueType = TypeHelper.ObjectType;
 
             if (value != null)
             {
@@ -123,7 +123,7 @@ namespace System.Activities.Hosting
         public bool Contains(KeyValuePair<string, object> item)
         {
             // We don't need to check key for null since we want the exception to bubble up from the inner dictionary
-            if (this.symbols.TryGetValue(item.Key, out ExternalLocationReference reference))
+            if (this.symbols.TryGetValue(item.Key, out var reference))
             {
                 return item.Value == reference.Value;
             }
@@ -159,7 +159,7 @@ namespace System.Activities.Hosting
                 throw FxTrace.Exception.Argument(nameof(array), SR.CopyToNotEnoughSpaceInArray);
             }
 
-            foreach (KeyValuePair<string, ExternalLocationReference> pair in this.symbols)
+            foreach (var pair in this.symbols)
             {
                 Fx.Assert(arrayIndex < array.Length, "We must have room since we validated it.");
 
@@ -170,7 +170,7 @@ namespace System.Activities.Hosting
 
         public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
         {
-            foreach (KeyValuePair<string, ExternalLocationReference> pair in this.symbols)
+            foreach (var pair in this.symbols)
             {
                 yield return new KeyValuePair<string, object>(pair.Key, pair.Value.Value);
             }
@@ -178,7 +178,7 @@ namespace System.Activities.Hosting
 
         internal IEnumerable<KeyValuePair<string, LocationReference>> GetLocationReferenceEnumerator()
         {
-            foreach (KeyValuePair<string, ExternalLocationReference> pair in this.symbols)
+            foreach (var pair in this.symbols)
             {
                 yield return new KeyValuePair<string, LocationReference>(pair.Key, pair.Value);
             }
@@ -198,7 +198,7 @@ namespace System.Activities.Hosting
         public bool Remove(KeyValuePair<string, object> item)
         {
             // We don't need to check key for null since we want the exception to bubble up from the inner dictionary
-            if (this.symbols.TryGetValue(item.Key, out ExternalLocationReference reference))
+            if (this.symbols.TryGetValue(item.Key, out var reference))
             {
                 if (reference.Value == item.Value)
                 {
@@ -214,7 +214,7 @@ namespace System.Activities.Hosting
         {
             // We don't need to check key for null since we want the exception to bubble up from the inner dictionary
 
-            if (this.symbols.TryGetValue(key, out ExternalLocationReference reference))
+            if (this.symbols.TryGetValue(key, out var reference))
             {
                 value = reference.Value;
                 return true;
@@ -226,7 +226,7 @@ namespace System.Activities.Hosting
 
         internal bool TryGetLocationReference(string name, out LocationReference result)
         {
-            if (this.symbols.TryGetValue(name, out ExternalLocationReference reference))
+            if (this.symbols.TryGetValue(name, out var reference))
             {
                 result = reference;
                 return true;
@@ -246,7 +246,7 @@ namespace System.Activities.Hosting
             }
             else
             {
-                if (this.symbols.TryGetValue(locationReference.Name, out ExternalLocationReference externalLocationReference))
+                if (this.symbols.TryGetValue(locationReference.Name, out var externalLocationReference))
                 {
                     if (externalLocationReference.Type == locationReference.Type)
                     {
@@ -260,7 +260,7 @@ namespace System.Activities.Hosting
 
         private Location GetLocation(string name, Type type)
         {
-            if (this.symbols.TryGetValue(name, out ExternalLocationReference reference))
+            if (this.symbols.TryGetValue(name, out var reference))
             {
                 if (reference.Type == type)
                 {
@@ -316,8 +316,8 @@ namespace System.Activities.Hosting
 
             public override IEnumerable<LocationReference> GetLocationReferences()
             {
-                List<LocationReference> list = new List<LocationReference>();
-                foreach (ExternalLocationReference item in this.symbolResolver.symbols.Values)
+                var list = new List<LocationReference>();
+                foreach (var item in this.symbolResolver.symbols.Values)
                 {
                     list.Add(item);
                 }
@@ -372,7 +372,7 @@ namespace System.Activities.Hosting
 
             public override Location GetLocation(ActivityContext context)
             {
-                SymbolResolver resolver = context.GetExtension<SymbolResolver>();
+                var resolver = context.GetExtension<SymbolResolver>();
 
                 if (resolver == null)
                 {

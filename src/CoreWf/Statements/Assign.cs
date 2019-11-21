@@ -34,26 +34,26 @@ namespace System.Activities.Statements
 
         protected override void CacheMetadata(CodeActivityMetadata metadata)
         {
-            Collection<RuntimeArgument> arguments = new Collection<RuntimeArgument>();
+            var arguments = new Collection<RuntimeArgument>();
             
-            Type valueType = TypeHelper.ObjectType;
+            var valueType = TypeHelper.ObjectType;
 
             if (this.Value != null)
             {
                 valueType = this.Value.ArgumentType;
             }
 
-            RuntimeArgument valueArgument = new RuntimeArgument("Value", valueType, ArgumentDirection.In, true);
+            var valueArgument = new RuntimeArgument("Value", valueType, ArgumentDirection.In, true);
             metadata.Bind(this.Value, valueArgument);
 
-            Type toType = TypeHelper.ObjectType;
+            var toType = TypeHelper.ObjectType;
 
             if (this.To != null)
             {
                 toType = this.To.ArgumentType;
             }
 
-            RuntimeArgument toArgument = new RuntimeArgument("To", toType, ArgumentDirection.Out, true);
+            var toArgument = new RuntimeArgument("To", toType, ArgumentDirection.Out, true);
             metadata.Bind(this.To, toArgument);
 
             arguments.Add(valueArgument);
@@ -104,12 +104,12 @@ namespace System.Activities.Statements
 
         protected override void CacheMetadata(CodeActivityMetadata metadata)
         {
-            Collection<RuntimeArgument> arguments = new Collection<RuntimeArgument>();
+            var arguments = new Collection<RuntimeArgument>();
 
-            RuntimeArgument valueArgument = new RuntimeArgument("Value", typeof(T), ArgumentDirection.In, true);
+            var valueArgument = new RuntimeArgument("Value", typeof(T), ArgumentDirection.In, true);
             metadata.Bind(this.Value, valueArgument);
 
-            RuntimeArgument toArgument = new RuntimeArgument("To", typeof(T), ArgumentDirection.Out, true);
+            var toArgument = new RuntimeArgument("To", typeof(T), ArgumentDirection.Out, true);
             metadata.Bind(this.To, toArgument);
 
             arguments.Add(valueArgument);

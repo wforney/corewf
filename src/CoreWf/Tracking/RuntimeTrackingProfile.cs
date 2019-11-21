@@ -29,7 +29,7 @@ namespace System.Activities.Tracking
             this.isRootNativeActivity = rootElement is NativeActivity;
             this.trackingRecordPreFilter = new TrackingRecordPreFilter();
 
-            foreach (TrackingQuery query in this.associatedProfile.Queries)
+            foreach (var query in this.associatedProfile.Queries)
             {
                 if (query is ActivityStateQuery)
                 {
@@ -130,7 +130,7 @@ namespace System.Activities.Tracking
         {
             this.trackingRecordPreFilter.TrackActivityStateRecords = true;
 
-            foreach (string state in query.States)
+            foreach (var state in query.States)
             {
                 if (string.CompareOrdinal(state, "*") == 0)
                 {
@@ -153,7 +153,7 @@ namespace System.Activities.Tracking
                 this.activitySubscriptions = new Dictionary<string, HybridCollection<ActivityStateQuery>>();
             }
 
-            if (!this.activitySubscriptions.TryGetValue(query.ActivityName, out HybridCollection<ActivityStateQuery> subscription))
+            if (!this.activitySubscriptions.TryGetValue(query.ActivityName, out var subscription))
             {
                 subscription = new HybridCollection<ActivityStateQuery>();
                 this.activitySubscriptions[query.ActivityName] = subscription;
@@ -225,7 +225,7 @@ namespace System.Activities.Tracking
             }
             if (workflowTrackingQuery.HasStates)
             {
-                foreach (string state in workflowTrackingQuery.States)
+                foreach (var state in workflowTrackingQuery.States)
                 {
                     //if duplicates are found, use only the first subscription for a given state.
                     if (!this.workflowEventSubscriptions.ContainsKey(state))
@@ -277,7 +277,7 @@ namespace System.Activities.Tracking
             if (this.activitySubscriptions != null)
             {
                 //first look for a specific match, if not found, look for a generic match.
-                if (this.activitySubscriptions.TryGetValue(activityStateRecord.Activity.Name, out HybridCollection<ActivityStateQuery> eventSubscriptions))
+                if (this.activitySubscriptions.TryGetValue(activityStateRecord.Activity.Name, out var eventSubscriptions))
                 {
                     query = MatchActivityState(activityStateRecord, eventSubscriptions.AsReadOnly());
                 }
@@ -302,7 +302,7 @@ namespace System.Activities.Tracking
         private static ActivityStateQuery MatchActivityState(ActivityStateRecord activityRecord, ReadOnlyCollection<ActivityStateQuery> subscriptions)
         {
             ActivityStateQuery genericMatch = null;
-            for (int i = 0; i < subscriptions.Count; i++)
+            for (var i = 0; i < subscriptions.Count; i++)
             {
                 if (subscriptions[i].States.Contains(activityRecord.State))
                 {
@@ -354,10 +354,10 @@ namespace System.Activities.Tracking
             ActivityScheduledQuery query = null;
             if (this.activityScheduledSubscriptions != null)
             {
-                for (int i = 0; i < this.activityScheduledSubscriptions.Count; i++)
+                for (var i = 0; i < this.activityScheduledSubscriptions.Count; i++)
                 {
                     //check specific and then generic
-                    string activityName = activityScheduledRecord.Activity == null ? null : activityScheduledRecord.Activity.Name;
+                    var activityName = activityScheduledRecord.Activity == null ? null : activityScheduledRecord.Activity.Name;
                     if (string.CompareOrdinal(this.activityScheduledSubscriptions[i].ActivityName, activityName) == 0)
                     {
                         if (CheckSubscription(this.activityScheduledSubscriptions[i].ChildActivityName, activityScheduledRecord.Child.Name))
@@ -395,10 +395,10 @@ namespace System.Activities.Tracking
             FaultPropagationQuery query = null;
             if (this.faultPropagationSubscriptions != null)
             {
-                for (int i = 0; i < this.faultPropagationSubscriptions.Count; i++)
+                for (var i = 0; i < this.faultPropagationSubscriptions.Count; i++)
                 {
                     //check specific and then generic
-                    string faultHandlerName = faultRecord.FaultHandler == null ? null : faultRecord.FaultHandler.Name;
+                    var faultHandlerName = faultRecord.FaultHandler == null ? null : faultRecord.FaultHandler.Name;
                     if (string.CompareOrdinal(this.faultPropagationSubscriptions[i].FaultSourceActivityName, faultRecord.FaultSource.Name) == 0)
                     {
                         if (CheckSubscription(this.faultPropagationSubscriptions[i].FaultHandlerActivityName, faultHandlerName))
@@ -436,10 +436,10 @@ namespace System.Activities.Tracking
 
             if (this.cancelRequestedSubscriptions != null)
             {
-                for (int i = 0; i < this.cancelRequestedSubscriptions.Count; i++)
+                for (var i = 0; i < this.cancelRequestedSubscriptions.Count; i++)
                 {
                     //check specific and then generic
-                    string activityName = cancelRecord.Activity == null ? null : cancelRecord.Activity.Name;
+                    var activityName = cancelRecord.Activity == null ? null : cancelRecord.Activity.Name;
                     if (string.CompareOrdinal(this.cancelRequestedSubscriptions[i].ActivityName, activityName) == 0)
                     {
                         if (CheckSubscription(this.cancelRequestedSubscriptions[i].ChildActivityName, cancelRecord.Child.Name))
@@ -477,7 +477,7 @@ namespace System.Activities.Tracking
 
             if (this.customTrackingQuerySubscriptions != null)
             {
-                for (int i = 0; i < this.customTrackingQuerySubscriptions.Count; i++)
+                for (var i = 0; i < this.customTrackingQuerySubscriptions.Count; i++)
                 {
                     //check specific and then generic
                     if (string.CompareOrdinal(this.customTrackingQuerySubscriptions[i].Name, customRecord.Name) == 0)
@@ -534,7 +534,7 @@ namespace System.Activities.Tracking
 
         private static TrackingRecord PrepareRecord(TrackingRecord record, TrackingQuery query, bool shouldClone)
         {
-            TrackingRecord preparedRecord = shouldClone ? record.Clone() : record;
+            var preparedRecord = shouldClone ? record.Clone() : record;
 
             if (query.HasAnnotations)
             {
@@ -578,8 +578,8 @@ namespace System.Activities.Tracking
                     }
                     else
                     {
-                        ReadOnlyCollection<RuntimeTrackingProfile> runtimeProfileCollection = runtimeProfileList.AsReadOnly();
-                        foreach (RuntimeTrackingProfile runtimeProfile in runtimeProfileCollection)
+                        var runtimeProfileCollection = runtimeProfileList.AsReadOnly();
+                        foreach (var runtimeProfile in runtimeProfileCollection)
                         {
                             if (string.CompareOrdinal(profile.Name, runtimeProfile.associatedProfile.Name) == 0 &&
                                 string.CompareOrdinal(profile.ActivityDefinitionId, runtimeProfile.associatedProfile.ActivityDefinitionId) == 0)

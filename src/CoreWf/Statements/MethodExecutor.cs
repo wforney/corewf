@@ -47,7 +47,7 @@ namespace System.Activities.Statements
         {
             if (parameters.Length > 0)
             {
-                ParameterInfo last = parameters[parameters.Length - 1];
+                var last = parameters[parameters.Length - 1];
                 return last.GetCustomAttributes(typeof(ParamArrayAttribute), true).GetLength(0) > 0;
             }
             else
@@ -59,21 +59,21 @@ namespace System.Activities.Statements
         protected object[] EvaluateAndPackParameters(CodeActivityContext context, MethodInfo method,
             bool usingAsyncPattern)
         {
-            ParameterInfo[] formalParameters = method.GetParameters();
-            int formalParamCount = formalParameters.Length;
-            object[] actualParameters = new object[formalParamCount];
+            var formalParameters = method.GetParameters();
+            var formalParamCount = formalParameters.Length;
+            var actualParameters = new object[formalParamCount];
 
             if (usingAsyncPattern)
             {
                 formalParamCount -= 2;
             }
 
-            bool haveParameterArray = HaveParameterArray(formalParameters);
-            for (int i = 0; i < formalParamCount; i++)
+            var haveParameterArray = HaveParameterArray(formalParameters);
+            for (var i = 0; i < formalParamCount; i++)
             {
                 if (i == formalParamCount - 1 && !usingAsyncPattern && haveParameterArray)
                 {
-                    int paramArrayCount = this.parameters.Count - formalParamCount + 1;
+                    var paramArrayCount = this.parameters.Count - formalParamCount + 1;
 
                     // If params are given explicitly, that's okay.
                     if (paramArrayCount == 1 && TypeHelper.AreTypesCompatible(this.parameters[i].ArgumentType,
@@ -86,7 +86,7 @@ namespace System.Activities.Statements
                         // Otherwise, pack them into an array for the reflection call.
                         actualParameters[i] =
                             Activator.CreateInstance(formalParameters[i].ParameterType, paramArrayCount);
-                        for (int j = 0; j < paramArrayCount; j++)
+                        for (var j = 0; j < paramArrayCount; j++)
                         {
                             ((object[])actualParameters[i])[j] = this.parameters[i + j].Get<object>(context);
                         }
@@ -141,7 +141,7 @@ namespace System.Activities.Statements
 
         public void SetOutArgumentAndReturnValue(ActivityContext context, object state, object[] actualParameters)
         {
-            for (int index = 0; index < parameters.Count; index++)
+            for (var index = 0; index < parameters.Count; index++)
             {
                 if (parameters[index].Direction != ArgumentDirection.In)
                 {

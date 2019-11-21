@@ -45,7 +45,7 @@ namespace System.Activities.Tracking
             this.Level = record.Level;
             if (record.HasAnnotations)
             {
-                Dictionary<string, string> copy = new Dictionary<string, string>(record._annotations);
+                var copy = new Dictionary<string, string>(record._annotations);
                 _annotations = new ReadOnlyDictionary<string, string>(copy);
             }
         }

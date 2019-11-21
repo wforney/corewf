@@ -22,17 +22,17 @@ namespace System.Activities.XamlIntegration
         {
             if (value is string stringValue)
             {
-                AssemblyReference result = new AssemblyReference
+                var result = new AssemblyReference
                 {
                     AssemblyName = new AssemblyName(stringValue)
                 };
 
-                XamlSchemaContext schemaContext = GetSchemaContext(context);
+                var schemaContext = GetSchemaContext(context);
                 if (schemaContext != null &&
                     schemaContext.ReferenceAssemblies != null &&
                     schemaContext.ReferenceAssemblies.Count > 0)
                 {
-                    Assembly assembly = ResolveAssembly(result.AssemblyName, schemaContext.ReferenceAssemblies);
+                    var assembly = ResolveAssembly(result.AssemblyName, schemaContext.ReferenceAssemblies);
                     if (assembly != null)
                     {
                         result.Assembly = assembly;
@@ -58,7 +58,7 @@ namespace System.Activities.XamlIntegration
 
         public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
         {
-            AssemblyReference reference = value as AssemblyReference;
+            var reference = value as AssemblyReference;
             if (destinationType == typeof(string) && reference != null)
             {
                 if (reference.AssemblyName != null)
@@ -67,14 +67,14 @@ namespace System.Activities.XamlIntegration
                 }
                 else if (reference.Assembly != null)
                 {
-                    XamlSchemaContext schemaContext = GetSchemaContext(context);
+                    var schemaContext = GetSchemaContext(context);
                     if (schemaContext == null || schemaContext.FullyQualifyAssemblyNamesInClrNamespaces)
                     {
                         return reference.Assembly.FullName;
                     }
                     else
                     {
-                        AssemblyName assemblyName = AssemblyReference.GetFastAssemblyName(reference.Assembly);
+                        var assemblyName = AssemblyReference.GetFastAssemblyName(reference.Assembly);
                         return assemblyName.Name;
                     }
                 }
@@ -94,9 +94,9 @@ namespace System.Activities.XamlIntegration
 
         private static Assembly ResolveAssembly(AssemblyName assemblyReference, IEnumerable<Assembly> assemblies)
         {
-            foreach (Assembly assembly in assemblies)
+            foreach (var assembly in assemblies)
             {
-                AssemblyName assemblyName = AssemblyReference.GetFastAssemblyName(assembly);
+                var assemblyName = AssemblyReference.GetFastAssemblyName(assembly);
                 if (AssemblyReference.AssemblySatisfiesReference(assemblyName, assemblyReference))
                 {
                     return assembly;

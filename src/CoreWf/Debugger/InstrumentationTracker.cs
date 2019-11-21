@@ -11,15 +11,15 @@ namespace System.Activities.Debugger
     // - which subroots share the same source file
     // SubRoot is defined as an activity that has a source file
     // (Custom Activity).
-    class InstrumentationTracker
+    internal class InstrumentationTracker
     {
         // Root of the workflow to keep track.
-        Activity root;
+        private Activity root;
 
         // Mapping of subroots to their source files.
-        Dictionary<Activity, string> uninstrumentedSubRoots;
+        private Dictionary<Activity, string> uninstrumentedSubRoots;
 
-        Dictionary<Activity, string> UninstrumentedSubRoots
+        private Dictionary<Activity, string> UninstrumentedSubRoots
         {
             get
             {
@@ -37,20 +37,20 @@ namespace System.Activities.Debugger
         }
 
         // Initialize UninstrumentedSubRoots by traversing the workflow.
-        void InitializeUninstrumentedSubRoots()
+        private void InitializeUninstrumentedSubRoots()
         {
             this.uninstrumentedSubRoots = new Dictionary<Activity, string>();
 
-            Queue<Activity> activitiesRemaining = new Queue<Activity>();
+            var activitiesRemaining = new Queue<Activity>();
 
             CollectSubRoot(this.root);
             activitiesRemaining.Enqueue(this.root);
 
             while (activitiesRemaining.Count > 0)
             {
-                Activity toProcess = activitiesRemaining.Dequeue();
+                var toProcess = activitiesRemaining.Dequeue();
 
-                foreach (Activity activity in WorkflowInspectionServices.GetActivities(toProcess))
+                foreach (var activity in WorkflowInspectionServices.GetActivities(toProcess))
                 {
                     if (!uninstrumentedSubRoots.ContainsKey(activity))
                     {
@@ -62,16 +62,16 @@ namespace System.Activities.Debugger
         }
 
         // Collect subroot as uninstrumented activity.
-        void CollectSubRoot(Activity activity)
+        private void CollectSubRoot(Activity activity)
         {
-            string wfSymbol = DebugSymbol.GetSymbol(activity) as string;
+            var wfSymbol = DebugSymbol.GetSymbol(activity) as string;
             if (!string.IsNullOrEmpty(wfSymbol))
             {
                 this.uninstrumentedSubRoots.Add(activity, wfSymbol);
             }
             else
             {
-                string sourcePath = XamlDebuggerXmlReader.GetFileName(activity) as string;
+                var sourcePath = XamlDebuggerXmlReader.GetFileName(activity) as string;
                 if (!string.IsNullOrEmpty(sourcePath))
                 {
                     this.uninstrumentedSubRoots.Add(activity, sourcePath);
@@ -92,10 +92,10 @@ namespace System.Activities.Debugger
         public List<Activity> GetSameSourceSubRoots(Activity subRoot)
         {
             string sourcePath;
-            List<Activity> sameSourceSubRoots = new List<Activity>();
+            var sameSourceSubRoots = new List<Activity>();
             if (this.UninstrumentedSubRoots.TryGetValue(subRoot, out sourcePath))
             {
-                foreach (KeyValuePair<Activity, string> entry in this.UninstrumentedSubRoots)
+                foreach (var entry in this.UninstrumentedSubRoots)
                 {
                     if (entry.Value == sourcePath && entry.Key != subRoot)
                     {

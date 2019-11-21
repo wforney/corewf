@@ -1,5 +1,5 @@
-// This file is part of Core WF which is licensed under the MIT license.
-// See LICENSE file in the project root for full license information.
+// This file is part of Core WF which is licensed under the MIT license. See LICENSE file in the
+// project root for full license information.
 
 using System;
 using System.Activities;
@@ -17,14 +17,36 @@ namespace TestCases.Runtime.WorkflowInstanceTest
 {
     public class WorflowInstanceResumeBookmarkAsyncTests
     {
+        public static void ResumeBookmarkCallback(IAsyncResult result)
+        {
+            var asyncState = (TestWorkflowRuntimeAsyncState)result.AsyncState;
+            var operationId = (int)asyncState.State;
+            if (operationId == 2)
+            {
+                asyncState.Instance.ResumeBookmark("Read1", 99);
+            }
+            else if (operationId == 3)
+            {
+                asyncState.Instance.Persist();
+            }
+            else if (operationId == 4)
+            {
+                asyncState.Instance.Persist();
+                asyncState.Instance.Unload();
+            }
+
+            TestTraceManager.Instance.AddTrace(asyncState.Instance.Id, new UserTrace("After ResumeBookmarkCallback"));
+            //UserTrace.Trace(asyncState.Instance.Id, "After ResumeBookmarkCallback");
+        }
+
         [Theory]
         // Test resume bookmark with callback
         [InlineData(2)]
         public static void TestOperationsResumeBookmarkCallback(int operationId)
         {
-            Variable<int> value = VariableHelper.Create<int>("value");
+            var value = VariableHelper.Create<int>("value");
             const string WaitMessage = "WaitActivity will wait for this trace";
-            TestSequence testSequence = new TestSequence()
+            var testSequence = new TestSequence()
             {
                 Variables = { value },
                 Activities =
@@ -53,12 +75,12 @@ namespace TestCases.Runtime.WorkflowInstanceTest
                 }
             };
 
-            JsonFileInstanceStore.FileInstanceStore jsonStore = new JsonFileInstanceStore.FileInstanceStore(".\\~");
-            TestWorkflowRuntime workflowRuntime = TestRuntime.CreateTestWorkflowRuntime(testSequence, null, jsonStore, PersistableIdleAction.Unload);
+            var jsonStore = new JsonFileInstanceStore.FileInstanceStore(".\\~");
+            var workflowRuntime = TestRuntime.CreateTestWorkflowRuntime(testSequence, null, jsonStore, PersistableIdleAction.Unload);
             workflowRuntime.ExecuteWorkflow();
             workflowRuntime.WaitForActivityStatusChange("WaitActivity", TestActivityInstanceState.Executing);
 
-            TestWorkflowRuntimeAsyncResult asyncResult = workflowRuntime.BeginResumeBookMark("Read", 10, new AsyncCallback(ResumeBookmarkCallback), operationId);
+            var asyncResult = workflowRuntime.BeginResumeBookMark("Read", 10, new AsyncCallback(ResumeBookmarkCallback), operationId);
             //Continue the WaitActivity
             TestTraceManager.Instance.AddTrace(workflowRuntime.CurrentWorkflowInstanceId, new SynchronizeTrace(WaitMessage));
             SynchronizeTrace.Trace(workflowRuntime.CurrentWorkflowInstanceId, WaitMessage);
@@ -83,31 +105,77 @@ namespace TestCases.Runtime.WorkflowInstanceTest
                 workflowRuntime.ResumeBookMark("Read1", 99);
             }
 
-            ExpectedTrace expectedTrace = testSequence.GetExpectedTrace();
+            var expectedTrace = testSequence.GetExpectedTrace();
             expectedTrace.AddIgnoreTypes(typeof(UserTrace));
             workflowRuntime.WaitForCompletion(expectedTrace);
         }
 
-        public static void ResumeBookmarkCallback(IAsyncResult result)
+        [Fact()]
+        public static void TestPersistDuringResumeBookmark()
         {
-            TestWorkflowRuntimeAsyncState asyncState = (TestWorkflowRuntimeAsyncState)result.AsyncState;
-            int operationId = (int)asyncState.State;
-            if (operationId == 2)
+            var isSync = true;
+            var value = VariableHelper.Create<int>("value");
+            var persist = VariableHelper.Create<string>("persist");
+            const string WaitMessage = "Continue the WaitActivity";
+
+            var testSequence = new TestSequence()
             {
-                asyncState.Instance.ResumeBookmark("Read1", 99);
+                Variables = { value, persist },
+                Activities =
+                {
+                    new TestWriteLine()
+                    {
+                        Message = "Workflow Started"
+                    },
+                    new TestWaitForTrace()
+                    {
+                        DisplayName = "WaitActivity",
+                        TraceToWait = WaitMessage,
+                        DelayDuration = TimeSpan.FromMilliseconds(10)
+                    },
+                    new TestWaitReadLine<int>("Read", "Read")
+                    {
+                        BookmarkValue = value,
+                        WaitTime = TimeSpan.FromSeconds(1)
+                    },
+                    new TestReadLine<string>("PersistBookmark", "PersistBookmark")
+                    {
+                        BookmarkValue = persist
+                    },
+                    new TestWriteLine()
+                    {
+                        MessageExpression = ((env)=>value.Get(env).ToString()),
+                        HintMessage = "9999"
+                    }
+                }
+            };
+
+            var jsonStore = new JsonFileInstanceStore.FileInstanceStore(".\\~");
+            var workflowRuntime = TestRuntime.CreateTestWorkflowRuntime(testSequence, null, jsonStore, PersistableIdleAction.Unload);
+            workflowRuntime.ExecuteWorkflow();
+            workflowRuntime.WaitForActivityStatusChange("WaitActivity", TestActivityInstanceState.Executing);
+            TestTraceManager.Instance.AddTrace(workflowRuntime.CurrentWorkflowInstanceId, new SynchronizeTrace(WaitMessage));
+            SynchronizeTrace.Trace(workflowRuntime.CurrentWorkflowInstanceId, WaitMessage);
+
+            if (isSync)
+            {
+                workflowRuntime.ResumeBookMark("Read", 9999);
+                workflowRuntime.PersistWorkflow();
             }
-            else if (operationId == 3)
+            else
             {
-                asyncState.Instance.Persist();
-            }
-            else if (operationId == 4)
-            {
-                asyncState.Instance.Persist();
-                asyncState.Instance.Unload();
+                var asyncResultResume = workflowRuntime.BeginResumeBookMark("Read", 9999, null, null);
+                var asyncResultPersist = workflowRuntime.BeginPersistWorkflow(null, null);
+
+                workflowRuntime.EndResumeBookMark(asyncResultResume);
+                workflowRuntime.EndPersistWorkflow(asyncResultPersist);
             }
 
-            TestTraceManager.Instance.AddTrace(asyncState.Instance.Id, new UserTrace("After ResumeBookmarkCallback"));
-            //UserTrace.Trace(asyncState.Instance.Id, "After ResumeBookmarkCallback");
+            workflowRuntime.WaitForActivityStatusChange("PersistBookmark", TestActivityInstanceState.Executing);
+            workflowRuntime.WaitForUnloaded(1);
+            workflowRuntime.LoadWorkflow();
+            workflowRuntime.ResumeBookMark("PersistBookmark", "Yes");
+            workflowRuntime.WaitForCompletion(false);
         }
 
         [Theory]
@@ -125,12 +193,12 @@ namespace TestCases.Runtime.WorkflowInstanceTest
         [InlineData(4, false)]
         private static void TestInstanceOperationFromResumeBookmarkCallback(int operationsId, bool isSync)
         {
-            string shouldNotExecuteMsg = "Should not see this message";
-            Variable<int> value = VariableHelper.Create<int>("value");
-            TestWriteLine writeLineNotRun = new TestWriteLine("NotExecuted", shouldNotExecuteMsg)
+            var shouldNotExecuteMsg = "Should not see this message";
+            var value = VariableHelper.Create<int>("value");
+            var writeLineNotRun = new TestWriteLine("NotExecuted", shouldNotExecuteMsg)
             {
             };
-            TestSequence testSequence = new TestSequence()
+            var testSequence = new TestSequence()
             {
                 Variables = { value },
                 Activities =
@@ -152,7 +220,7 @@ namespace TestCases.Runtime.WorkflowInstanceTest
                 testSequence.ExpectedOutcome = Outcome.Canceled;
             }
 
-            ExpectedTrace expectedTrace = testSequence.GetExpectedTrace();
+            var expectedTrace = testSequence.GetExpectedTrace();
 
             if (operationsId == 4)
             {
@@ -164,18 +232,18 @@ namespace TestCases.Runtime.WorkflowInstanceTest
                 expectedTrace.Trace.Steps.Add(new ActivityTrace(testSequence.DisplayName, ActivityInstanceState.Faulted));
             }
 
-
             //Now Add TestWriteLine to workflow
             testSequence.Activities.Add(writeLineNotRun);
 
             TestWorkflowRuntimeAsyncResult asyncResultResume = null;
             TestWorkflowRuntimeAsyncResult asyncResultOperation = null;
-            string message = "";
+            var message = "";
 
             //Execute Workflow
-            JsonFileInstanceStore.FileInstanceStore jsonStore = new JsonFileInstanceStore.FileInstanceStore(".\\~");
-            // using PersistableIdleAction.None here because the idle unload was racing with the resume bookmark after the wait for the BeforeWait trace.
-            TestWorkflowRuntime workflowRuntime = TestRuntime.CreateTestWorkflowRuntime(testSequence, null, jsonStore, PersistableIdleAction.None);
+            var jsonStore = new JsonFileInstanceStore.FileInstanceStore(".\\~");
+            // using PersistableIdleAction.None here because the idle unload was racing with the
+            // resume bookmark after the wait for the BeforeWait trace.
+            var workflowRuntime = TestRuntime.CreateTestWorkflowRuntime(testSequence, null, jsonStore, PersistableIdleAction.None);
             workflowRuntime.ExecuteWorkflow();
             workflowRuntime.WaitForActivityStatusChange("Read", TestActivityInstanceState.Executing);
             if (isSync)
@@ -209,6 +277,7 @@ namespace TestCases.Runtime.WorkflowInstanceTest
                         }
                         //Trace.WriteLine should not execute
                         break;
+
                     case 3:
                         //Terminate Workflow during OnResumeBookmark is executing
                         //Log.Info("TerminateWorkflow during OnResumeBookmark executing");
@@ -225,6 +294,7 @@ namespace TestCases.Runtime.WorkflowInstanceTest
                         }
                         //Trace.WriteLine should not execute.
                         break;
+
                     case 4:
                         //Unload Workflow during OnResumeBookmark is executing
                         //This should wait till ResumeMark finishes the work
@@ -263,14 +333,14 @@ namespace TestCases.Runtime.WorkflowInstanceTest
                         }
                     case 3:
                         {
-                            workflowRuntime.WaitForTerminated(1, out Exception terminationException, expectedTrace);
+                            workflowRuntime.WaitForTerminated(1, out var terminationException, expectedTrace);
                             break;
                         }
                     case 4:
                         {
-                            // We tried to do a ResumeWorkflow without loading it after an unload, so we expected
-                            // to get a WorkflowApplicationUnloadedException. The workflow will never complete,
-                            // so don't wait for it to complete.
+                            // We tried to do a ResumeWorkflow without loading it after an unload,
+                            // so we expected to get a WorkflowApplicationUnloadedException. The
+                            // workflow will never complete, so don't wait for it to complete.
                             break;
                         }
                 }
@@ -295,74 +365,6 @@ namespace TestCases.Runtime.WorkflowInstanceTest
                     throw new Exception("The NotExecuted WriteLine activity has been executed, the expectation is it does not");
                 }
             }
-        }
-
-        [Fact()]
-        public static void TestPersistDuringResumeBookmark()
-        {
-            bool isSync = true;
-            Variable<int> value = VariableHelper.Create<int>("value");
-            Variable<string> persist = VariableHelper.Create<string>("persist");
-            const string WaitMessage = "Continue the WaitActivity";
-
-            TestSequence testSequence = new TestSequence()
-            {
-                Variables = { value, persist },
-                Activities =
-                {
-                    new TestWriteLine()
-                    {
-                        Message = "Workflow Started"
-                    },
-                    new TestWaitForTrace()
-                    {
-                        DisplayName = "WaitActivity",
-                        TraceToWait = WaitMessage,
-                        DelayDuration = TimeSpan.FromMilliseconds(10)
-                    },
-                    new TestWaitReadLine<int>("Read", "Read")
-                    {
-                        BookmarkValue = value,
-                        WaitTime = TimeSpan.FromSeconds(1)
-                    },
-                    new TestReadLine<string>("PersistBookmark", "PersistBookmark")
-                    {
-                        BookmarkValue = persist
-                    },
-                    new TestWriteLine()
-                    {
-                        MessageExpression = ((env)=>value.Get(env).ToString()),
-                        HintMessage = "9999"
-                    }
-                }
-            };
-
-            JsonFileInstanceStore.FileInstanceStore jsonStore = new JsonFileInstanceStore.FileInstanceStore(".\\~");
-            TestWorkflowRuntime workflowRuntime = TestRuntime.CreateTestWorkflowRuntime(testSequence, null, jsonStore, PersistableIdleAction.Unload);
-            workflowRuntime.ExecuteWorkflow();
-            workflowRuntime.WaitForActivityStatusChange("WaitActivity", TestActivityInstanceState.Executing);
-            TestTraceManager.Instance.AddTrace(workflowRuntime.CurrentWorkflowInstanceId, new SynchronizeTrace(WaitMessage));
-            SynchronizeTrace.Trace(workflowRuntime.CurrentWorkflowInstanceId, WaitMessage);
-
-            if (isSync)
-            {
-                workflowRuntime.ResumeBookMark("Read", 9999);
-                workflowRuntime.PersistWorkflow();
-            }
-            else
-            {
-                TestWorkflowRuntimeAsyncResult asyncResultResume = workflowRuntime.BeginResumeBookMark("Read", 9999, null, null);
-                TestWorkflowRuntimeAsyncResult asyncResultPersist = workflowRuntime.BeginPersistWorkflow(null, null);
-
-                workflowRuntime.EndResumeBookMark(asyncResultResume);
-                workflowRuntime.EndPersistWorkflow(asyncResultPersist);
-            }
-
-            workflowRuntime.WaitForActivityStatusChange("PersistBookmark", TestActivityInstanceState.Executing);
-            workflowRuntime.WaitForUnloaded(1);
-            workflowRuntime.LoadWorkflow();
-            workflowRuntime.ResumeBookMark("PersistBookmark", "Yes");
-            workflowRuntime.WaitForCompletion(false);
         }
     }
 }

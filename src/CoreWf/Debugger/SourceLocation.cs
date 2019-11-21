@@ -26,12 +26,12 @@ namespace System.Activities.Debugger
     [Fx.Tag.XamlVisible(false)]
     public class SourceLocation
     {
-        string fileName;
-        int startLine;
-        int endLine;
-        int startColumn;
-        int endColumn;
-        byte[] checksum;
+        private string fileName;
+        private int startLine;
+        private int endLine;
+        private int startColumn;
+        private int endColumn;
+        private byte[] checksum;
 
         // Define a source location from a filename and line-number (1-based).
         // This is a convenience constructor to specify the entire line.
@@ -63,32 +63,32 @@ namespace System.Activities.Debugger
         {
             if (startLine <= 0)
             {
-                throw FxTrace.Exception.Argument("startLine", SR.InvalidSourceLocationLineNumber("startLine", startLine));
+                throw FxTrace.Exception.Argument(nameof(startLine), SR.InvalidSourceLocationLineNumber("startLine", startLine));
             }
 
             if (startColumn <= 0)
             {
-                throw FxTrace.Exception.Argument("startColumn", SR.InvalidSourceLocationColumn("startColumn", startColumn));
+                throw FxTrace.Exception.Argument(nameof(startColumn), SR.InvalidSourceLocationColumn("startColumn", startColumn));
             }
 
             if (endLine <= 0)
             {
-                throw FxTrace.Exception.Argument("endLine", SR.InvalidSourceLocationLineNumber("endLine", endLine));
+                throw FxTrace.Exception.Argument(nameof(endLine), SR.InvalidSourceLocationLineNumber("endLine", endLine));
             }
 
             if (endColumn <= 0)
             {
-                throw FxTrace.Exception.Argument("endColumn", SR.InvalidSourceLocationColumn("endColumn", endColumn));
+                throw FxTrace.Exception.Argument(nameof(endColumn), SR.InvalidSourceLocationColumn("endColumn", endColumn));
             }
 
             if (startLine > endLine)
             {
-                throw FxTrace.Exception.ArgumentOutOfRange("endLine", endLine, SR.OutOfRangeSourceLocationEndLine(startLine));
+                throw FxTrace.Exception.ArgumentOutOfRange(nameof(endLine), endLine, SR.OutOfRangeSourceLocationEndLine(startLine));
             }
 
             if ((startLine == endLine) && (startColumn > endColumn))
             {
-                throw FxTrace.Exception.ArgumentOutOfRange("endColumn", endColumn, SR.OutOfRangeSourceLocationEndColumn(startColumn));
+                throw FxTrace.Exception.ArgumentOutOfRange(nameof(endColumn), endColumn, SR.OutOfRangeSourceLocationEndColumn(startColumn));
             }
 
             this.fileName = (fileName != null) ? fileName.ToUpperInvariant() : null;
@@ -146,7 +146,7 @@ namespace System.Activities.Debugger
         // not for superset or subset relationships.
         public override bool Equals(object obj)
         {
-            SourceLocation rsl = obj as SourceLocation;
+            var rsl = obj as SourceLocation;
             if (rsl == null)
             {
                 return false;

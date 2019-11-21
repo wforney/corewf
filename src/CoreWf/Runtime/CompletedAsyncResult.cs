@@ -37,7 +37,7 @@ namespace System.Activities.Runtime
         public static T End(IAsyncResult result)
         {
             Fx.AssertAndThrowFatal(result.IsCompleted, "CompletedAsyncResult<T> was not completed!");
-            CompletedAsyncResult<T> completedResult = AsyncResult.End<CompletedAsyncResult<T>>(result);
+            var completedResult = AsyncResult.End<CompletedAsyncResult<T>>(result);
             return completedResult._data;
         }
     }
@@ -59,7 +59,7 @@ namespace System.Activities.Runtime
         public static TResult End(IAsyncResult result, out TParameter parameter)
         {
             Fx.AssertAndThrowFatal(result.IsCompleted, "CompletedAsyncResult<T> was not completed!");
-            CompletedAsyncResult<TResult, TParameter> completedResult = AsyncResult.End<CompletedAsyncResult<TResult, TParameter>>(result);
+            var completedResult = AsyncResult.End<CompletedAsyncResult<TResult, TParameter>>(result);
             parameter = completedResult._parameter;
             return completedResult._resultData;
         }

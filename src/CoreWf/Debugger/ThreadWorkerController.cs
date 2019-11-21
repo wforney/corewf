@@ -22,30 +22,29 @@ namespace System.Activities.Debugger
     [DebuggerNonUserCode]
     public class ThreadWorkerController
     {
-        StateManager stateManager;
+        private StateManager stateManager;
 
         // Set to true to notify to Break on first instruction. This helps the F11 on startup experience.
         // Since the islands are on a new thread, there may be no user code on the main thread and so 
         // F11 doesn't work. Thus the new worker thread needs to fire some break event.
         // This gets reset after the 'startup breakpoint'.
         // The initial Properties can override this.
-        bool breakOnStartup;
+        private bool breakOnStartup;
 
         // Own the worker thread.
-        Thread worker;
+        private Thread worker;
 
         // Signalled when the main thread wants to send an event to the worker thread.
         // The main thread fills out the data first. 
-        AutoResetEvent eventSend;
+        private AutoResetEvent eventSend;
 
         // Signalled by the worker thread when it's finished handling the event and 
         // the main thread can resume.
-        AutoResetEvent eventDone;
-
-        EventCode eventCode;
+        private AutoResetEvent eventDone;
+        private EventCode eventCode;
 
         // Parameter for enter message. 
-        VirtualStackFrame enterStackParameter;
+        private VirtualStackFrame enterStackParameter;
 
         internal void Initialize(string threadName, StateManager manager)
         {
@@ -63,7 +62,7 @@ namespace System.Activities.Debugger
         }
 
         [DebuggerHidden]
-        void WorkerThreadProc()
+        private void WorkerThreadProc()
         {
             Worker(false);
 
@@ -100,7 +99,7 @@ namespace System.Activities.Debugger
             }
 
             // The final terminator is when leave returns, but from a recursive call.
-            bool leave = false;
+            var leave = false;
             while (!leave)
             {
                 this.eventSend.WaitOne();
@@ -126,13 +125,13 @@ namespace System.Activities.Debugger
             }
         }
 
-        void CreateWorkerThread(string threadName)
+        private void CreateWorkerThread(string threadName)
         {
             this.eventSend = new AutoResetEvent(false);
             this.eventDone = new AutoResetEvent(false);
             this.worker = new Thread(new ThreadStart(WorkerThreadProc));
 
-            string name = string.IsNullOrEmpty(threadName) ? this.stateManager.ManagerProperties.AuxiliaryThreadName : threadName;
+            var name = string.IsNullOrEmpty(threadName) ? this.stateManager.ManagerProperties.AuxiliaryThreadName : threadName;
             if (name != null)
             {
                 this.worker.Name = name;
@@ -173,7 +172,7 @@ namespace System.Activities.Debugger
         }
 
         // Type of event being fired.
-        enum EventCode
+        private enum EventCode
         {
             Enter,
             Leave,

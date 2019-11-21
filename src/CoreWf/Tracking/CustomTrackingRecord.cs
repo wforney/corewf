@@ -46,7 +46,7 @@ namespace System.Activities.Tracking
             this.Activity = record.Activity;
             if (record._data != null && record._data.Count > 0)
             {
-                foreach (KeyValuePair<string, object> item in record._data)
+                foreach (var item in record._data)
                 {
                     this.Data.Add(item);
                 }

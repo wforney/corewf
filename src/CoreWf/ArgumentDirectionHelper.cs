@@ -1,5 +1,5 @@
-// This file is part of Core WF which is licensed under the MIT license.
-// See LICENSE file in the project root for full license information.
+// This file is part of Core WF which is licensed under the MIT license. See LICENSE file in the
+// project root for full license information.
 
 namespace System.Activities
 {
@@ -8,10 +8,13 @@ namespace System.Activities
 
     internal static class ArgumentDirectionHelper
     {
-        internal static bool IsDefined(ArgumentDirection direction)
-        {
-            return (direction == ArgumentDirection.In || direction == ArgumentDirection.Out || direction == ArgumentDirection.InOut);
-        }
+        public static bool IsIn(Argument argument) => ArgumentDirectionHelper.IsIn(argument.Direction);
+
+        public static bool IsIn(ArgumentDirection direction) => (direction == ArgumentDirection.In) || (direction == ArgumentDirection.InOut);
+
+        public static bool IsOut(Argument argument) => ArgumentDirectionHelper.IsOut(argument.Direction);
+
+        public static bool IsOut(ArgumentDirection direction) => (direction == ArgumentDirection.Out) || (direction == ArgumentDirection.InOut);
 
         public static void Validate(ArgumentDirection direction, string argumentName)
         {
@@ -22,24 +25,7 @@ namespace System.Activities
             }
         }
 
-        public static bool IsIn(Argument argument)
-        {
-            return ArgumentDirectionHelper.IsIn(argument.Direction);
-        }
-
-        public static bool IsIn(ArgumentDirection direction)
-        {
-            return (direction == ArgumentDirection.In) || (direction == ArgumentDirection.InOut);
-        }
-
-        public static bool IsOut(Argument argument)
-        {
-            return ArgumentDirectionHelper.IsOut(argument.Direction);
-        }
-
-        public static bool IsOut(ArgumentDirection direction)
-        {
-            return (direction == ArgumentDirection.Out) || (direction == ArgumentDirection.InOut);
-        }
+        internal static bool IsDefined(ArgumentDirection direction) =>
+                                                    direction == ArgumentDirection.In || direction == ArgumentDirection.Out || direction == ArgumentDirection.InOut;
     }
 }

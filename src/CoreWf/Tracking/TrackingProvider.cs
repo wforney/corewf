@@ -150,22 +150,22 @@ namespace System.Activities.Tracking
             {
                 if (this.HasPendingRecords)
                 {
-                    TimeoutHelper helper = new TimeoutHelper(timeout);
-                    for (int i = 0; i < this.trackingParticipants.Count; i++)
+                    var helper = new TimeoutHelper(timeout);
+                    for (var i = 0; i < this.trackingParticipants.Count; i++)
                     {
-                        TrackingParticipant participant = this.trackingParticipants[i];
-                        RuntimeTrackingProfile runtimeProfile = GetRuntimeTrackingProfile(participant);
+                        var participant = this.trackingParticipants[i];
+                        var runtimeProfile = GetRuntimeTrackingProfile(participant);
 
                         // HasPendingRecords can be true for the sole purpose of populating our initial profiles, so check again here
                         if (this.pendingTrackingRecords != null)
                         {
-                            for (int j = 0; j < this.pendingTrackingRecords.Count; j++)
+                            for (var j = 0; j < this.pendingTrackingRecords.Count; j++)
                             {
-                                TrackingRecord currentRecord = this.pendingTrackingRecords[j];
+                                var currentRecord = this.pendingTrackingRecords[j];
                                 Fx.Assert(currentRecord != null, "We should never come across a null context.");
 
                                 TrackingRecord preparedRecord = null;
-                                bool shouldClone = this.trackingParticipants.Count > 1;
+                                var shouldClone = this.trackingParticipants.Count > 1;
                                 if (runtimeProfile == null)
                                 {
                                     preparedRecord = shouldClone ? currentRecord.Clone() : currentRecord;
@@ -216,7 +216,7 @@ namespace System.Activities.Tracking
             if (this.pendingTrackingRecords != null)
             {
                 //since the number of records is small, it is faster to remove from end than to call List.Clear
-                for (int i = this.pendingTrackingRecords.Count - 1; i >= 0; i--)
+                for (var i = this.pendingTrackingRecords.Count - 1; i >= 0; i--)
                 {
                     this.pendingTrackingRecords.RemoveAt(i);
                 }
@@ -227,7 +227,7 @@ namespace System.Activities.Tracking
         {
             TrackingProfile profile;
 
-            if (!this.profileSubscriptions.TryGetValue(participant, out RuntimeTrackingProfile runtimeProfile))
+            if (!this.profileSubscriptions.TryGetValue(participant, out var runtimeProfile))
             {
                 profile = participant.TrackingProfile;
 
@@ -238,14 +238,14 @@ namespace System.Activities.Tracking
 
                     //Add the names to the list of activities that have subscriptions.  This provides a quick lookup
                     //for the runtime to check if a TrackingRecord has to be created. 
-                    IEnumerable<string> activityNames = runtimeProfile.GetSubscribedActivityNames();
+                    var activityNames = runtimeProfile.GetSubscribedActivityNames();
                     if (activityNames != null)
                     {
                         if (this.activitySubscriptions == null)
                         {
                             this.activitySubscriptions = new Hashtable();
                         }
-                        foreach (string name in activityNames)
+                        foreach (var name in activityNames)
                         {
                             if (this.activitySubscriptions[name] == null)
                             {
@@ -320,14 +320,14 @@ namespace System.Activities.Tracking
                 {
                     while (this.currentParticipant < this.provider.trackingParticipants.Count)
                     {
-                        TrackingParticipant participant = this.provider.trackingParticipants[this.currentParticipant];
-                        RuntimeTrackingProfile runtimeProfile = this.provider.GetRuntimeTrackingProfile(participant);
+                        var participant = this.provider.trackingParticipants[this.currentParticipant];
+                        var runtimeProfile = this.provider.GetRuntimeTrackingProfile(participant);
 
                         if (this.provider.pendingTrackingRecords != null)
                         {
                             while (this.currentRecord < this.provider.pendingTrackingRecords.Count)
                             {
-                                bool completedSynchronously = PostTrackingRecord(participant, runtimeProfile);
+                                var completedSynchronously = PostTrackingRecord(participant, runtimeProfile);
                                 if (!completedSynchronously)
                                 {
                                     return false;
@@ -349,9 +349,9 @@ namespace System.Activities.Tracking
             {
                 Fx.Assert(!result.CompletedSynchronously, "TrackingAsyncResult.OnTrackingComplete should not get called with a result that is CompletedSynchronously");
 
-                FlushPendingRecordsAsyncResult thisPtr = (FlushPendingRecordsAsyncResult)result.AsyncState;
-                TrackingParticipant participant = thisPtr.provider.trackingParticipants[thisPtr.currentParticipant];
-                bool isSuccessful = false;
+                var thisPtr = (FlushPendingRecordsAsyncResult)result.AsyncState;
+                var participant = thisPtr.provider.trackingParticipants[thisPtr.currentParticipant];
+                var isSuccessful = false;
                 try
                 {
                     participant.EndTrack(result);
@@ -369,14 +369,14 @@ namespace System.Activities.Tracking
 
             private bool PostTrackingRecord(TrackingParticipant participant, RuntimeTrackingProfile runtimeProfile)
             {
-                TrackingRecord originalRecord = this.provider.pendingTrackingRecords[this.currentRecord];
+                var originalRecord = this.provider.pendingTrackingRecords[this.currentRecord];
                 this.currentRecord++;
-                bool isSuccessful = false;
+                var isSuccessful = false;
 
                 try
                 {
                     TrackingRecord preparedRecord = null;
-                    bool shouldClone = this.provider.trackingParticipants.Count > 1;
+                    var shouldClone = this.provider.trackingParticipants.Count > 1;
                     if (runtimeProfile == null)
                     {
                         preparedRecord = shouldClone ? originalRecord.Clone() : originalRecord;
@@ -388,7 +388,7 @@ namespace System.Activities.Tracking
 
                     if (preparedRecord != null)
                     {
-                        IAsyncResult result = participant.BeginTrack(preparedRecord, this.timeoutHelper.RemainingTime(), PrepareAsyncCompletion(trackingCompleteCallback), this);
+                        var result = participant.BeginTrack(preparedRecord, this.timeoutHelper.RemainingTime(), PrepareAsyncCompletion(trackingCompleteCallback), this);
                         if (TD.TrackingRecordRaisedIsEnabled())
                         {
                             TD.TrackingRecordRaised(preparedRecord.ToString(), participant.GetType().ToString());

@@ -22,7 +22,7 @@ namespace Microsoft.CSharp.Activities
     [ContentProperty("ExpressionText")]
     public class CSharpValue<TResult> : CodeActivity<TResult>, ITextExpression
     {
-        CompiledExpressionInvoker invoker;
+        private CompiledExpressionInvoker invoker;
           
         public CSharpValue()
         {

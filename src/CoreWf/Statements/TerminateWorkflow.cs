@@ -20,12 +20,12 @@ namespace System.Activities.Statements
 
         protected override void CacheMetadata(NativeActivityMetadata metadata)
         {
-            Collection<RuntimeArgument> arguments = new Collection<RuntimeArgument>();
+            var arguments = new Collection<RuntimeArgument>();
 
-            RuntimeArgument reasonArgument = new RuntimeArgument("Reason", typeof(string), ArgumentDirection.In, false);
+            var reasonArgument = new RuntimeArgument("Reason", typeof(string), ArgumentDirection.In, false);
             metadata.Bind(this.Reason, reasonArgument);
 
-            RuntimeArgument exceptionArgument = new RuntimeArgument("Exception", typeof(Exception), ArgumentDirection.In, false);
+            var exceptionArgument = new RuntimeArgument("Exception", typeof(Exception), ArgumentDirection.In, false);
             metadata.Bind(this.Exception, exceptionArgument);
 
             arguments.Add(reasonArgument);
@@ -45,8 +45,8 @@ namespace System.Activities.Statements
             // If Reason is provided, we'll create a WorkflowApplicationTerminatedException from
             // it, wrapping Exception if it is also provided. Otherwise just use Exception.
             // If neither is provided just throw a new WorkflowTerminatedException.
-            string reason = Reason.Get(context);
-            Exception exception = Exception.Get(context);
+            var reason = Reason.Get(context);
+            var exception = Exception.Get(context);
             if (!string.IsNullOrEmpty(reason))
             {
                 context.Terminate(new WorkflowTerminatedException(reason, exception));

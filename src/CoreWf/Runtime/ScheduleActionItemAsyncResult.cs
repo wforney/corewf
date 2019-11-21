@@ -24,7 +24,7 @@ namespace System.Activities.Runtime
 
         private static void DoWork(object state)
         {
-            ScheduleActionItemAsyncResult thisPtr = (ScheduleActionItemAsyncResult)state;
+            var thisPtr = (ScheduleActionItemAsyncResult)state;
             Exception completionException = null;
             try
             {

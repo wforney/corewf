@@ -99,7 +99,7 @@ namespace System.Activities
         // can't cast to a CommittableTransaction.
         private static Transaction CloneAmbientTransaction()
         {
-            Transaction ambientTransaction = Transaction.Current;
+            var ambientTransaction = Transaction.Current;
             return ambientTransaction == null ? null : ambientTransaction.Clone();
         }
     }

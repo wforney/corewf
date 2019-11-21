@@ -74,13 +74,13 @@ namespace System.Activities.Runtime
             Fx.AssertAndThrow(_expectedStage == Stage.Collect, "Collect called at the wrong time.");
             _expectedStage = Stage.None;
 
-            foreach (IPersistencePipelineModule module in _modules)
+            foreach (var module in _modules)
             {
 
-                module.CollectValues(out IDictionary<XName, object> readWriteValues, out IDictionary<XName, object> writeOnlyValues);
+                module.CollectValues(out var readWriteValues, out var writeOnlyValues);
                 if (readWriteValues != null)
                 {
-                    foreach (KeyValuePair<XName, object> value in readWriteValues)
+                    foreach (var value in readWriteValues)
                     {
                         try
                         {
@@ -94,7 +94,7 @@ namespace System.Activities.Runtime
                 }
                 if (writeOnlyValues != null)
                 {
-                    foreach (KeyValuePair<XName, object> value in writeOnlyValues)
+                    foreach (var value in writeOnlyValues)
                     {
                         try
                         {
@@ -118,9 +118,9 @@ namespace System.Activities.Runtime
 
             List<Tuple<IPersistencePipelineModule, IDictionary<XName, object>>> pendingValues = null;
 
-            foreach (IPersistencePipelineModule module in _modules)
+            foreach (var module in _modules)
             {
-                IDictionary<XName, object> mappedValues = module.MapValues(_readWriteView, _writeOnlyView);
+                var mappedValues = module.MapValues(_readWriteView, _writeOnlyView);
                 if (mappedValues != null)
                 {
                     if (pendingValues == null)
@@ -133,9 +133,9 @@ namespace System.Activities.Runtime
 
             if (pendingValues != null)
             {
-                foreach (Tuple<IPersistencePipelineModule, IDictionary<XName, object>> writeOnlyValues in pendingValues)
+                foreach (var writeOnlyValues in pendingValues)
                 {
-                    foreach (KeyValuePair<XName, object> value in writeOnlyValues.Item2)
+                    foreach (var value in writeOnlyValues.Item2)
                     {
                         try
                         {
@@ -197,7 +197,7 @@ namespace System.Activities.Runtime
             Fx.AssertAndThrow(_expectedStage == Stage.Publish || _expectedStage == Stage.Load, "Publish called at the wrong time.");
             _expectedStage = Stage.None;
 
-            foreach (IPersistencePipelineModule module in _modules)
+            foreach (var module in _modules)
             {
                 module.PublishValues(_readWriteView);
             }
@@ -205,7 +205,7 @@ namespace System.Activities.Runtime
 
         public void Abort()
         {
-            foreach (IPersistencePipelineModule module in _modules)
+            foreach (var module in _modules)
             {
                 try
                 {
@@ -274,7 +274,7 @@ namespace System.Activities.Runtime
             {
                 get
                 {
-                    if (TryGetValue(key, out object value))
+                    if (TryGetValue(key, out var value))
                     {
                         return value;
                     }
@@ -310,7 +310,7 @@ namespace System.Activities.Runtime
 
             public bool ContainsKey(XName key)
             {
-                return TryGetValue(key, out object dummy);
+                return TryGetValue(key, out var dummy);
             }
 
             public bool Remove(XName key)
@@ -320,7 +320,7 @@ namespace System.Activities.Runtime
 
             public bool TryGetValue(XName key, out object value)
             {
-                if (!_basis.TryGetValue(key, out InstanceValue realValue) || realValue.IsWriteOnly() != _writeOnly)
+                if (!_basis.TryGetValue(key, out var realValue) || realValue.IsWriteOnly() != _writeOnly)
                 {
                     value = null;
                     return false;
@@ -342,7 +342,7 @@ namespace System.Activities.Runtime
 
             public bool Contains(KeyValuePair<XName, object> item)
             {
-                if (!TryGetValue(item.Key, out object value))
+                if (!TryGetValue(item.Key, out var value))
                 {
                     return false;
                 }
@@ -351,7 +351,7 @@ namespace System.Activities.Runtime
 
             public void CopyTo(KeyValuePair<XName, object>[] array, int arrayIndex)
             {
-                foreach (KeyValuePair<XName, object> entry in this)
+                foreach (var entry in this)
                 {
                     array[arrayIndex++] = entry;
                 }
@@ -400,18 +400,18 @@ namespace System.Activities.Runtime
                 _pendingModules = _pipeline._modules.Where(value => value.IsIOParticipant).ToArray();
                 _remainingModules = _pendingModules.Length;
 
-                bool completeSelf = false;
+                var completeSelf = false;
                 if (_pendingModules.Length == 0)
                 {
                     completeSelf = true;
                 }
                 else
                 {
-                    for (int i = 0; i < _pendingModules.Length; i++)
+                    for (var i = 0; i < _pendingModules.Length; i++)
                     {
                         Fx.Assert(!completeSelf, "Shouldn't have been completed yet.");
 
-                        IPersistencePipelineModule module = _pendingModules[i];
+                        var module = _pendingModules[i];
                         IAsyncResult result = null;
                         try
                         {
@@ -465,9 +465,9 @@ namespace System.Activities.Runtime
                     return;
                 }
 
-                int i = (int)result.AsyncState;
+                var i = (int)result.AsyncState;
 
-                IPersistencePipelineModule module = _pendingModules[i];
+                var module = _pendingModules[i];
                 Fx.Assert(module != null, "There should be a pending result for this result");
                 _pendingModules[i] = null;
 
@@ -506,7 +506,7 @@ namespace System.Activities.Runtime
             {
                 if (exception != null)
                 {
-                    bool abortNeeded = false;
+                    var abortNeeded = false;
                     lock (_pendingModules)
                     {
                         if (_exception == null)
@@ -530,9 +530,9 @@ namespace System.Activities.Runtime
 
             private void Abort()
             {
-                for (int j = 0; j < _pendingModules.Length; j++)
+                for (var j = 0; j < _pendingModules.Length; j++)
                 {
-                    IPersistencePipelineModule module = _pendingModules[j];
+                    var module = _pendingModules[j];
                     if (module != null)
                     {
                         try

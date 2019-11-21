@@ -13,11 +13,11 @@ namespace Microsoft.VisualBasic.Activities
 
     public class VisualBasicImportReference : IEquatable<VisualBasicImportReference>
     {
-        static AssemblyNameEqualityComparer equalityComparer = new AssemblyNameEqualityComparer();
-        AssemblyName assemblyName;
-        string assemblyNameString;
-        int hashCode;
-        string import;
+        private static AssemblyNameEqualityComparer equalityComparer = new AssemblyNameEqualityComparer();
+        private AssemblyName assemblyName;
+        private string assemblyNameString;
+        private int hashCode;
+        private string import;
 
         public VisualBasicImportReference()
         {
@@ -92,7 +92,7 @@ namespace Microsoft.VisualBasic.Activities
 
         internal VisualBasicImportReference Clone()
         {
-            VisualBasicImportReference toReturn = (VisualBasicImportReference)this.MemberwiseClone();
+            var toReturn = (VisualBasicImportReference)this.MemberwiseClone();
             toReturn.EarlyBoundAssembly = null;
             // Also make a clone of the AssemblyName.
             toReturn.assemblyName = (AssemblyName) this.assemblyName.Clone();

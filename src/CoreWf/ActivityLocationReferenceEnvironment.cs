@@ -71,7 +71,7 @@ namespace System.Activities
                 {
                     if (activityEnvironment.declarations != null)
                     {
-                        foreach (LocationReference declaration in activityEnvironment.declarations.Values)
+                        foreach (var declaration in activityEnvironment.declarations.Values)
                         {
                             if (locationReference == declaration)
                             {
@@ -82,7 +82,7 @@ namespace System.Activities
 
                     if (activityEnvironment.unnamedDeclarations != null)
                     {
-                        for (int i = 0; i < activityEnvironment.unnamedDeclarations.Count; i++)
+                        for (var i = 0; i < activityEnvironment.unnamedDeclarations.Count; i++)
                         {
                             if (locationReference == activityEnvironment.unnamedDeclarations[i])
                             {
@@ -126,7 +126,7 @@ namespace System.Activities
                         id = owner.Id;
                     }
 
-                    ValidationError validationError = new ValidationError(SR.SymbolNamesMustBeUnique(locationReference.Name))
+                    var validationError = new ValidationError(SR.SymbolNamesMustBeUnique(locationReference.Name))
                     {
                         Source = owner,
                         Id = id
@@ -149,7 +149,7 @@ namespace System.Activities
                 // a custom declared environment might.  We need to walk up
                 // to the root and see if it chains to a
                 // non-ActivityLocationReferenceEnvironment implementation
-                LocationReferenceEnvironment currentEnvironment = this.Parent;
+                var currentEnvironment = this.Parent;
 
                 while (currentEnvironment is ActivityLocationReferenceEnvironment)
                 {
@@ -170,14 +170,14 @@ namespace System.Activities
                     return true;
                 }
 
-                bool found = false;
-                LocationReferenceEnvironment currentEnvironment = this.Parent;
+                var found = false;
+                var currentEnvironment = this.Parent;
                 LocationReferenceEnvironment rootEnvironment = this;
 
                 // Loop through all of the ActivityLocationReferenceEnvironments we have chained together
                 while (currentEnvironment != null && currentEnvironment is ActivityLocationReferenceEnvironment)
                 {
-                    ActivityLocationReferenceEnvironment activityEnvironment = (ActivityLocationReferenceEnvironment)currentEnvironment;
+                    var activityEnvironment = (ActivityLocationReferenceEnvironment)currentEnvironment;
                     if (activityEnvironment.declarations != null && activityEnvironment.declarations.TryGetValue(name, out result))
                     {
                         return true;

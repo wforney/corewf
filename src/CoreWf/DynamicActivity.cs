@@ -130,7 +130,7 @@ namespace System.Activities
             // Always cache the last body that we returned
             this.runtimeImplementation = body;
 
-            ReflectedInformation information = new ReflectedInformation(this);
+            var information = new ReflectedInformation(this);
 
             SetImportedChildrenCollection(information.GetChildren());
             SetVariablesCollection(information.GetVariables());
@@ -318,7 +318,7 @@ namespace System.Activities
             // Always cache the last body that we returned
             this.runtimeImplementation = body;
 
-            ReflectedInformation information = new ReflectedInformation(this);
+            var information = new ReflectedInformation(this);
 
             SetImportedChildrenCollection(information.GetChildren());
             SetVariablesCollection(information.GetVariables());

@@ -23,7 +23,7 @@ namespace System.Activities.Validation
         {
             Fx.Assert(this.ValidationContext != null, "ValidationContext must not be null");
 
-            ValidationContext currentContext = this.ValidationContext.Get(context);
+            var currentContext = this.ValidationContext.Get(context);
             if (currentContext != null)
             {
                 return currentContext.GetChildren();

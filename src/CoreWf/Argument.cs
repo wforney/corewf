@@ -193,7 +193,7 @@ namespace System.Activities
                 throw FxTrace.Exception.ArgumentNull(nameof(argument));
             }
 
-            bool passedValidations = true;
+            var passedValidations = true;
 
             if (binding != null)
             {
@@ -266,11 +266,11 @@ namespace System.Activities
             {
                 if (this.Expression.Result != null && !this.Expression.Result.IsEmpty)
                 {
-                    ValidationError validationError = new ValidationError(SR.ResultCannotBeSetOnArgumentExpressions, false, this.RuntimeArgument.Name, owner);
+                    var validationError = new ValidationError(SR.ResultCannotBeSetOnArgumentExpressions, false, this.RuntimeArgument.Name, owner);
                     ActivityUtilities.Add(ref validationErrors, validationError);
                 }
 
-                ActivityWithResult actualExpression = this.Expression;
+                var actualExpression = this.Expression;
 
                 if (actualExpression is IExpressionWrapper)
                 {
@@ -293,7 +293,7 @@ namespace System.Activities
                         if (!ActivityUtilities.IsLocationGenericType(actualExpression.ResultType, out locationType) ||
                             locationType != this.ArgumentType)
                         {
-                            Type expectedType = ActivityUtilities.CreateActivityWithResult(ActivityUtilities.CreateLocation(this.ArgumentType));
+                            var expectedType = ActivityUtilities.CreateActivityWithResult(ActivityUtilities.CreateLocation(this.ArgumentType));
                             ActivityUtilities.Add(
                                 ref validationErrors,
                                 new ValidationError(SR.ArgumentLocationExpressionTypeMismatch(expectedType.FullName, actualExpression.GetType().FullName), false, this.RuntimeArgument.Name, owner));

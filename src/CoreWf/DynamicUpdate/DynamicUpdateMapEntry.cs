@@ -14,11 +14,10 @@ namespace System.Activities.DynamicUpdate
     [DataContract(IsReference = true)]
     internal class DynamicUpdateMapEntry
     {
-        static DynamicUpdateMapEntry dummyMapEntry = new DynamicUpdateMapEntry(-1, -1);
-
-        DynamicUpdateMap implementationUpdateMap;
-        int oldActivityId;
-        int newActivityId;        
+        private static DynamicUpdateMapEntry dummyMapEntry = new DynamicUpdateMapEntry(-1, -1);
+        private DynamicUpdateMap implementationUpdateMap;
+        private int oldActivityId;
+        private int newActivityId;        
                
         public DynamicUpdateMapEntry(int oldActivityId, int newActivityId)
         {
@@ -95,7 +94,7 @@ namespace System.Activities.DynamicUpdate
         {
             get
             {
-                for (DynamicUpdateMapEntry parent = this.Parent; parent != null; parent = parent.Parent)
+                for (var parent = this.Parent; parent != null; parent = parent.Parent)
                 {
                     if (parent.IsRemoval || parent.IsRuntimeUpdateBlocked || parent.IsUpdateBlockedByUpdateAuthor)
                     {
@@ -183,7 +182,7 @@ namespace System.Activities.DynamicUpdate
             Fx.Assert(first.NewActivityId == second.OldActivityId, "Merging mismatched entries");
             Fx.Assert((first.Parent == null && second.Parent == null) || (first.Parent.NewActivityId == second.Parent.OldActivityId), "Merging mismatched parents");
 
-            DynamicUpdateMapEntry result = new DynamicUpdateMapEntry(first.OldActivityId, second.NewActivityId)
+            var result = new DynamicUpdateMapEntry(first.OldActivityId, second.NewActivityId)
             {
                 Parent = newParent
             };
@@ -230,8 +229,8 @@ namespace System.Activities.DynamicUpdate
                 return first ?? second;
             }
 
-            Dictionary<string, object> result = new Dictionary<string, object>(first);
-            foreach (KeyValuePair<string, object> pair in second)
+            var result = new Dictionary<string, object>(first);
+            foreach (var pair in second)
             {
                 if (!result.ContainsKey(pair.Key))
                 {

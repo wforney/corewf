@@ -6,21 +6,21 @@ namespace System.Activities.Expressions
     using System.Activities;
     using System.Activities.Statements;
     using System.ComponentModel;
+    using System.Diagnostics.CodeAnalysis;
 
-using System.Activities.DynamicUpdate;
-
-    //[SuppressMessage(FxCop.Category.Naming, FxCop.Rule.IdentifiersShouldNotMatchKeywords, Justification = "Optimizing for XAML naming. VB imperative users will [] qualify (e.g. New [OrElse])")]
+    [SuppressMessage(
+        "Naming",
+        "CA1716:Identifiers should not match keywords",
+        Justification = "Optimizing for XAML naming. VB imperative users will [] qualify (e.g. New [OrElse])")]
     public sealed class OrElse : Activity<bool>
     {
         public OrElse()
-            : base()
-        {
-            this.Implementation =
+            : base() => this.Implementation =
                 () =>
                 {
-                    if (this.Left != null && this.Right != null)
-                    {
-                        return new If
+                    return this.Left == null || this.Right == null
+                        ? null
+                        : new If
                         {
                             Condition = this.Left,
                             Then = new Assign<bool>
@@ -34,27 +34,13 @@ using System.Activities.DynamicUpdate;
                                 Value = new InArgument<bool>(this.Right)
                             }
                         };
-                    }
-                    else
-                    {
-                        return null;
-                    }
                 };
-        }
 
         [DefaultValue(null)]
-        public Activity<bool> Left
-        {
-            get;
-            set;
-        }
+        public Activity<bool> Left { get; set; }
 
         [DefaultValue(null)]
-        public Activity<bool> Right
-        {
-            get;
-            set;
-        }
+        public Activity<bool> Right { get; set; }
 
 #if NET45
         protected override void OnCreateDynamicUpdateMap(UpdateMapMetadata metadata, Activity originalActivity)
@@ -70,12 +56,20 @@ using System.Activities.DynamicUpdate;
 
             if (this.Left == null)
             {
-                metadata.AddValidationError(SR.BinaryExpressionActivityRequiresArgument("Left", "OrElse", this.DisplayName));
+                metadata.AddValidationError(
+                    SR.BinaryExpressionActivityRequiresArgument(
+                        nameof(this.Left),
+                        nameof(OrElse),
+                        this.DisplayName));
             }
 
             if (this.Right == null)
             {
-                metadata.AddValidationError(SR.BinaryExpressionActivityRequiresArgument("Right", "OrElse", this.DisplayName));
+                metadata.AddValidationError(
+                    SR.BinaryExpressionActivityRequiresArgument(
+                        nameof(this.Right),
+                        nameof(OrElse),
+                        this.DisplayName));
             }
         }
     }

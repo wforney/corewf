@@ -57,7 +57,7 @@ namespace System.Activities.Tracking
 
             private static void ExecuteTrack(object state)
             {
-                TrackAsyncResult thisPtr = (TrackAsyncResult)state;
+                var thisPtr = (TrackAsyncResult)state;
                 thisPtr.TrackCore();
             }
 

@@ -45,7 +45,7 @@ namespace System.Activities
             {
                 if (emptyKeyValues == null)
                 {
-                    emptyKeyValues = new KeyValuePair<string, object>[0];
+                    emptyKeyValues = Array.Empty<KeyValuePair<string, object>>();
                 }
                 return emptyKeyValues;
             }
@@ -133,7 +133,7 @@ namespace System.Activities
 
             if (this.properties != null && this.properties.IsOwner(this.scope))
             {
-                object property = this.properties.GetPropertyAtCurrentScope(name);
+                var property = this.properties.GetPropertyAtCurrentScope(name);
 
                 if (property != null)
                 {

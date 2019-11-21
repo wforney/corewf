@@ -22,7 +22,7 @@ namespace System.Activities.Statements
 
         protected override void CacheMetadata(NativeActivityMetadata metadata)
         {
-            RuntimeArgument subInstanceArgument = new RuntimeArgument("Scope", typeof(BookmarkScope), ArgumentDirection.In);
+            var subInstanceArgument = new RuntimeArgument("Scope", typeof(BookmarkScope), ArgumentDirection.In);
             metadata.Bind(this.Scope, subInstanceArgument);
 
             metadata.SetArgumentsCollection(new Collection<RuntimeArgument> { subInstanceArgument });
@@ -30,7 +30,7 @@ namespace System.Activities.Statements
 
         protected override void Execute(NativeActivityContext context)
         {
-            BookmarkScope toUnregister = this.Scope.Get(context);
+            var toUnregister = this.Scope.Get(context);
 
             if (toUnregister == null)
             {

@@ -102,7 +102,7 @@ namespace System.Activities.Runtime.Collections
         {
             if (key == null)
             {
-                bool result = _isNullKeyPresent;
+                var result = _isNullKeyPresent;
                 _isNullKeyPresent = false;
                 _nullKeyValue = default(TValue);
                 return result;
@@ -197,7 +197,7 @@ namespace System.Activities.Runtime.Collections
 
         public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
         {
-            IEnumerator<KeyValuePair<TKey, TValue>> innerEnumerator = _innerDictionary.GetEnumerator() as IEnumerator<KeyValuePair<TKey, TValue>>;
+            var innerEnumerator = _innerDictionary.GetEnumerator() as IEnumerator<KeyValuePair<TKey, TValue>>;
 
             while (innerEnumerator.MoveNext())
             {
@@ -228,7 +228,7 @@ namespace System.Activities.Runtime.Collections
             {
                 get
                 {
-                    int count = _nullKeyDictionary._innerDictionary.Keys.Count;
+                    var count = _nullKeyDictionary._innerDictionary.Keys.Count;
                     if (_nullKeyDictionary._isNullKeyPresent)
                     {
                         count++;
@@ -273,7 +273,7 @@ namespace System.Activities.Runtime.Collections
 
             public IEnumerator<TypeKey> GetEnumerator()
             {
-                foreach (TypeKey item in _nullKeyDictionary._innerDictionary.Keys)
+                foreach (var item in _nullKeyDictionary._innerDictionary.Keys)
                 {
                     yield return item;
                 }
@@ -303,7 +303,7 @@ namespace System.Activities.Runtime.Collections
             {
                 get
                 {
-                    int count = _nullKeyDictionary._innerDictionary.Values.Count;
+                    var count = _nullKeyDictionary._innerDictionary.Values.Count;
                     if (_nullKeyDictionary._isNullKeyPresent)
                     {
                         count++;
@@ -349,7 +349,7 @@ namespace System.Activities.Runtime.Collections
 
             public IEnumerator<TypeValue> GetEnumerator()
             {
-                foreach (TypeValue item in _nullKeyDictionary._innerDictionary.Values)
+                foreach (var item in _nullKeyDictionary._innerDictionary.Values)
                 {
                     yield return item;
                 }

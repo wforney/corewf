@@ -173,7 +173,7 @@ namespace System.Activities.Runtime.DurableInstancing
                 // from here, and adding a way would add complexity to the AsyncResult transactional calling pattern. This
                 // unnecessary Interlocked only happens when: PrepareTransactionalCall is called with a non-null transaction,
                 // PrepareAsyncCompletion is reached, and the operation completes synchronously or with an exception.
-                if (State == TransactionSignalState.Completed && Unlock(out IAsyncResult result))
+                if (State == TransactionSignalState.Completed && Unlock(out var result))
                 {
                     if (this.parent.deferredTransactionalResult != null)
                     {

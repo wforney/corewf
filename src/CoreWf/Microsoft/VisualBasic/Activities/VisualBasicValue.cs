@@ -20,9 +20,9 @@ namespace Microsoft.VisualBasic.Activities
     [DebuggerStepThrough]
     public sealed class VisualBasicValue<TResult> : CodeActivity<TResult>, IValueSerializableExpression, IExpressionContainer, ITextExpression
     {
-        Expression<Func<ActivityContext, TResult>> expressionTree;
-        Func<ActivityContext, TResult> compiledExpression;
-        CompiledExpressionInvoker invoker; 
+        private Expression<Func<ActivityContext, TResult>> expressionTree;
+        private Func<ActivityContext, TResult> compiledExpression;
+        private CompiledExpressionInvoker invoker; 
 
         public VisualBasicValue() 
             : base()
@@ -93,7 +93,7 @@ namespace Microsoft.VisualBasic.Activities
 
             // If ICER is not implemented that means we haven't been compiled
 
-            CodeActivityPublicEnvironmentAccessor publicAccessor = CodeActivityPublicEnvironmentAccessor.Create(metadata);            
+            var publicAccessor = CodeActivityPublicEnvironmentAccessor.Create(metadata);            
             try
             {
                 this.expressionTree = VisualBasicHelper.Compile<TResult>(this.ExpressionText, publicAccessor, false);
@@ -124,8 +124,8 @@ namespace Microsoft.VisualBasic.Activities
                 {
                     // it's safe to create this CodeActivityMetadata here,
                     // because we know we are using it only as lookup purpose.
-                    CodeActivityMetadata metadata = new CodeActivityMetadata(this, this.GetParentEnvironment(), false);
-                    CodeActivityPublicEnvironmentAccessor publicAccessor = CodeActivityPublicEnvironmentAccessor.CreateWithoutArgument(metadata);
+                    var metadata = new CodeActivityMetadata(this, this.GetParentEnvironment(), false);
+                    var publicAccessor = CodeActivityPublicEnvironmentAccessor.CreateWithoutArgument(metadata);
                     try
                     {                                                
                         this.expressionTree = VisualBasicHelper.Compile<TResult>(this.ExpressionText, publicAccessor, false);

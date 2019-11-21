@@ -25,7 +25,7 @@ namespace System.Activities.Statements
 
         protected override void CacheMetadata(CodeActivityMetadata metadata)
         {
-            RuntimeArgument collectionArgument = new RuntimeArgument("Collection", typeof(ICollection<T>), ArgumentDirection.In, true);
+            var collectionArgument = new RuntimeArgument("Collection", typeof(ICollection<T>), ArgumentDirection.In, true);
             metadata.Bind(this.Collection, collectionArgument);
 
             metadata.SetArgumentsCollection(new Collection<RuntimeArgument> { collectionArgument });
@@ -33,7 +33,7 @@ namespace System.Activities.Statements
 
         protected override void Execute(CodeActivityContext context)
         {
-            ICollection<T> collection = this.Collection.Get(context);
+            var collection = this.Collection.Get(context);
             if (collection == null)
             {
                 throw FxTrace.Exception.AsError(new InvalidOperationException(SR.CollectionActivityRequiresCollection(this.DisplayName)));
