@@ -1,0 +1,120 @@
+// This file is part of Core WF which is licensed under the MIT license. See LICENSE file in the
+// project root for full license information.
+
+namespace System.Activities.Statements
+{
+    using Portable.Xaml.Markup;
+
+    using System;
+    using System.Activities;
+    using System.Activities.DynamicUpdate;
+    using System.Activities.Internals;
+    using System.Activities.Runtime.Collections;
+    using System.Collections.ObjectModel;
+    using System.ComponentModel;
+
+    [ContentProperty("Body")]
+    public sealed class CancellationScope : NativeActivity
+    {
+        private readonly Variable<bool> suppressCancel;
+        private Collection<Variable> variables;
+
+        public CancellationScope()
+            : base()
+        {
+            this.suppressCancel = new Variable<bool>();
+        }
+
+        [DefaultValue(null)]
+        [DependsOn("Variables")]
+        public Activity Body
+        {
+            get;
+            set;
+        }
+
+        [DefaultValue(null)]
+        [DependsOn("Body")]
+        public Activity CancellationHandler
+        {
+            get;
+            set;
+        }
+
+        public Collection<Variable> Variables
+        {
+            get
+            {
+                if (this.variables == null)
+                {
+                    this.variables = new ValidatingCollection<Variable>
+                    {
+                        // disallow null values
+                        OnAddValidationCallback = item =>
+                        {
+                            if (item == null)
+                            {
+                                throw FxTrace.Exception.ArgumentNull(nameof(item));
+                            }
+                        }
+                    };
+                }
+                return this.variables;
+            }
+        }
+
+        protected override void CacheMetadata(NativeActivityMetadata metadata)
+        {
+            metadata.AddChild(this.Body);
+            metadata.AddChild(this.CancellationHandler);
+            metadata.SetVariablesCollection(this.Variables);
+            metadata.AddImplementationVariable(this.suppressCancel);
+        }
+
+        protected override void Cancel(NativeActivityContext context)
+        {
+            var suppressCancel = this.suppressCancel.Get(context);
+            if (!suppressCancel)
+            {
+                context.CancelChildren();
+            }
+        }
+
+        protected override void Execute(NativeActivityContext context)
+        {
+            if (this.Body != null)
+            {
+                context.ScheduleActivity(this.Body, new CompletionCallback(OnBodyComplete));
+            }
+        }
+
+        protected override void OnCreateDynamicUpdateMap(NativeActivityUpdateMapMetadata metadata, Activity originalActivity)
+        {
+            metadata.AllowUpdateInsideThisActivity();
+        }
+
+        private void OnBodyComplete(NativeActivityContext context, ActivityInstance completedInstance)
+        {
+            // Determine whether to run the Cancel based on whether the body canceled rather than
+            // whether cancel had been requested.
+            if (completedInstance.State == ActivityInstanceState.Canceled ||
+                (context.IsCancellationRequested && completedInstance.State == ActivityInstanceState.Faulted))
+            {
+                // We don't cancel the cancel handler
+                this.suppressCancel.Set(context, true);
+
+                context.MarkCanceled();
+
+                if (this.CancellationHandler != null)
+                {
+                    context.ScheduleActivity(this.CancellationHandler, onFaulted: new FaultCallback(OnExceptionFromCancelHandler));
+                }
+            }
+        }
+
+        private void OnExceptionFromCancelHandler(NativeActivityFaultContext context, Exception propagatedException, ActivityInstance propagatedFrom)
+        {
+            this.suppressCancel.Set(context, false);
+        }
+    }
+}

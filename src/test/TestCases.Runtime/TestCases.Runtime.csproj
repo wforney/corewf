@@ -23,7 +23,7 @@
     </PackageReference>
     <ProjectReference Include="../JsonFileInstanceStore/JsonFileInstanceStore.csproj" />
     <ProjectReference Include="../TestObjects/TestObjects.csproj" />
-    <ProjectReference Include="..\..\CoreWf\System.Activities.csproj" />
+    <ProjectReference Include="..\..\System.Activities\System.Activities.csproj" />
   </ItemGroup>
 
 </Project>

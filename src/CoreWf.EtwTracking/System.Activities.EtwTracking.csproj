@@ -9,18 +9,20 @@
     <PackageProjectUrl>https://github.com/dmetzgar/corewf</PackageProjectUrl>
     <Version>1.2.0</Version>
     <RootNamespace>System.Activities.EtwTracking</RootNamespace>
+    <NeutralLanguage>en-US</NeutralLanguage>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <LangVersion>7.1</LangVersion>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <LangVersion>7.1</LangVersion>
+    <DocumentationFile>C:\Users\WilliamForney\OneDrive - IMPROVGROUP LLC\Documents\GitHub\corewf\src\CoreWf.EtwTracking\System.Activities.EtwTracking.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition="'$(OfficialBuild)'=='true'">
     <SignAssembly>True</SignAssembly>
     <AssemblyOriginatorKeyFile>..\..\CoreWF.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\CoreWf\System.Activities.csproj" />
+    <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="2.9.3" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\System.Activities\System.Activities.csproj" />
   </ItemGroup>
 </Project>

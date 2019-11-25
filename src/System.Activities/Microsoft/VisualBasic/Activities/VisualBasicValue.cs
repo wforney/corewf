@@ -1,0 +1,151 @@
+﻿//-----------------------------------------------------------------------------
+// Copyright (c) Microsoft Corporation.  All rights reserved.
+//-----------------------------------------------------------------------------
+
+namespace Microsoft.VisualBasic.Activities
+{
+    using Portable.Xaml.Markup;
+    using System;
+    using System.Activities;
+    using System.Activities.ExpressionParser;
+    using System.Activities.Expressions;
+    using System.Activities.Internals;
+    using System.Activities.Runtime;
+    using System.Activities.XamlIntegration;
+    using System.ComponentModel;
+    using System.Diagnostics;
+    using System.Linq.Expressions;
+
+    [DebuggerStepThrough]
+    public sealed class VisualBasicValue<TResult> : CodeActivity<TResult>, IValueSerializableExpression, IExpressionContainer, ITextExpression
+    {
+        private Expression<Func<ActivityContext, TResult>> expressionTree;
+        private Func<ActivityContext, TResult> compiledExpression;
+        private CompiledExpressionInvoker invoker; 
+
+        public VisualBasicValue() 
+            : base()
+        {
+            this.UseOldFastPath = true;
+        }
+
+        public VisualBasicValue(string expressionText)
+            : this()
+        {
+            this.ExpressionText = expressionText;
+        }
+
+        public string ExpressionText
+        {
+            get;
+            set;
+        }
+
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public string Language
+        {
+            get
+            {
+                return VisualBasicHelper.Language;
+            }
+        }
+
+        public bool RequiresCompilation
+        {
+            get
+            {
+                return false;
+            }
+        }
+
+        protected override TResult Execute(CodeActivityContext context)
+        {
+            if (!this.invoker.IsStaticallyCompiled)
+            {
+                if (this.expressionTree != null)
+                {
+                    if (this.compiledExpression == null)
+                    {
+                        this.compiledExpression = this.expressionTree.Compile();
+                    }
+                    return this.compiledExpression(context);
+                }
+                else
+                {
+                    return default(TResult);
+                }
+            }
+            else
+            {
+                return (TResult)this.invoker.InvokeExpression(context);
+            }
+        }
+
+        protected override void CacheMetadata(CodeActivityMetadata metadata)
+        {
+            this.expressionTree = null;
+            this.invoker = new CompiledExpressionInvoker(this, false, metadata);
+            if (this.invoker.IsStaticallyCompiled == true)
+            {
+                return;
+            }
+
+            // If ICER is not implemented that means we haven't been compiled
+
+            var publicAccessor = CodeActivityPublicEnvironmentAccessor.Create(metadata);            
+            try
+            {
+                this.expressionTree = VisualBasicHelper.Compile<TResult>(this.ExpressionText, publicAccessor, false);
+            }
+            catch (SourceExpressionException e)
+            {
+                metadata.AddValidationError(e.Message);
+            }
+        }
+
+        public bool CanConvertToString(IValueSerializerContext context)
+        {
+            // we can always convert to a string 
+            return true;
+        }
+
+        public string ConvertToString(IValueSerializerContext context)
+        {
+            // Return our bracket-escaped text
+            return "[" + this.ExpressionText + "]";
+        }
+
+        public Expression GetExpressionTree()
+        {            
+            if (this.IsMetadataCached)
+            {
+                if (this.expressionTree == null)
+                {
+                    // it's safe to create this CodeActivityMetadata here,
+                    // because we know we are using it only as lookup purpose.
+                    var metadata = new CodeActivityMetadata(this, this.GetParentEnvironment(), false);
+                    var publicAccessor = CodeActivityPublicEnvironmentAccessor.CreateWithoutArgument(metadata);
+                    try
+                    {                                                
+                        this.expressionTree = VisualBasicHelper.Compile<TResult>(this.ExpressionText, publicAccessor, false);
+                    }
+                    catch (SourceExpressionException e)
+                    {
+                        throw FxTrace.Exception.AsError(new InvalidOperationException(SR.VBExpressionTamperedSinceLastCompiled(e.Message))); 
+                    }
+                    finally
+                    {
+                        metadata.Dispose();
+                    }                   
+                }
+
+                Fx.Assert(this.expressionTree.NodeType == ExpressionType.Lambda, "Lambda expression required");
+                return ExpressionUtilities.RewriteNonCompiledExpressionTree((LambdaExpression)this.expressionTree);
+            }
+            else
+            {
+                throw FxTrace.Exception.AsError(new InvalidOperationException(SR.ActivityIsUncached)); 
+            }
+        }
+    }
+}
