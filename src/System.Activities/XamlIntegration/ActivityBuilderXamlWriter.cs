@@ -3,14 +3,14 @@
 
 namespace System.Activities.XamlIntegration
 {
-    using Portable.Xaml;
-    using Portable.Xaml.Schema;
 
     using System;
     using System.Activities.Internals;
     using System.Activities.Runtime;
     using System.Collections.Generic;
     using System.Globalization;
+    using System.Xaml;
+    using System.Xaml.Schema;
 
     // This class rewrites an <ActivityBuilder to <Activity x:Class
     // ActivityBuilder.Properties is rewritten to x:Members

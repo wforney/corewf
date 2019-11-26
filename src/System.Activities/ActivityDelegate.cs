@@ -3,13 +3,12 @@
 
 namespace System.Activities
 {
-    using Portable.Xaml.Markup;
-
     using System.Activities.Runtime;
     using System.Activities.Validation;
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
     using System.ComponentModel;
+    using System.Windows.Markup;
 
     //[SuppressMessage(FxCop.Category.Naming, FxCop.Rule.IdentifiersShouldNotHaveIncorrectSuffix,
     //    Justification = "Part of the sanctioned, public WF OM")]

@@ -3,10 +3,10 @@
 
 namespace System.Activities.Statements
 {
-    using Portable.Xaml.Markup;
 
     using System.Activities;
     using System.ComponentModel;
+    using System.Windows.Markup;
 
     /// <summary>
     /// This class represents a Transition of a State.

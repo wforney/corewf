@@ -3,7 +3,6 @@
 
 namespace System.Activities.Statements
 {
-    using Portable.Xaml.Markup;
 
     using System;
     using System.Activities;
@@ -14,6 +13,7 @@ namespace System.Activities.Statements
     using System.Collections.ObjectModel;
     using System.ComponentModel;
     using System.Linq.Expressions;
+    using System.Windows.Markup;
 
     /// <summary>
     /// The DoWhile class. This class cannot be inherited. Implements the <see

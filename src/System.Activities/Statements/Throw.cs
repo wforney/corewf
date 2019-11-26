@@ -3,13 +3,13 @@
 
 namespace System.Activities.Statements
 {
-    using Portable.Xaml.Markup;
 
     using System;
     using System.Activities;
     using System.Activities.Internals;
     using System.Collections.ObjectModel;
     using System.ComponentModel;
+    using System.Windows.Markup;
 
     [ContentProperty("Exception")]
     //[SuppressMessage(FxCop.Category.Naming, FxCop.Rule.IdentifiersShouldNotMatchKeywords, Justification = "Optimizing for XAML naming. VB imperative users will [] qualify (e.g. New [Throw])")]

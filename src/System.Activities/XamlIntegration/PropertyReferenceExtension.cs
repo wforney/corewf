@@ -3,11 +3,11 @@
 
 namespace System.Activities.XamlIntegration
 {
-    using Portable.Xaml.Markup;
 
     using System;
     using System.Activities.Internals;
     using System.ComponentModel;
+    using System.Windows.Markup;
 
     [MarkupExtensionReturnType(typeof(object))]
     public sealed class PropertyReferenceExtension<T> : MarkupExtension

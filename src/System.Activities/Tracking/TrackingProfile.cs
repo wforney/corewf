@@ -3,10 +3,10 @@
 
 namespace System.Activities.Tracking
 {
-    using Portable.Xaml.Markup;
 
     using System.Collections.ObjectModel;
     using System.ComponentModel;
+    using System.Windows.Markup;
 
     [ContentProperty("Queries")]
     public class TrackingProfile

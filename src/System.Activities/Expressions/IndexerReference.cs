@@ -3,7 +3,6 @@
 
 namespace System.Activities.Expressions
 {
-    using Portable.Xaml.Markup;
 
     using System;
     using System.Activities.Internals;
@@ -14,6 +13,7 @@ namespace System.Activities.Expressions
     using System.Reflection;
     using System.Runtime.Serialization;
     using System.Threading;
+    using System.Windows.Markup;
 
     /// <summary>
     /// The IndexerReference class. This class cannot be inherited. Implements the <see

@@ -3,10 +3,10 @@
 
 namespace System.Activities.XamlIntegration
 {
-    using Portable.Xaml.Markup;
 
     using System;
     using System.Activities.DynamicUpdate;
+    using System.Windows.Markup;
     using System.Xml.Serialization;
 
     [ContentProperty("XmlContent")]

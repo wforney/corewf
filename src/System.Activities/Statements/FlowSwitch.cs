@@ -3,13 +3,13 @@
 
 namespace System.Activities.Statements
 {
-    using Portable.Xaml.Markup;
 
     using System.Activities;
     using System.Activities.Runtime;
     using System.Activities.Runtime.Collections;
     using System.Collections.Generic;
     using System.ComponentModel;
+    using System.Windows.Markup;
 
     /// <summary>
     /// The FlowSwitch class. This class cannot be inherited. Implements the <see

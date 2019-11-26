@@ -3,12 +3,12 @@
 
 namespace System.Activities.Statements
 {
-    using Portable.Xaml.Markup;
 
     using System.Activities.Internals;
     using System.Activities.Runtime.Collections;
     using System.Collections.ObjectModel;
     using System.ComponentModel;
+    using System.Windows.Markup;
 
     [ContentProperty("Action")]
     public sealed class PickBranch

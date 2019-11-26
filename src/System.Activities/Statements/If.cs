@@ -3,13 +3,13 @@
 
 namespace System.Activities.Statements
 {
+    using System;
     using System.Activities;
+    using System.Activities.Internals;
     using System.Collections.ObjectModel;
     using System.ComponentModel;
     using System.Linq.Expressions;
-    using System;
-    using System.Activities.Internals;
-    using Portable.Xaml.Markup;
+    using System.Windows.Markup;
 
     //[SuppressMessage(FxCop.Category.Naming, FxCop.Rule.IdentifiersShouldNotMatchKeywords, Justification = "Optimizing for XAML naming. VB imperative users will [] qualify (e.g. New [If])")]
     public sealed class If : NativeActivity

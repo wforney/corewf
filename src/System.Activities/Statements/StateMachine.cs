@@ -3,7 +3,6 @@
 
 namespace System.Activities.Statements
 {
-    using Portable.Xaml.Markup;
 
     using System;
     using System.Activities;
@@ -17,6 +16,7 @@ namespace System.Activities.Statements
     using System.ComponentModel;
     using System.Diagnostics.CodeAnalysis;
     using System.Linq;
+    using System.Windows.Markup;
 
     /// <summary>
     /// This class represents a StateMachine which contains States and Variables.

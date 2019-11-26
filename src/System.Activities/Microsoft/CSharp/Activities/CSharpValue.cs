@@ -4,7 +4,6 @@
 
 namespace Microsoft.CSharp.Activities
 {
-    using Portable.Xaml.Markup;
     using System;
     using System.Activities;
     using System.Activities.Expressions;
@@ -12,6 +11,7 @@ namespace Microsoft.CSharp.Activities
     using System.ComponentModel;
     using System.Diagnostics;
     using System.Linq.Expressions;
+    using System.Windows.Markup;
 
     [DebuggerStepThrough]
     [ContentProperty("ExpressionText")]

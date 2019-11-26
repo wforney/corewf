@@ -3,7 +3,6 @@
 
 namespace System.Activities.Statements
 {
-    using Portable.Xaml.Markup;
 
     using System.Activities;
     using System.Activities.Runtime;
@@ -12,6 +11,7 @@ namespace System.Activities.Statements
     using System.Collections.ObjectModel;
     using System.ComponentModel;
     using System.Linq;
+    using System.Windows.Markup;
 
     [ContentProperty("Body")]
     public sealed class NoPersistScope : NativeActivity

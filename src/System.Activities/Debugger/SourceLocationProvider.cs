@@ -3,7 +3,6 @@
 
 namespace System.Activities.Debugger
 {
-    using Portable.Xaml;
     using System;
     using System.Activities.Debugger.Symbol;
     using System.Activities.Runtime;
@@ -16,6 +15,8 @@ namespace System.Activities.Debugger
     using System.Runtime.Serialization;
     using System.Security;
     using System.Security.Permissions;
+    using System.Xaml;
+
     using Trace = System.Diagnostics.Trace;
 
     // Provide SourceLocation information for activities in given root activity. This is integration

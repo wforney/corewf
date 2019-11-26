@@ -2,7 +2,6 @@
 // project root for full license information.
 namespace System.Activities.Statements
 {
-    using Portable.Xaml.Markup;
 
     using System;
     using System.Activities.DynamicUpdate;
@@ -15,6 +14,7 @@ namespace System.Activities.Statements
     using System.Collections.ObjectModel;
     using System.ComponentModel;
     using System.Linq;
+    using System.Windows.Markup;
 
     [ContentProperty("Body")]
     public sealed class CompensableActivity : NativeActivity<CompensationToken>

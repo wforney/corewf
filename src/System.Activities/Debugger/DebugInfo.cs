@@ -3,9 +3,6 @@
 
 namespace System.Activities.Debugger
 {
-    using Portable.Xaml;
-    using Portable.Xaml.Markup;
-
     using System;
     using System.Activities.Internals;
     using System.Activities.Runtime;
@@ -14,6 +11,8 @@ namespace System.Activities.Debugger
     using System.ComponentModel;
     using System.Globalization;
     using System.Linq;
+    using System.Windows.Markup;
+    using System.Xaml;
 
     // Class to communicate with Workflow's Expression Evaluation. The methods of this class get
     // invoked thru reflection by Visual Studio, so this needs to be public to allow partial trust

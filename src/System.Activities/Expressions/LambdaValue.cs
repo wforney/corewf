@@ -3,7 +3,6 @@
 
 namespace System.Activities.Expressions
 {
-    using Portable.Xaml.Markup;
 
     using System;
     using System.Activities.Internals;
@@ -11,6 +10,7 @@ namespace System.Activities.Expressions
     using System.Activities.XamlIntegration;
     using System.Diagnostics;
     using System.Linq.Expressions;
+    using System.Windows.Markup;
 
     // consciously not XAML-friendly since Linq Expressions aren't create-set-use
     [Fx.Tag.XamlVisible(false)]

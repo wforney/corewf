@@ -3,9 +3,9 @@
 
 namespace System.Activities.XamlIntegration
 {
-    using Portable.Xaml;
 
     using System.Collections.Generic;
+    using System.Xaml;
 
     internal class NamespaceTable : IXamlNamespaceResolver
     {

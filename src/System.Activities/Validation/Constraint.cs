@@ -3,11 +3,11 @@
 
 namespace System.Activities.Validation
 {
-    using Portable.Xaml.Markup;
     using System;
     using System.Activities.Internals;
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
+    using System.Windows.Markup;
 
     public abstract class Constraint : NativeActivity
     {

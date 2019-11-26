@@ -6,11 +6,11 @@ namespace System.Activities.Statements
     using System;
     using System.Activities;
     using System.Activities.Expressions;
+    using System.Activities.Internals;
     using System.Collections.Generic;
     using System.ComponentModel;
     using System.Linq.Expressions;
-    using System.Activities.Internals;
-    using Portable.Xaml.Markup;
+    using System.Windows.Markup;
 
     public sealed class FlowDecision : FlowNode
     {

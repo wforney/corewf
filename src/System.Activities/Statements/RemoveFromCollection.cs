@@ -3,12 +3,12 @@
 
 namespace System.Activities.Statements
 {
-    using Portable.Xaml.Markup;
     using System;
     using System.Activities.Internals;
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
     using System.ComponentModel;
+    using System.Windows.Markup;
 
     //[SuppressMessage(FxCop.Category.Naming, FxCop.Rule.IdentifiersShouldNotHaveIncorrectSuffix, Justification = "Optimizing for XAML naming.")]
     [ContentProperty("Collection")]

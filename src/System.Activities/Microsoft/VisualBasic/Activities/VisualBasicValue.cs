@@ -4,7 +4,6 @@
 
 namespace Microsoft.VisualBasic.Activities
 {
-    using Portable.Xaml.Markup;
     using System;
     using System.Activities;
     using System.Activities.ExpressionParser;
@@ -15,6 +14,7 @@ namespace Microsoft.VisualBasic.Activities
     using System.ComponentModel;
     using System.Diagnostics;
     using System.Linq.Expressions;
+    using System.Windows.Markup;
 
     [DebuggerStepThrough]
     public sealed class VisualBasicValue<TResult> : CodeActivity<TResult>, IValueSerializableExpression, IExpressionContainer, ITextExpression

@@ -4,7 +4,7 @@
 
 namespace Microsoft.VisualBasic.Activities.XamlIntegration
 {
-    using Portable.Xaml.Markup;
+    using System.Windows.Markup;
 
     // this value serializer always returns false for CanConvertToString, but
     // needs to add namespace declarations to the context

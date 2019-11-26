@@ -3,10 +3,10 @@
 
 namespace System.Activities.Expressions
 {
-    using Portable.Xaml.Markup;
 
     using System.Activities.DynamicUpdate;
     using System.ComponentModel;
+    using System.Windows.Markup;
 
     [ContentProperty("Func")]
     public sealed class InvokeFunc<TResult> : NativeActivity<TResult>

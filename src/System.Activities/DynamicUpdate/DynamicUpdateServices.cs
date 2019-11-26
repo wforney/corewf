@@ -5,13 +5,12 @@ namespace System.Activities.DynamicUpdate
 {
     using Microsoft.VisualBasic.Activities;
 
-    using Portable.Xaml;
-
     using System;
     using System.Activities;
     using System.Activities.Expressions;
     using System.Activities.Internals;
     using System.Collections.Generic;
+    using System.Xaml;
 
     public static class DynamicUpdateServices
     {

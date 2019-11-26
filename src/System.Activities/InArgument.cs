@@ -3,7 +3,6 @@
 
 namespace System.Activities
 {
-    using Portable.Xaml.Markup;
     using System;
     using System.Activities.Expressions;
     using System.Activities.Internals;
@@ -11,6 +10,7 @@ namespace System.Activities
     using System.Activities.XamlIntegration;
     using System.ComponentModel;
     using System.Linq.Expressions;
+    using System.Windows.Markup;
 
     public abstract class InArgument : Argument
     {

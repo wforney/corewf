@@ -3,13 +3,13 @@
 
 namespace System.Activities.Expressions
 {
-    using Portable.Xaml;
 
     using System;
     using System.Activities.Internals;
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
     using System.Reflection;
+    using System.Xaml;
 
     public static class TextExpression
     {

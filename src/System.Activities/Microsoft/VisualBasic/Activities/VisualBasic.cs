@@ -4,11 +4,8 @@
 
 namespace Microsoft.VisualBasic.Activities
 {
-    using System;
     using System.Activities;
-    using System.Diagnostics.CodeAnalysis;
-    using System.Activities.Runtime;
-    using Portable.Xaml;
+    using System.Xaml;
 
     //[SuppressMessage(FxCop.Category.Naming, FxCop.Rule.TypeNamesShouldNotMatchNamespaces,
     //    Justification = "Approved name")]

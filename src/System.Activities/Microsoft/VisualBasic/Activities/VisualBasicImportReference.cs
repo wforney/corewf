@@ -4,11 +4,11 @@
 
 namespace Microsoft.VisualBasic.Activities
 {
-    using Portable.Xaml;
     using System;
     using System.Activities.Expressions;
     using System.Globalization;
     using System.Reflection;
+    using System.Xaml;
     using System.Xml.Linq;
 
     public class VisualBasicImportReference : IEquatable<VisualBasicImportReference>

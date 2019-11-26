@@ -4,8 +4,6 @@
 
 namespace Microsoft.VisualBasic.Activities.XamlIntegration
 {
-    using Portable.Xaml;
-    using Portable.Xaml.Markup;
     using System;
     using System.Activities.Expressions;
     using System.Activities.Runtime;
@@ -15,6 +13,8 @@ namespace Microsoft.VisualBasic.Activities.XamlIntegration
     using System.Security;
     using System.Text.RegularExpressions;
     using System.Threading;
+    using System.Windows.Markup;
+    using System.Xaml;
     using System.Xml.Linq;
 
     internal static class VisualBasicExpressionConverter

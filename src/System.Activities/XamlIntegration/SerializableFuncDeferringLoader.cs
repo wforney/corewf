@@ -3,12 +3,12 @@
 
 namespace System.Activities.XamlIntegration
 {
-    using Portable.Xaml;
 
     using System;
     using System.Activities.Internals;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Xaml;
 
     public class SerializableFuncDeferringLoader : XamlDeferringLoader
     {

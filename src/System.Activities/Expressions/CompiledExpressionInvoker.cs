@@ -3,13 +3,13 @@
 
 namespace System.Activities.Expressions
 {
-    using Portable.Xaml;
 
     using System;
     using System.Activities.Internals;
     using System.Activities.XamlIntegration;
     using System.Collections.Generic;
     using System.Linq.Expressions;
+    using System.Xaml;
 
     public class CompiledExpressionInvoker
     {

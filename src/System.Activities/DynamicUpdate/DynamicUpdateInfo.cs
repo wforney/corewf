@@ -3,7 +3,7 @@
 
 namespace System.Activities.DynamicUpdate
 {
-    using Portable.Xaml;
+    using System.Xaml;
 
     public static class DynamicUpdateInfo
     {

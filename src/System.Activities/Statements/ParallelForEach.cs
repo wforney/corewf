@@ -3,7 +3,6 @@
 
 namespace System.Activities.Statements
 {
-    using Portable.Xaml.Markup;
 
     using System;
     using System.Activities;
@@ -12,6 +11,7 @@ namespace System.Activities.Statements
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
     using System.ComponentModel;
+    using System.Windows.Markup;
 
     [ContentProperty("Body")]
     public sealed class ParallelForEach<T> : NativeActivity

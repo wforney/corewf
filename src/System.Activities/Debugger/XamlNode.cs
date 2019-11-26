@@ -3,9 +3,9 @@
 
 namespace System.Activities.Debugger
 {
-    using Portable.Xaml;
 
     using System.Text;
+    using System.Xaml;
 
     internal class XamlNode
     {

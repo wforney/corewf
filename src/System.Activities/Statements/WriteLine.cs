@@ -3,13 +3,13 @@
 
 namespace System.Activities.Statements
 {
-    using Portable.Xaml.Markup;
 
     using System;
     using System.Activities.Runtime;
     using System.Collections.ObjectModel;
     using System.ComponentModel;
     using System.IO;
+    using System.Windows.Markup;
 
     [ContentProperty("Text")]
     public sealed class WriteLine : CodeActivity

@@ -3,7 +3,6 @@
 
 namespace System.Activities.Statements
 {
-    using Portable.Xaml.Markup;
 
     using System.Activities;
     using System.Activities.DynamicUpdate;
@@ -11,6 +10,7 @@ namespace System.Activities.Statements
     using System.Activities.Runtime.Collections;
     using System.Collections.ObjectModel;
     using System.ComponentModel;
+    using System.Windows.Markup;
 
     [ContentProperty("Branches")]
     public sealed class Parallel : NativeActivity

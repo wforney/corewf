@@ -3,8 +3,6 @@
 
 namespace System.Activities
 {
-    using Portable.Xaml.Markup;
-
     using System;
     using System.Activities.Internals;
     using System.Activities.Runtime;
@@ -13,6 +11,7 @@ namespace System.Activities
     using System.Collections.Generic;
     using System.ComponentModel;
     using System.Runtime.Serialization;
+    using System.Windows.Markup;
 
     /// <summary>
     /// The Argument class.

@@ -3,7 +3,6 @@
 
 namespace System.Activities.Expressions
 {
-    using Portable.Xaml.Markup;
 
     using System;
     using System.Activities.Runtime;
@@ -11,6 +10,7 @@ namespace System.Activities.Expressions
     using System.ComponentModel;
     using System.Diagnostics;
     using System.Text.RegularExpressions;
+    using System.Windows.Markup;
 
     [DebuggerStepThrough]
     [ContentProperty("Value")]

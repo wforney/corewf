@@ -3,12 +3,12 @@
 
 namespace System.Activities.Statements
 {
-    using Portable.Xaml.Markup;
 
     using System.Activities;
     using System.Activities.Internals;
     using System.Activities.Runtime;
     using System.Collections.ObjectModel;
+    using System.Windows.Markup;
 
     /// <summary>
     /// The HandleScope class. This class cannot be inherited.

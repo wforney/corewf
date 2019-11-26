@@ -3,11 +3,11 @@
 
 namespace System.Activities.Statements
 {
-    using Portable.Xaml.Markup;
 
     using System.Activities;
     using System.Collections.Generic;
     using System.ComponentModel;
+    using System.Windows.Markup;
 
     [ContentProperty("Action")]
     public sealed class FlowStep : FlowNode

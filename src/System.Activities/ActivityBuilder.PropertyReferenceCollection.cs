@@ -3,12 +3,11 @@
 
 namespace System.Activities
 {
-    using Portable.Xaml;
-
     using System;
     using System.Activities.Debugger;
     using System.Activities.Runtime;
     using System.Collections.ObjectModel;
+    using System.Xaml;
 
     public sealed partial class ActivityBuilder
         : IDebuggableWorkflowTree

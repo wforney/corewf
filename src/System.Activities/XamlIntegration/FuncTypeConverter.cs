@@ -3,10 +3,10 @@
 
 namespace System.Activities.XamlIntegration
 {
-    using Portable.Xaml;
 
     using System;
     using System.Activities.Internals;
+    using System.Xaml;
 
     public class FuncDeferringLoader : XamlDeferringLoader
     {

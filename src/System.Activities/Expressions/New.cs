@@ -3,7 +3,6 @@
 
 namespace System.Activities.Expressions
 {
-    using Portable.Xaml.Markup;
 
     using System;
     using System.Activities;
@@ -13,6 +12,7 @@ namespace System.Activities.Expressions
     using System.Collections.ObjectModel;
     using System.Reflection;
     using System.Threading;
+    using System.Windows.Markup;
 
     //[SuppressMessage(FxCop.Category.Naming, FxCop.Rule.IdentifiersShouldNotMatchKeywords,
     //    Justification = "Optimizing for XAML naming. VB imperative users will [] qualify (e.g. New [New])")]

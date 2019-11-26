@@ -3,7 +3,6 @@
 
 namespace System.Activities.Statements
 {
-    using Portable.Xaml.Markup;
     using System;
     using System.Activities;
     using System.Activities.DynamicUpdate;
@@ -14,6 +13,7 @@ namespace System.Activities.Statements
     using System.Collections.ObjectModel;
     using System.ComponentModel;
     using System.Runtime.Serialization;
+    using System.Windows.Markup;
 
     public sealed class TryCatch : NativeActivity
     {

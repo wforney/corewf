@@ -3,7 +3,6 @@
 
 namespace System.Activities.Expressions
 {
-    using Portable.Xaml.Markup;
 
     using System;
     using System.Activities.Internals;
@@ -14,6 +13,7 @@ namespace System.Activities.Expressions
     using System.ComponentModel;
     using System.Reflection;
     using System.Threading;
+    using System.Windows.Markup;
 
     [ContentProperty("Parameters")]
     public sealed class InvokeMethod<TResult> : AsyncCodeActivity<TResult>

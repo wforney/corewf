@@ -3,7 +3,6 @@
 
 namespace System.Activities.XamlIntegration
 {
-    using Portable.Xaml;
 
     using System;
     using System.Activities.Expressions;
@@ -11,6 +10,7 @@ namespace System.Activities.XamlIntegration
     using System.ComponentModel;
     using System.Globalization;
     using System.Reflection;
+    using System.Xaml;
 
     public class AssemblyReferenceConverter : TypeConverter
     {

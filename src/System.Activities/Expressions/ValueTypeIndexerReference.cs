@@ -3,16 +3,16 @@
 
 namespace System.Activities.Expressions
 {
+    using System;
+    using System.Activities.Internals;
+    using System.Activities.Runtime;
+    using System.Activities.Runtime.Collections;
     using System.Collections.ObjectModel;
     using System.ComponentModel;
     using System.Reflection;
-    using System.Activities.Runtime.Collections;
     using System.Runtime.Serialization;
     using System.Threading;
-    using System;
-    using System.Activities.Runtime;
-    using System.Activities.Internals;
-    using Portable.Xaml.Markup;
+    using System.Windows.Markup;
 
     [ContentProperty("Indices")]
     public sealed class ValueTypeIndexerReference<TOperand, TItem> : CodeActivity<Location<TItem>>

@@ -3,10 +3,10 @@
 
 namespace System.Activities.Debugger
 {
-    using Portable.Xaml;
-    using Portable.Xaml.Schema;
 
     using System.Reflection;
+    using System.Xaml;
+    using System.Xaml.Schema;
 
     internal static class XamlMemberExtensions
     {

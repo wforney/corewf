@@ -3,7 +3,6 @@
 
 namespace System.Activities
 {
-    using Portable.Xaml.Markup;
 
     using System;
     using System.Activities.Expressions;
@@ -12,6 +11,7 @@ namespace System.Activities
     using System.Activities.XamlIntegration;
     using System.ComponentModel;
     using System.Linq.Expressions;
+    using System.Windows.Markup;
 
     /// <summary>
     /// The OutArgument class.

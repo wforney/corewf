@@ -3,7 +3,6 @@
 
 namespace System.Activities.Statements
 {
-    using Portable.Xaml.Markup;
 
     using System.Activities.DynamicUpdate;
     using System.Activities.Internals;
@@ -12,6 +11,7 @@ namespace System.Activities.Statements
     using System.Activities.Validation;
     using System.Collections.ObjectModel;
     using System.Runtime.Serialization;
+    using System.Windows.Markup;
 
     [ContentProperty("Branches")]
     public sealed class Pick : NativeActivity

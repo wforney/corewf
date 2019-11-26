@@ -3,7 +3,6 @@
 
 namespace System.Activities.Statements
 {
-    using Portable.Xaml.Markup;
 
     using System;
     using System.Activities;
@@ -11,6 +10,7 @@ namespace System.Activities.Statements
     using System.Activities.Runtime;
     using System.Collections.ObjectModel;
     using System.ComponentModel;
+    using System.Windows.Markup;
 
     [ContentProperty("Duration")]
     public sealed class Delay : NativeActivity

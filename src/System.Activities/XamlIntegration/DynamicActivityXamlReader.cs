@@ -3,13 +3,12 @@
 
 namespace System.Activities.XamlIntegration
 {
-    using Portable.Xaml;
-    using Portable.Xaml.Schema;
-
     using System;
     using System.Activities.Internals;
     using System.Activities.Runtime;
     using System.Collections.Generic;
+    using System.Xaml;
+    using System.Xaml.Schema;
 
     // This Xaml Reader converts an <Activity x:Class=Foo to <DynamicActivity Name=Foo it does the
     // folowing Rewrites any record of type "Activity" to "DynamicActivity" Rewrites any member of

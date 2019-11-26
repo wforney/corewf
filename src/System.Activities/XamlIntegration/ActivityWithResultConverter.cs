@@ -5,14 +5,13 @@ namespace System.Activities.XamlIntegration
 {
     using Microsoft.VisualBasic.Activities;
 
-    using Portable.Xaml;
-
     using System;
     using System.Activities.Expressions;
     using System.Activities.Internals;
     using System.Activities.Runtime;
     using System.ComponentModel;
     using System.Text.RegularExpressions;
+    using System.Xaml;
 
     public sealed class ActivityWithResultConverter : TypeConverterBase
     {

@@ -6,15 +6,14 @@ namespace Microsoft.VisualBasic.Activities
 {
     using Microsoft.VisualBasic.Activities.XamlIntegration;
 
-    using Portable.Xaml;
-    using Portable.Xaml.Markup;
-
     using System;
     using System.Activities;
     using System.Activities.Internals;
     using System.Activities.Runtime;
     using System.Collections.Generic;
     using System.ComponentModel;
+    using System.Windows.Markup;
+    using System.Xaml;
 
     [ValueSerializer(typeof(VisualBasicSettingsValueSerializer))]
     [TypeConverter(typeof(VisualBasicSettingsConverter))]

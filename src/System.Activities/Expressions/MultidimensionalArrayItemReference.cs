@@ -3,7 +3,6 @@
 
 namespace System.Activities.Expressions
 {
-    using Portable.Xaml.Markup;
     using System;
     using System.Activities.Internals;
     using System.Activities.Runtime;
@@ -12,6 +11,7 @@ namespace System.Activities.Expressions
     using System.ComponentModel;
     using System.Diagnostics.CodeAnalysis;
     using System.Runtime.Serialization;
+    using System.Windows.Markup;
 
     /// <summary>
     /// The MultidimensionalArrayItemReference class. This class cannot be inherited.

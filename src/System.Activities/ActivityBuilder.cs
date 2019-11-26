@@ -3,9 +3,6 @@
 
 namespace System.Activities
 {
-    using Portable.Xaml;
-    using Portable.Xaml.Markup;
-
     using System;
     using System.Activities.Debugger;
     using System.Activities.Validation;
@@ -13,6 +10,8 @@ namespace System.Activities
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
     using System.ComponentModel;
+    using System.Windows.Markup;
+    using System.Xaml;
 
     /// <summary>
     /// The ActivityBuilder class. This class cannot be inherited.
@@ -35,17 +34,17 @@ namespace System.Activities
         /// <summary>
         /// The attributes
         /// </summary>
-        private Collection<Attribute> attributes;
+        private Collection<Attribute>? attributes;
 
         /// <summary>
         /// The constraints
         /// </summary>
-        private Collection<Constraint> constraints;
+        private Collection<Constraint>? constraints;
 
         /// <summary>
         /// The properties
         /// </summary>
-        private KeyedCollection<string, DynamicActivityProperty> properties;
+        private KeyedCollection<string, DynamicActivityProperty>? properties;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ActivityBuilder" /> class.
@@ -98,7 +97,7 @@ namespace System.Activities
         [DefaultValue(null)]
         [Browsable(false)]
         [DependsOn("Constraints")]
-        public Activity Implementation { get; set; }
+        public Activity? Implementation { get; set; }
 
         /// <summary>
         /// Gets or sets the implementation version.
@@ -107,13 +106,13 @@ namespace System.Activities
         [TypeConverter(typeof(ImplementationVersionConverter))]
         [DefaultValue(null)]
         [DependsOn("Name")]
-        public Version ImplementationVersion { get; set; }
+        public Version? ImplementationVersion { get; set; }
 
         /// <summary>
         /// Gets or sets the name.
         /// </summary>
         /// <value>The name.</value>
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         /// <summary>
         /// Gets the properties.
@@ -190,10 +189,11 @@ namespace System.Activities
             return propertyReferences.Count > 1 || propertyReferences.SingleItem == null;
         }
 
-        Activity IDebuggableWorkflowTree.GetWorkflowRoot()
-        {
-            return this.Implementation;
-        }
+        /// <summary>
+        /// Gets the workflow root.
+        /// </summary>
+        /// <returns>System.Nullable&lt;Activity&gt;.</returns>
+        Activity? IDebuggableWorkflowTree.GetWorkflowRoot() => this.Implementation;
 
         /// <summary>
         /// Creates the activity property collection.
@@ -241,17 +241,17 @@ namespace System.Activities
         /// <summary>
         /// The attributes
         /// </summary>
-        private Collection<Attribute> attributes;
+        private Collection<Attribute>? attributes;
 
         /// <summary>
         /// The constraints
         /// </summary>
-        private Collection<Constraint> constraints;
+        private Collection<Constraint>? constraints;
 
         /// <summary>
         /// The properties
         /// </summary>
-        private KeyedCollection<string, DynamicActivityProperty> properties;
+        private KeyedCollection<string, DynamicActivityProperty>? properties;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ActivityBuilder{TResult}" /> class.
@@ -304,7 +304,7 @@ namespace System.Activities
         [DefaultValue(null)]
         [Browsable(false)]
         [DependsOn("Constraints")]
-        public Activity Implementation { get; set; }
+        public Activity? Implementation { get; set; }
 
         /// <summary>
         /// Gets or sets the implementation version.
@@ -313,13 +313,13 @@ namespace System.Activities
         [TypeConverter(typeof(ImplementationVersionConverter))]
         [DefaultValue(null)]
         [DependsOn("Name")]
-        public Version ImplementationVersion { get; set; }
+        public Version? ImplementationVersion { get; set; }
 
         /// <summary>
         /// Gets or sets the name.
         /// </summary>
         /// <value>The name.</value>
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         /// <summary>
         /// Gets the properties.
@@ -340,9 +340,6 @@ namespace System.Activities
             }
         }
 
-        Activity IDebuggableWorkflowTree.GetWorkflowRoot()
-        {
-            return this.Implementation;
-        }
+        Activity? IDebuggableWorkflowTree.GetWorkflowRoot() => this.Implementation;
     }
 }

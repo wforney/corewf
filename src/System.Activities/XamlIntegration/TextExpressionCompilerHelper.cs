@@ -3,11 +3,11 @@
 
 namespace System.Activities.XamlIntegration
 {
-    using Portable.Xaml;
 
     using System.Activities.Expressions;
     using System.Collections.Generic;
     using System.IO;
+    using System.Xaml;
     using System.Xml;
 
     internal static class TextExpressionCompilerHelper

@@ -3,11 +3,10 @@
 
 namespace System.Activities.XamlIntegration
 {
-    using Portable.Xaml;
-    using Portable.Xaml.Markup;
-
     using System;
     using System.Activities.Internals;
+    using System.Windows.Markup;
+    using System.Xaml;
 
     /// <summary>
     /// The ActivityWithResultValueSerializer class. This class cannot be inherited. Implements the

@@ -3,7 +3,6 @@
 
 namespace System.Activities.XamlIntegration
 {
-    using Portable.Xaml;
 
     using System;
     using System.Activities.Internals;
@@ -11,6 +10,7 @@ namespace System.Activities.XamlIntegration
     using System.Collections.Concurrent;
     using System.ComponentModel;
     using System.Globalization;
+    using System.Xaml;
 
     public abstract class TypeConverterBase : TypeConverter
     {

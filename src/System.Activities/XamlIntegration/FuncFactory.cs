@@ -3,12 +3,12 @@
 
 namespace System.Activities.XamlIntegration
 {
-    using Portable.Xaml;
-    using Portable.Xaml.Markup;
 
     using System;
     using System.Collections.Generic;
     using System.Reflection;
+    using System.Windows.Markup;
+    using System.Xaml;
 
     internal abstract class FuncFactory
     {

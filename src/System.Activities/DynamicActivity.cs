@@ -3,7 +3,6 @@
 
 namespace System.Activities
 {
-    using Portable.Xaml.Markup;
 
     using System;
     using System.Activities.Runtime;
@@ -11,6 +10,7 @@ namespace System.Activities
     using System.Activities.XamlIntegration;
     using System.Collections.ObjectModel;
     using System.ComponentModel;
+    using System.Windows.Markup;
 
     [ContentProperty("Implementation")]
     public sealed class DynamicActivity : Activity, ICustomTypeDescriptor, IDynamicActivity

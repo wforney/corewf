@@ -2661,6 +2661,12 @@
             <param name="target">The target.</param>
             <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         </member>
+        <member name="M:System.Activities.ActivityBuilder.System#Activities#Debugger#IDebuggableWorkflowTree#GetWorkflowRoot">
+            <summary>
+            Gets the workflow root.
+            </summary>
+            <returns>System.Nullable&lt;Activity&gt;.</returns>
+        </member>
         <member name="M:System.Activities.ActivityBuilder.CreateActivityPropertyCollection">
             <summary>
             Creates the activity property collection.
@@ -4593,7 +4599,7 @@
             <param name="argument">The argument.</param>
             <param name="violationOwner">The violation owner.</param>
         </member>
-        <member name="M:System.Activities.Argument.CanConvertToString(Portable.Xaml.Markup.IValueSerializerContext)">
+        <member name="M:System.Activities.Argument.CanConvertToString(System.Windows.Markup.IValueSerializerContext)">
             <summary>
             Determines whether this instance [can convert to string] the specified context.
             </summary>
@@ -4603,7 +4609,7 @@
             </returns>
             <remarks>for ArgumentValueSerializer</remarks>
         </member>
-        <member name="M:System.Activities.Argument.ConvertToString(Portable.Xaml.Markup.IValueSerializerContext)">
+        <member name="M:System.Activities.Argument.ConvertToString(System.Windows.Markup.IValueSerializerContext)">
             <summary>
             Converts to string.
             </summary>
@@ -4667,6 +4673,21 @@
             <param name="lastCharacterRead">The last character read by the underlying reader</param>
             <returns>The last character processed</returns>
         </member>
+        <member name="T:System.Activities.Debugger.IDebuggableWorkflowTree">
+            <summary>
+            The IDebuggableWorkflowTree interface.
+            </summary>
+            <remarks>
+            Interface to implement in serializable object containing Workflow to be debuggable with
+            Workflow debugger.
+            </remarks>
+        </member>
+        <member name="M:System.Activities.Debugger.IDebuggableWorkflowTree.GetWorkflowRoot">
+            <summary>
+            Gets the workflow root.
+            </summary>
+            <returns>Return the root of the workflow tree.</returns>
+        </member>
         <member name="T:System.Activities.Debugger.Symbol.ActivitySymbol">
             <summary>
             Represent the debug symbol for an Activity.
@@ -4721,6 +4742,35 @@
         <member name="M:System.Activities.Debugger.Symbol.ActivitySymbol.ToString">
             <summary>Returns a <see cref="T:System.String"/> that represents this instance.</summary>
             <returns>A <see cref="T:System.String"/> that represents this instance.</returns>
+        </member>
+        <member name="T:System.Activities.Debugger.Symbol.DebugSymbol">
+            <summary>
+            The DebugSymbol class.
+            </summary>
+        </member>
+        <member name="F:System.Activities.Debugger.Symbol.DebugSymbol.SymbolName">
+            <summary>
+            The symbol name
+            </summary>
+        </member>
+        <member name="F:System.Activities.Debugger.Symbol.DebugSymbol.attachingTypeName">
+            <summary>
+            The attaching type name
+            </summary>
+        </member>
+        <member name="M:System.Activities.Debugger.Symbol.DebugSymbol.GetSymbol(System.Object)">
+            <summary>
+            Gets the symbol.
+            </summary>
+            <param name="instance">The instance.</param>
+            <returns>System.Object.</returns>
+        </member>
+        <member name="M:System.Activities.Debugger.Symbol.DebugSymbol.SetSymbol(System.Object,System.Object)">
+            <summary>
+            Sets the symbol.
+            </summary>
+            <param name="instance">The instance.</param>
+            <param name="value">The value.</param>
         </member>
         <member name="P:System.Activities.Debugger.Symbol.WorkflowSymbol.FileName">
             <summary>
@@ -11396,11 +11446,11 @@
         <member name="T:System.Activities.XamlIntegration.ActivityWithResultValueSerializer">
             <summary>
             The ActivityWithResultValueSerializer class. This class cannot be inherited. Implements the
-            <see cref="T:Portable.Xaml.Markup.ValueSerializer" />
+            <see cref="!:Portable.Xaml.Markup.ValueSerializer" />
             </summary>
-            <seealso cref="T:Portable.Xaml.Markup.ValueSerializer" />
+            <seealso cref="!:Portable.Xaml.Markup.ValueSerializer" />
         </member>
-        <member name="M:System.Activities.XamlIntegration.ActivityWithResultValueSerializer.CanConvertToString(System.Object,Portable.Xaml.Markup.IValueSerializerContext)">
+        <member name="M:System.Activities.XamlIntegration.ActivityWithResultValueSerializer.CanConvertToString(System.Object,System.Windows.Markup.IValueSerializerContext)">
             <summary>
             Determines whether this instance [can convert to string] the specified value.
             </summary>
@@ -11410,7 +11460,7 @@
             <c>true</c> if this instance [can convert to string] the specified value; otherwise, <c>false</c>.
             </returns>
         </member>
-        <member name="M:System.Activities.XamlIntegration.ActivityWithResultValueSerializer.ConvertToString(System.Object,Portable.Xaml.Markup.IValueSerializerContext)">
+        <member name="M:System.Activities.XamlIntegration.ActivityWithResultValueSerializer.ConvertToString(System.Object,System.Windows.Markup.IValueSerializerContext)">
             <summary>
             Converts to string.
             </summary>

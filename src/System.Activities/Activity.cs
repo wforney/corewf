@@ -3,8 +3,6 @@
 
 namespace System.Activities
 {
-    using Portable.Xaml.Markup;
-
     using System;
     using System.Activities.DynamicUpdate;
     using System.Activities.Expressions;
@@ -19,6 +17,7 @@ namespace System.Activities
     using System.Diagnostics.CodeAnalysis;
     using System.Globalization;
     using System.Threading;
+    using System.Windows.Markup;
 
     /// <summary>
     /// The Activity class.
@@ -148,7 +147,7 @@ namespace System.Activities
         /// Gets the host environment.
         /// </summary>
         /// <value>The host environment.</value>
-        internal LocationReferenceEnvironment HostEnvironment =>
+        internal LocationReferenceEnvironment? HostEnvironment =>
             this.RootActivity != null && this.RootActivity.rootProperties != null
                     ? this.RootActivity.rootProperties.HostEnvironment
                     : null;
@@ -157,7 +156,7 @@ namespace System.Activities
         /// Gets the identifier.
         /// </summary>
         /// <value>The identifier.</value>
-        public string Id => this.id == 0 ? null : this.QualifiedId.ToString();
+        public string? Id => this.id == 0 ? null : this.QualifiedId.ToString();
 
         /// <summary>
         /// Gets or sets the implementation.
@@ -167,11 +166,7 @@ namespace System.Activities
         [DefaultValue(null)]
         [Browsable(false)]
         [Ambient]
-        public virtual Func<Activity> Implementation
-        {
-            get;
-            set;
-        }
+        public virtual Func<Activity> Implementation { get; set; }
 
         /// <summary>
         /// Gets the children.
@@ -220,11 +215,7 @@ namespace System.Activities
         /// Gets the handler of.
         /// </summary>
         /// <value>The handler of.</value>
-        internal ActivityDelegate HandlerOf
-        {
-            get;
-            private set;
-        }
+        internal ActivityDelegate HandlerOf { get; private set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether this instance has been associated with an instance.

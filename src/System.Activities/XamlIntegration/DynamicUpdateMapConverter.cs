@@ -3,12 +3,12 @@
 
 namespace System.Activities.XamlIntegration
 {
-    using Portable.Xaml.Markup;
 
     using System;
     using System.Activities.DynamicUpdate;
     using System.ComponentModel;
     using System.Globalization;
+    using System.Windows.Markup;
 
     /// <summary>
     /// The DynamicUpdateMapConverter class.

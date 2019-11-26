@@ -3,9 +3,6 @@
 
 namespace System.Activities.Debugger
 {
-    using Portable.Xaml;
-    using Portable.Xaml.Schema;
-
     using System;
     using System.Activities.Runtime;
     using System.Activities.XamlIntegration;
@@ -13,6 +10,8 @@ namespace System.Activities.Debugger
     using System.ComponentModel;
     using System.IO;
     using System.Reflection;
+    using System.Xaml;
+    using System.Xaml.Schema;
 
     public class XamlDebuggerXmlReader : XamlReader, IXamlLineInfo
     {
